@@ -36,7 +36,11 @@ import {
   Unlock,
   ShieldCheck,
   Eye,
-  Sliders
+  Sliders,
+  Crown,
+  Flame,
+  Gem,
+  Tag
 } from "lucide-react";
 
 // --- SERVIZI DONNA ---
@@ -379,19 +383,23 @@ export default function CambiaLookApp() {
   };
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-[#11090C] text-[#FFF5F6] flex flex-col relative pb-24 shadow-2xl overflow-hidden selection:bg-[#D91B42] selection:text-white font-sans">
+    <div className="max-w-md mx-auto min-h-screen bg-[#0A0407] text-[#FFF5F7] flex flex-col relative pb-24 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden selection:bg-[#E11D48] selection:text-white font-sans">
       
+      {/* Background Ambient Glow Elements */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-96 h-80 bg-[#E11D48]/15 rounded-full blur-[100px] pointer-events-none z-0" />
+      <div className="fixed bottom-20 right-0 w-80 h-80 bg-[#9F1239]/12 rounded-full blur-[110px] pointer-events-none z-0" />
+
       {/* SIMULATED PUSH NOTIFICATION (iOS Style Red-Tinted Glass Banner) */}
       {showNotification && (
         <div className="fixed top-4 left-4 right-4 z-50 animate-in slide-in-from-top duration-300">
-          <div className="max-w-sm mx-auto bg-[#241017]/95 backdrop-blur-xl border border-[#D91B42]/50 rounded-2xl p-3.5 shadow-2xl flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#12090C] flex items-center justify-center shrink-0 border border-[#D91B42]/40 shadow-inner">
+          <div className="max-w-sm mx-auto glass-panel-elevated rounded-2xl p-3.5 shadow-2xl flex items-start gap-3 border border-[#FB7185]/40">
+            <div className="w-10 h-10 rounded-xl bg-[#14060C] flex items-center justify-center shrink-0 border border-[#E11D48]/40 shadow-inner">
               <Image src="/app_icon_192.png" alt="Icon" width={28} height={28} className="rounded-lg" />
             </div>
             <div className="flex-1 min-w-0 pr-1">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-black tracking-wider uppercase text-[#E63956]">Cambia Look</span>
-                <span className="text-[10px] text-white/40">Adesso</span>
+                <span className="text-[11px] font-black tracking-wider uppercase text-[#FB7185]">Cambia Look</span>
+                <span className="text-[10px] text-white/50">Adesso</span>
               </div>
               <p className="text-xs text-white/95 font-medium mt-0.5 leading-snug">{notificationText}</p>
             </div>
@@ -404,14 +412,14 @@ export default function CambiaLookApp() {
 
       {/* STAFF MODE BANNER (When Active) */}
       {isStaffMode && (
-        <div className="bg-gradient-to-r from-[#9F1239] via-[#D91B42] to-[#E11D48] text-white px-4 py-2 text-xs font-bold flex items-center justify-between shadow-lg sticky top-0 z-40">
+        <div className="bg-gradient-to-r from-[#9F1239] via-[#E11D48] to-[#FB7185] text-white px-4 py-2 text-xs font-bold flex items-center justify-between shadow-xl sticky top-0 z-40">
           <div className="flex items-center gap-2">
             <ShieldCheck size={16} />
-            <span>Modalità Gestione Titolare (Salone)</span>
+            <span className="tracking-wide">Modalità Gestione Titolare (Salone)</span>
           </div>
           <button 
             onClick={handleToggleStaffMode}
-            className="px-2.5 py-1 bg-black/30 hover:bg-black/50 text-[10px] uppercase font-black rounded-lg transition-colors"
+            className="px-2.5 py-1 bg-black/40 hover:bg-black/60 text-[10px] uppercase font-black rounded-lg transition-colors border border-white/20"
           >
             Vista Cliente
           </button>
@@ -419,10 +427,10 @@ export default function CambiaLookApp() {
       )}
 
       {/* TOP HEADER */}
-      <header className="px-5 pt-10 pb-4 bg-gradient-to-b from-[#1C0E13] via-[#1C0E13]/95 to-transparent sticky top-0 z-30 backdrop-blur-md flex items-center justify-between border-b border-[#421C28]/60">
+      <header className="px-5 pt-10 pb-4 bg-[#0A0407]/80 sticky top-0 z-30 backdrop-blur-xl flex items-center justify-between border-b border-[#FB7185]/15 transition-all">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#9F1239] to-[#E11D48] p-0.5 shadow-lg shadow-[#D91B42]/20 flex items-center justify-center overflow-hidden">
-            <div className="w-full h-full bg-[#180C10] rounded-[14px] flex items-center justify-center p-1">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#9F1239] via-[#E11D48] to-[#FDA4AF] p-0.5 shadow-lg shadow-[#E11D48]/30 flex items-center justify-center overflow-hidden">
+            <div className="w-full h-full bg-[#12050B] rounded-[14px] flex items-center justify-center p-1">
               <Image 
                 src="/logo_transparent.png" 
                 alt="Logo Cambia Look" 
@@ -434,11 +442,11 @@ export default function CambiaLookApp() {
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-black uppercase tracking-widest text-[#E63956]">Salone Donna</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] text-emerald-400 font-bold">Aperto</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#FB7185]">Salone Donna</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[10px] text-emerald-400 font-bold tracking-wider">Aperto</span>
             </div>
-            <h1 className="text-lg font-black tracking-tight font-serif bg-gradient-to-r from-white via-[#FFF0F2] to-[#FDA4AF] bg-clip-text text-transparent">
+            <h1 className="text-xl font-black tracking-tight font-serif bg-gradient-to-r from-white via-[#FFF0F2] to-[#FDA4AF] bg-clip-text text-transparent">
               Cambia Look
             </h1>
           </div>
@@ -448,10 +456,10 @@ export default function CambiaLookApp() {
           {/* Staff Switch Demo Button */}
           <button 
             onClick={handleToggleStaffMode}
-            className={`px-2.5 py-1.5 rounded-full border text-[10px] font-black uppercase flex items-center gap-1.5 transition-all ${
+            className={`px-3 py-1.5 rounded-full border text-[10px] font-black uppercase flex items-center gap-1.5 transition-all ${
               isStaffMode 
-                ? "bg-[#D91B42] text-white border-[#D91B42]" 
-                : "bg-white/5 border-white/10 text-white/70 hover:text-white"
+                ? "bg-[#E11D48] text-white border-[#FB7185] shadow-md shadow-[#E11D48]/40" 
+                : "bg-white/5 border-white/10 text-white/70 hover:text-white hover:border-[#FB7185]/40"
             }`}
             title={isStaffMode ? "Torna a vista cliente" : "Accedi come Titolare Salone"}
           >
@@ -461,42 +469,48 @@ export default function CambiaLookApp() {
 
           <button 
             onClick={() => triggerPushDemo("🔔 Promemoria: Ciao Giulia! Ti ricordiamo il tuo appuntamento domani alle 15:30 da Cambia Look.")}
-            className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/80 hover:text-[#E63956] hover:border-[#D91B42]/40 transition-colors relative"
+            className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/80 hover:text-[#FB7185] hover:border-[#FB7185]/40 transition-colors relative"
             title="Simula Notifica Push"
           >
-            <Bell size={17} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#D91B42]" />
+            <Bell size={16} />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#E11D48] shadow-sm shadow-[#E11D48]" />
           </button>
         </div>
       </header>
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 px-5 pt-3 space-y-6">
+      <main className="flex-1 px-5 pt-3 space-y-6 relative z-10">
 
         {/* TAB 1: HOME */}
         {activeTab === "home" && (
           <div className="space-y-6 animate-in fade-in duration-300">
             {/* HERO RUBY GLAMOUR CARD */}
-            <div className="relative rounded-3xl overflow-hidden p-6 bg-gradient-to-br from-[#9F1239] via-[#6B0D24] to-[#1C0E13] border border-[#D91B42]/40 shadow-2xl">
-              <div className="absolute -top-10 -right-10 w-44 h-44 bg-[#E11D48]/30 rounded-full blur-3xl pointer-events-none" />
+            <div className="relative rounded-[28px] overflow-hidden p-6 bg-gradient-to-br from-[#9F1239] via-[#4C0617] to-[#120409] border border-[#FB7185]/30 shadow-2xl animate-shimmer">
+              <div className="absolute -top-12 -right-12 w-48 h-48 bg-[#E11D48]/35 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-8 -left-8 w-36 h-36 bg-[#BE123C]/20 rounded-full blur-2xl pointer-events-none" />
               
-              <div className="relative z-10 space-y-3">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm border border-white/20 text-[#FFF5F6] text-[10px] font-black uppercase tracking-wider">
+              <div className="relative z-10 space-y-3.5">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full glass-badge text-[#FFF5F7] text-[10px] font-black uppercase tracking-wider shadow-sm">
                   <Sparkles size={12} className="text-[#FDA4AF]" />
-                  <span>Dedicato Esclusivamente a Te</span>
+                  <span>Atelier Donna • Alta Moda Capelli</span>
                 </div>
-                <h2 className="text-2xl font-black font-serif leading-tight text-white drop-shadow-sm">
-                  Riscopri la bellezza dei tuoi capelli.
+
+                <h2 className="text-2xl font-black font-serif leading-tight text-white drop-shadow-md">
+                  Riscopri la bellezza <br/>
+                  <span className="italic font-normal bg-gradient-to-r from-[#FFF5F7] via-[#FDA4AF] to-[#F5D061] bg-clip-text text-transparent">
+                    e la luce dei tuoi capelli.
+                  </span>
                 </h2>
-                <p className="text-xs text-white/85 font-normal leading-relaxed">
-                  Trattamenti su misura per sole donne: taglio sartoriale, schiariture luminose e i migliori prodotti professionali per la cura a casa.
+
+                <p className="text-xs text-white/80 font-normal leading-relaxed">
+                  Percorsi sartoriali dedicati ad ogni donna: balayage tridimensionale, tagli di precisione e rituali benessere professionali da proseguire a casa.
                 </p>
 
                 {/* 2 Main Action Buttons: Servizi e Prodotti */}
                 <div className="pt-2 grid grid-cols-2 gap-2.5">
                   <button 
                     onClick={() => setActiveTab("servizi")}
-                    className="py-3 px-3 rounded-2xl bg-white text-[#9F1239] font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 hover:bg-white/90 active:scale-95 transition-all"
+                    className="py-3 px-3 rounded-2xl bg-white text-[#880B2B] font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 hover:bg-white/95 active:scale-95 transition-all"
                   >
                     <Scissors size={15} />
                     <span>Tutti i Servizi</span>
@@ -504,10 +518,10 @@ export default function CambiaLookApp() {
 
                   <button 
                     onClick={() => setActiveTab("prodotti")}
-                    className="py-3 px-3 rounded-2xl bg-black/40 backdrop-blur-md border border-white/30 text-white font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 hover:bg-black/60 active:scale-95 transition-all"
+                    className="py-3 px-3 rounded-2xl glass-panel text-white font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 hover:bg-white/10 active:scale-95 transition-all border border-white/25"
                   >
                     <ShoppingBag size={15} className="text-[#FDA4AF]" />
-                    <span>I Nostri Prodotti</span>
+                    <span>Linee Prodotti</span>
                   </button>
                 </div>
               </div>
@@ -518,28 +532,34 @@ export default function CambiaLookApp() {
               {/* Box 1: Servizi */}
               <div 
                 onClick={() => setActiveTab("servizi")}
-                className="p-4 rounded-2xl bg-gradient-to-br from-[#28141C] to-[#1C0E13] border border-[#421C28] hover:border-[#D91B42]/50 transition-all cursor-pointer group space-y-2 active:scale-98"
+                className="p-4 rounded-2xl glass-panel hover:border-[#FB7185]/40 transition-all cursor-pointer group space-y-2.5 active:scale-98 relative overflow-hidden"
               >
-                <div className="w-10 h-10 rounded-xl bg-[#D91B42]/15 text-[#E63956] flex items-center justify-center border border-[#D91B42]/30">
+                <div className="w-10 h-10 rounded-xl bg-[#E11D48]/15 text-[#FB7185] flex items-center justify-center border border-[#E11D48]/30 group-hover:scale-110 transition-transform">
                   <Scissors size={20} />
                 </div>
                 <div>
-                  <h3 className="text-xs font-black text-white group-hover:text-[#FDA4AF] transition-colors">Trattamenti Salone</h3>
-                  <p className="text-[10px] text-white/50">{INITIAL_SERVICES.length} servizi esclusivi</p>
+                  <h3 className="text-xs font-black text-white group-hover:text-[#FDA4AF] transition-colors flex items-center gap-1">
+                    Trattamenti Salone
+                    <ChevronRight size={13} className="text-white/40 group-hover:translate-x-0.5 transition-transform" />
+                  </h3>
+                  <p className="text-[10px] text-white/50">{INITIAL_SERVICES.length} servizi esclusivi donna</p>
                 </div>
               </div>
 
               {/* Box 2: Prodotti */}
               <div 
                 onClick={() => setActiveTab("prodotti")}
-                className="p-4 rounded-2xl bg-gradient-to-br from-[#28141C] to-[#1C0E13] border border-[#421C28] hover:border-[#D91B42]/50 transition-all cursor-pointer group space-y-2 active:scale-98"
+                className="p-4 rounded-2xl glass-panel hover:border-[#FB7185]/40 transition-all cursor-pointer group space-y-2.5 active:scale-98 relative overflow-hidden"
               >
-                <div className="w-10 h-10 rounded-xl bg-[#E63956]/15 text-[#FDA4AF] flex items-center justify-center border border-[#E63956]/30">
+                <div className="w-10 h-10 rounded-xl bg-[#FB7185]/15 text-[#FDA4AF] flex items-center justify-center border border-[#FB7185]/30 group-hover:scale-110 transition-transform">
                   <ShoppingBag size={20} />
                 </div>
                 <div>
-                  <h3 className="text-xs font-black text-white group-hover:text-[#FDA4AF] transition-colors">Linee Prodotti</h3>
-                  <p className="text-[10px] text-white/50">{productsList.length} prodotti disponibili</p>
+                  <h3 className="text-xs font-black text-white group-hover:text-[#FDA4AF] transition-colors flex items-center gap-1">
+                    Linee Salone
+                    <ChevronRight size={13} className="text-white/40 group-hover:translate-x-0.5 transition-transform" />
+                  </h3>
+                  <p className="text-[10px] text-white/50">{productsList.length} prodotti professionali</p>
                 </div>
               </div>
             </div>
@@ -548,14 +568,15 @@ export default function CambiaLookApp() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-black font-serif tracking-tight text-white flex items-center gap-2">
-                  <ShoppingBag size={15} className="text-[#E63956]" />
-                  <span>I Prodotti del Salone</span>
+                  <Flame size={16} className="text-[#E11D48]" />
+                  <span>I Bestseller del Salone</span>
                 </h3>
                 <button 
                   onClick={() => setActiveTab("prodotti")}
-                  className="text-[11px] font-bold text-[#FDA4AF] hover:underline"
+                  className="text-[11px] font-bold text-[#FDA4AF] hover:text-white flex items-center gap-0.5 transition-colors"
                 >
-                  Shop Completo ({productsList.length})
+                  <span>Shop ({productsList.length})</span>
+                  <ChevronRight size={13} />
                 </button>
               </div>
 
@@ -564,26 +585,27 @@ export default function CambiaLookApp() {
                   <div 
                     key={prod.id}
                     onClick={() => { setSelectedProduct(prod); setReservedCount(1); }}
-                    className="p-3 rounded-2xl bg-[#1C0E13] border border-[#421C28]/60 hover:border-[#D91B42]/60 transition-all flex flex-col justify-between cursor-pointer group relative"
+                    className="p-3.5 rounded-[22px] glass-panel hover:border-[#FB7185]/50 transition-all flex flex-col justify-between cursor-pointer group relative shadow-md"
                   >
-                    <div className="relative aspect-square rounded-xl overflow-hidden bg-black/40 mb-2.5">
+                    <div className="relative aspect-square rounded-2xl overflow-hidden bg-black/50 mb-2.5 border border-white/5">
                       <Image 
                         src={prod.img} 
                         alt={prod.name} 
                         fill 
                         className="object-cover group-hover:scale-105 transition-transform duration-500" 
                       />
-                      <span className="absolute top-2 left-2 text-[8px] font-black uppercase tracking-wider bg-[#D91B42] text-white px-2 py-0.5 rounded-full shadow">
+                      <span className="absolute top-2 left-2 text-[8px] font-black uppercase tracking-wider bg-[#E11D48] text-white px-2 py-0.5 rounded-full shadow-md">
                         Salone
                       </span>
                     </div>
 
                     <div className="space-y-1">
+                      <span className="text-[9px] font-bold text-[#FDA4AF]/80 uppercase tracking-wider block">{prod.brand}</span>
                       <h4 className="text-xs font-bold text-white line-clamp-1 group-hover:text-[#FDA4AF] transition-colors">{prod.name}</h4>
-                      <p className="text-[10px] text-white/50">{prod.size}</p>
-                      <div className="flex items-center justify-between pt-1">
-                        <span className="text-xs font-black text-[#E63956]">€ {Number(prod.price).toFixed(2)}</span>
-                        <span className="text-[10px] text-emerald-400 font-bold">Disponibile</span>
+                      <p className="text-[10px] text-white/45">{prod.size}</p>
+                      <div className="flex items-center justify-between pt-1.5 border-t border-white/5">
+                        <span className="text-xs font-black text-[#FB7185]">€ {Number(prod.price).toFixed(2)}</span>
+                        <span className="text-[9px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">Disponibile</span>
                       </div>
                     </div>
                   </div>
@@ -595,14 +617,15 @@ export default function CambiaLookApp() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-black font-serif tracking-tight text-white flex items-center gap-2">
-                  <Scissors size={15} className="text-[#E63956]" />
-                  <span>Servizi Più Richiesti</span>
+                  <Crown size={16} className="text-[#F5D061]" />
+                  <span>Trattamenti Signature</span>
                 </h3>
                 <button 
                   onClick={() => setActiveTab("servizi")}
-                  className="text-[11px] font-bold text-[#FDA4AF] hover:underline"
+                  className="text-[11px] font-bold text-[#FDA4AF] hover:text-white flex items-center gap-0.5 transition-colors"
                 >
-                  Tutti ({INITIAL_SERVICES.length})
+                  <span>Listino ({INITIAL_SERVICES.length})</span>
+                  <ChevronRight size={13} />
                 </button>
               </div>
 
@@ -611,26 +634,26 @@ export default function CambiaLookApp() {
                   <div 
                     key={serv.id}
                     onClick={() => handleStartBooking(serv)}
-                    className="p-3.5 rounded-2xl bg-[#1C0E13] border border-[#421C28]/60 hover:border-[#D91B42]/60 transition-all flex items-center justify-between cursor-pointer group active:scale-[0.99]"
+                    className="p-3.5 rounded-2xl glass-panel hover:border-[#FB7185]/40 transition-all flex items-center justify-between cursor-pointer group active:scale-[0.99]"
                   >
                     <div className="space-y-1 pr-3">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-white group-hover:text-[#FDA4AF] transition-colors">{serv.name}</span>
                         {serv.badge && (
-                          <span className="text-[9px] px-1.5 py-0.2 bg-[#D91B42]/20 text-[#FDA4AF] font-bold rounded">
+                          <span className="text-[9px] px-1.5 py-0.2 bg-[#E11D48]/20 border border-[#FB7185]/30 text-[#FDA4AF] font-bold rounded-md">
                             {serv.badge}
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-white/50 line-clamp-1">{serv.desc}</p>
+                      <p className="text-[11px] text-white/55 line-clamp-1">{serv.desc}</p>
                       <div className="flex items-center gap-3 text-[10px] text-white/40">
-                        <span className="flex items-center gap-1"><Clock size={11} /> {serv.duration}</span>
+                        <span className="flex items-center gap-1"><Clock size={11} className="text-[#FDA4AF]" /> {serv.duration}</span>
                       </div>
                     </div>
 
                     <div className="text-right shrink-0">
-                      <div className="text-sm font-black text-[#E63956]">€ {serv.price}</div>
-                      <button className="mt-1 px-2.5 py-1 rounded-lg bg-[#D91B42]/20 text-[#FDA4AF] group-hover:bg-[#D91B42] group-hover:text-white text-[10px] font-black uppercase transition-all">
+                      <div className="text-sm font-black text-[#FB7185]">€ {serv.price}</div>
+                      <button className="mt-1 px-3 py-1 rounded-xl bg-gradient-to-r from-[#E11D48] to-[#9F1239] text-white text-[10px] font-black uppercase shadow-sm group-hover:brightness-110 transition-all">
                         Prenota
                       </button>
                     </div>
@@ -642,16 +665,16 @@ export default function CambiaLookApp() {
             {/* FIDELITY BANNER */}
             <div 
               onClick={() => setActiveTab("fidelity")}
-              className="p-4 rounded-2xl bg-gradient-to-r from-[#2B1019] via-[#200D14] to-[#17090E] border border-[#D91B42]/40 flex items-center justify-between cursor-pointer hover:border-[#D91B42]/70 transition-all group"
+              className="p-4 rounded-2xl glass-panel-elevated flex items-center justify-between cursor-pointer hover:border-[#FB7185]/60 transition-all group"
             >
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl bg-[#D91B42]/20 text-[#FDA4AF] flex items-center justify-center shrink-0 border border-[#D91B42]/40">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#9F1239] to-[#E11D48] text-white flex items-center justify-center shrink-0 border border-[#FDA4AF]/40 shadow-md">
                   <Award size={22} />
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-[10px] font-black uppercase tracking-wider text-[#FDA4AF]">Tessera Fedeltà VIP</span>
-                    <span className="text-[10px] text-white/40">• 7/10 Timbri</span>
+                    <span className="text-[10px] text-white/50">• 7/10 Timbri</span>
                   </div>
                   <p className="text-xs font-bold text-white group-hover:text-[#FDA4AF] transition-colors">
                     Guadagna punti su ogni servizio e acquisto prodotti!
@@ -662,20 +685,23 @@ export default function CambiaLookApp() {
             </div>
 
             {/* SALON CONTACT & HOURS QUICK CARD */}
-            <div className="p-4 rounded-2xl bg-[#1A0E13] border border-[#421C28]/60 space-y-2.5 text-xs text-white/70">
-              <div className="flex items-center gap-2 text-white font-bold">
-                <MapPin size={15} className="text-[#E63956]" />
-                <span>Salone Cambia Look • Solo Donna</span>
+            <div className="p-4 rounded-2xl glass-panel space-y-2.5 text-xs text-white/70">
+              <div className="flex items-center justify-between text-white font-bold">
+                <div className="flex items-center gap-2">
+                  <MapPin size={15} className="text-[#FB7185]" />
+                  <span>Salone Cambia Look • Solo Donna</span>
+                </div>
+                <span className="text-[10px] text-white/40">Parcheggio riservato</span>
               </div>
-              <p className="text-[11px] text-white/50 pl-6">
+              <p className="text-[11px] text-white/55 pl-6">
                 Via Roma, 142 • Da Martedì a Sabato: 09:00 - 19:00
               </p>
               <div className="pt-1 flex gap-2 pl-6">
                 <button 
                   onClick={() => triggerPushDemo("📞 Chiamata telefonica al salone Cambia Look")}
-                  className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-bold flex items-center gap-1.5 hover:bg-white/10"
+                  className="px-3.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold flex items-center gap-1.5 hover:bg-white/10 hover:border-[#FB7185]/30 text-white transition-all"
                 >
-                  <Phone size={12} className="text-[#E63956]" />
+                  <Phone size={12} className="text-[#FB7185]" />
                   <span>Chiama Salone</span>
                 </button>
               </div>
@@ -687,29 +713,30 @@ export default function CambiaLookApp() {
         {activeTab === "servizi" && (
           <div className="space-y-5 animate-in fade-in duration-300">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#D91B42]/20 border border-[#D91B42]/30 text-[#FDA4AF] text-[9px] font-black uppercase tracking-wider mb-1">
-                Listino Completo
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full glass-badge text-[#FDA4AF] text-[9px] font-black uppercase tracking-wider mb-2">
+                <Scissors size={11} className="text-[#FB7185]" />
+                <span>Menu Trattamenti Salone</span>
               </div>
-              <h2 className="text-xl font-black font-serif text-white">Trattamenti Salone Donna</h2>
-              <p className="text-xs text-white/50">Scegli il trattamento desiderato per prenotare il tuo orario.</p>
+              <h2 className="text-2xl font-black font-serif text-white tracking-tight">Trattamenti Donna</h2>
+              <p className="text-xs text-white/50">Personalizzati sulla morfologia del tuo viso e sul benessere della chioma.</p>
             </div>
 
             {/* Category Filter Pills */}
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
               {[
-                { id: "tutti", label: "Tutti" },
+                { id: "tutti", label: "Tutti i Trattamenti" },
                 { id: "piega", label: "Piega & Finish" },
                 { id: "taglio", label: "Taglio Sartoriale" },
                 { id: "colore", label: "Colore & Balayage" },
-                { id: "cura", label: "Cura & Benessere" },
+                { id: "cura", label: "Rituali Spa & Cura" },
               ].map(cat => (
                 <button
                   key={cat.id}
                   onClick={() => setServiceCategory(cat.id)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                  className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
                     serviceCategory === cat.id 
-                      ? "bg-[#D91B42] text-white shadow-md shadow-[#D91B42]/30" 
-                      : "bg-[#1C0E13] text-white/60 border border-[#421C28]/60 hover:text-white"
+                      ? "btn-glamour text-white shadow-lg shadow-[#E11D48]/30 font-black scale-105" 
+                      : "glass-panel text-white/60 hover:text-white hover:border-[#FB7185]/40"
                   }`}
                 >
                   {cat.label}
@@ -718,37 +745,40 @@ export default function CambiaLookApp() {
             </div>
 
             {/* Services List */}
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               {INITIAL_SERVICES
                 .filter(s => serviceCategory === "tutti" || s.category === serviceCategory)
                 .map(serv => (
                   <div 
                     key={serv.id}
-                    className="p-4 rounded-2xl bg-[#1C0E13] border border-[#421C28]/60 hover:border-[#D91B42]/50 transition-all space-y-3"
+                    className="p-4 rounded-[22px] glass-panel hover:border-[#FB7185]/50 transition-all space-y-3 relative overflow-hidden group shadow-md"
                   >
-                    <div className="flex justify-between items-start">
+                    <div className="flex justify-between items-start gap-3">
                       <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-bold text-white">{serv.name}</h4>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="text-sm font-bold text-white group-hover:text-[#FDA4AF] transition-colors">{serv.name}</h4>
                           {serv.badge && (
-                            <span className="text-[9px] px-1.5 py-0.2 bg-[#D91B42]/20 text-[#FDA4AF] font-bold rounded">
+                            <span className="text-[9px] px-2 py-0.5 bg-[#E11D48]/20 border border-[#FB7185]/30 text-[#FDA4AF] font-bold rounded-full">
                               {serv.badge}
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-[10px] text-white/40 mt-0.5">
-                          <span className="flex items-center gap-1"><Clock size={11} /> {serv.duration}</span>
+                        <div className="flex items-center gap-2 text-[10px] text-white/45 mt-1">
+                          <span className="flex items-center gap-1"><Clock size={11} className="text-[#FDA4AF]" /> {serv.duration}</span>
+                          <span>•</span>
+                          <span className="text-[#FDA4AF]/80">Consulenza inclusa</span>
                         </div>
                       </div>
-                      <span className="text-base font-black text-[#E63956]">€ {serv.price}</span>
+                      <span className="text-base font-black text-[#FB7185] shrink-0">€ {serv.price}</span>
                     </div>
 
-                    <p className="text-xs text-white/60 leading-relaxed">{serv.desc}</p>
+                    <p className="text-xs text-white/65 leading-relaxed">{serv.desc}</p>
 
-                    <div className="pt-1 flex justify-end">
+                    <div className="pt-1 flex items-center justify-between border-t border-white/5">
+                      <span className="text-[10px] text-white/40">Pagamento in salone</span>
                       <button 
                         onClick={() => handleStartBooking(serv)}
-                        className="py-2 px-4 rounded-xl bg-gradient-to-r from-[#D91B42] to-[#B91034] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-[#D91B42]/20 active:scale-95 transition-all"
+                        className="py-2 px-4 rounded-xl btn-glamour text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 active:scale-95 transition-all"
                       >
                         <Calendar size={13} />
                         <span>Scegli & Prenota</span>
@@ -763,14 +793,15 @@ export default function CambiaLookApp() {
         {/* TAB 3: PRODOTTI DEL SALONE (VETRINA & SHOP) */}
         {activeTab === "prodotti" && (
           <div className="space-y-5 animate-in fade-in duration-300">
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-start gap-2">
               <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#D91B42]/20 border border-[#D91B42]/30 text-[#FDA4AF] text-[9px] font-black uppercase tracking-wider mb-1">
-                  Shop Salone
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full glass-badge text-[#FDA4AF] text-[9px] font-black uppercase tracking-wider mb-2">
+                  <ShoppingBag size={11} className="text-[#FB7185]" />
+                  <span>Boutique Salone</span>
                 </div>
-                <h2 className="text-xl font-black font-serif text-white">Linee Prodotti Salone</h2>
+                <h2 className="text-2xl font-black font-serif text-white tracking-tight">Linee Professionali</h2>
                 <p className="text-xs text-white/50">
-                  {isStaffMode ? "Pannello Titolare: aggiungi e modifica i prodotti" : "Trattamenti professionali da portare a casa"}
+                  {isStaffMode ? "Pannello Titolare: aggiungi e modifica i prodotti del salone" : "Trattamenti esclusivi consigliati per la cura a casa."}
                 </p>
               </div>
 
@@ -778,7 +809,7 @@ export default function CambiaLookApp() {
               {isStaffMode && (
                 <button
                   onClick={() => setIsNewProductModalOpen(true)}
-                  className="py-2 px-3 rounded-xl bg-gradient-to-r from-[#D91B42] to-[#E11D48] text-white text-xs font-black flex items-center gap-1.5 shadow-lg shadow-[#D91B42]/30 active:scale-95 transition-all"
+                  className="py-2.5 px-3.5 rounded-2xl btn-glamour text-white text-xs font-black flex items-center gap-1.5 shadow-lg shadow-[#E11D48]/30 active:scale-95 transition-all shrink-0"
                 >
                   <Plus size={15} />
                   <span>Nuovo Prodotto</span>
@@ -792,17 +823,17 @@ export default function CambiaLookApp() {
                 { id: "tutti", label: "Tutti" },
                 { id: "shampoo", label: "Shampoo" },
                 { id: "maschere", label: "Maschere & Balsami" },
-                { id: "oli", label: "Oli & Sieri" },
+                { id: "oli", label: "Oli Preziosi" },
                 { id: "styling", label: "Styling & Finish" },
                 { id: "kit", label: "Kit Completi" },
               ].map(cat => (
                 <button
                   key={cat.id}
                   onClick={() => setProductCategory(cat.id)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                  className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
                     productCategory === cat.id 
-                      ? "bg-[#D91B42] text-white shadow-md shadow-[#D91B42]/30" 
-                      : "bg-[#1C0E13] text-white/60 border border-[#421C28]/60 hover:text-white"
+                      ? "btn-glamour text-white shadow-lg shadow-[#E11D48]/30 font-black scale-105" 
+                      : "glass-panel text-white/60 hover:text-white hover:border-[#FB7185]/40"
                   }`}
                 >
                   {cat.label}
@@ -818,13 +849,13 @@ export default function CambiaLookApp() {
                   <div 
                     key={prod.id}
                     onClick={() => { setSelectedProduct(prod); setReservedCount(1); }}
-                    className="p-3 rounded-2xl bg-[#1C0E13] border border-[#421C28]/60 hover:border-[#D91B42]/60 transition-all flex flex-col justify-between cursor-pointer group relative"
+                    className="p-3.5 rounded-[22px] glass-panel hover:border-[#FB7185]/50 transition-all flex flex-col justify-between cursor-pointer group relative shadow-md"
                   >
                     {/* Delete button if in Staff Mode */}
                     {isStaffMode && (
                       <button
                         onClick={(e) => handleDeleteProduct(prod.id, e)}
-                        className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-black/70 hover:bg-rose-600 text-white flex items-center justify-center transition-colors shadow-md"
+                        className="absolute top-2.5 right-2.5 z-10 w-7 h-7 rounded-full bg-black/80 hover:bg-rose-600 text-white flex items-center justify-center transition-colors shadow-lg border border-white/10"
                         title="Elimina prodotto"
                       >
                         <Trash2 size={13} />
@@ -832,7 +863,7 @@ export default function CambiaLookApp() {
                     )}
 
                     <div>
-                      <div className="relative aspect-square rounded-xl overflow-hidden bg-black/40 mb-2.5">
+                      <div className="relative aspect-square rounded-2xl overflow-hidden bg-black/50 mb-2.5 border border-white/5">
                         <Image 
                           src={prod.img} 
                           alt={prod.name} 
@@ -840,23 +871,23 @@ export default function CambiaLookApp() {
                           className="object-cover group-hover:scale-105 transition-transform duration-500" 
                         />
                         {prod.bestseller && (
-                          <span className="absolute top-2 left-2 text-[8px] font-black uppercase tracking-wider bg-[#D91B42] text-white px-2 py-0.5 rounded-full shadow">
-                            Top Seller
+                          <span className="absolute top-2 left-2 text-[8px] font-black uppercase tracking-wider bg-gradient-to-r from-[#E11D48] to-[#9F1239] text-white px-2 py-0.5 rounded-full shadow-md">
+                            Bestseller
                           </span>
                         )}
                       </div>
 
                       <div className="space-y-1">
-                        <span className="text-[9px] font-bold text-[#FDA4AF] uppercase tracking-wider block">{prod.brand}</span>
+                        <span className="text-[9px] font-bold text-[#FDA4AF]/80 uppercase tracking-wider block">{prod.brand}</span>
                         <h4 className="text-xs font-bold text-white line-clamp-2 group-hover:text-[#FDA4AF] transition-colors leading-snug">{prod.name}</h4>
-                        <p className="text-[10px] text-white/50">{prod.size}</p>
+                        <p className="text-[10px] text-white/45">{prod.size}</p>
                       </div>
                     </div>
 
-                    <div className="pt-3 border-t border-white/5 mt-2 flex items-center justify-between">
-                      <span className="text-xs font-black text-[#E63956]">€ {Number(prod.price).toFixed(2)}</span>
-                      <button className="px-2 py-1 rounded-lg bg-[#D91B42]/20 text-[#FDA4AF] group-hover:bg-[#D91B42] group-hover:text-white text-[10px] font-bold uppercase transition-all">
-                        {isStaffMode ? "Modifica" : "Dettagli"}
+                    <div className="pt-3 border-t border-white/5 mt-2.5 flex items-center justify-between">
+                      <span className="text-xs font-black text-[#FB7185]">€ {Number(prod.price).toFixed(2)}</span>
+                      <button className="px-2.5 py-1 rounded-xl bg-white/5 hover:bg-[#E11D48] border border-white/10 hover:border-[#FB7185] text-[#FDA4AF] hover:text-white text-[10px] font-bold uppercase transition-all">
+                        {isStaffMode ? "Gestisci" : "Dettagli"}
                       </button>
                     </div>
                   </div>
@@ -864,11 +895,11 @@ export default function CambiaLookApp() {
             </div>
 
             {/* INFO SHOP BANNER */}
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-[#29141C] to-[#1C0E13] border border-[#D91B42]/30 text-center space-y-1.5">
-              <Package size={20} className="mx-auto text-[#E63956]" />
-              <h4 className="text-xs font-bold text-white">Ritiro Comodo in Salone</h4>
+            <div className="p-4 rounded-2xl glass-panel text-center space-y-1.5 border border-[#FB7185]/20">
+              <Package size={20} className="mx-auto text-[#FB7185]" />
+              <h4 className="text-xs font-bold text-white">Ritiro Comodo & Gratuito in Salone</h4>
               <p className="text-[11px] text-white/50 leading-relaxed">
-                Le tue clienti possono visionare e riservare i prodotti direttamente dall'app, per trovarli pronti al salone o richiederli durante l'appuntamento.
+                Le clienti possono visionare e riservare i prodotti con un tocco, per trovarli pronti al salone al momento del loro appuntamento.
               </p>
             </div>
           </div>
@@ -878,59 +909,63 @@ export default function CambiaLookApp() {
         {activeTab === "fidelity" && (
           <div className="space-y-6 animate-in fade-in duration-300">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#D91B42]/20 border border-[#D91B42]/30 text-[#FDA4AF] text-[9px] font-black uppercase tracking-wider mb-1">
-                Club Esclusivo
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full glass-badge text-[#FDA4AF] text-[9px] font-black uppercase tracking-wider mb-2">
+                <Crown size={11} className="text-[#F5D061]" />
+                <span>Privilege Club</span>
               </div>
-              <h2 className="text-xl font-black font-serif text-white">Club Cambia Look Donna</h2>
-              <p className="text-xs text-white/50">Accumula punti ad ogni trattamento e acquisto prodotti.</p>
+              <h2 className="text-2xl font-black font-serif text-white tracking-tight">Tessera VIP Cambia Look</h2>
+              <p className="text-xs text-white/50">Accumula timbri e sblocca rituali luxury gratuiti.</p>
             </div>
 
             {/* VIRTUAL RUBY LUXURY CARD */}
-            <div className="rounded-3xl p-6 bg-gradient-to-br from-[#9F1239] via-[#5C0A1E] to-[#1E090F] border border-[#D91B42]/60 shadow-2xl relative overflow-hidden space-y-6">
-              <div className="absolute top-0 right-0 w-44 h-44 bg-[#E11D48]/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="rounded-[28px] p-6 bg-gradient-to-br from-[#9F1239] via-[#4A0617] to-[#120409] border border-[#FB7185]/40 shadow-2xl relative overflow-hidden space-y-6 animate-shimmer">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-[#E11D48]/30 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-black/40 border border-white/20 flex items-center justify-center p-1">
-                    <Image src="/logo_transparent.png" alt="Logo" width={24} height={24} className="object-contain filter invert" />
+              <div className="flex justify-between items-start relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-black/40 border border-white/20 flex items-center justify-center p-1.5 shadow-md">
+                    <Image src="/logo_transparent.png" alt="Logo" width={26} height={26} className="object-contain filter invert" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-[#FDA4AF]">VIP Donna Member</span>
-                    <h3 className="text-sm font-bold text-white">Giulia Bianchi</h3>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[#FDA4AF] flex items-center gap-1">
+                      <Gem size={10} className="text-[#F5D061]" />
+                      VIP Diamond Member
+                    </span>
+                    <h3 className="text-base font-bold text-white tracking-wide">Giulia Bianchi</h3>
                   </div>
                 </div>
                 <div className="text-right">
                   <span className="text-[9px] text-white/50 uppercase tracking-wider block">Codice Tessera</span>
-                  <span className="text-xs font-mono font-bold text-white">#CL-88421</span>
+                  <span className="text-xs font-mono font-bold text-[#F5D061]">#CL-88421</span>
                 </div>
               </div>
 
               {/* STAMP GRID (10 TIMBRI) */}
-              <div className="space-y-2">
-                <div className="flex justify-between text-[11px] font-bold">
-                  <span className="text-white/90">Punti Raccolti</span>
-                  <span className="text-[#FDA4AF]">7 di 10 completati</span>
+              <div className="space-y-2.5 relative z-10">
+                <div className="flex justify-between text-xs font-bold">
+                  <span className="text-white/90">Progresso Trattamenti</span>
+                  <span className="text-[#FDA4AF]">7 di 10 timbri completati</span>
                 </div>
 
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-5 gap-2.5">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(step => {
                     const isDone = step <= 7;
                     const isReward = step === 10;
                     return (
                       <div 
                         key={step} 
-                        className={`aspect-square rounded-xl flex flex-col items-center justify-center text-center p-1 border transition-all ${
+                        className={`aspect-square rounded-2xl flex flex-col items-center justify-center text-center p-1 border transition-all ${
                           isDone 
-                            ? "bg-[#D91B42] text-white border-[#D91B42] shadow-md shadow-[#D91B42]/30 font-black" 
+                            ? "bg-gradient-to-tr from-[#9F1239] to-[#E11D48] text-white border-[#FB7185] shadow-lg shadow-[#E11D48]/40 font-black scale-100" 
                             : isReward
-                              ? "bg-white/10 border-white/40 text-[#FDA4AF] animate-pulse"
-                              : "bg-black/30 border-white/10 text-white/30"
+                              ? "bg-gradient-to-tr from-[#F5D061]/20 to-[#E11D48]/20 border-[#F5D061]/60 text-[#F5D061] animate-pulse"
+                              : "bg-black/40 border-white/10 text-white/25"
                         }`}
                       >
                         {isDone ? (
-                          <CheckCircle2 size={16} strokeWidth={3} />
+                          <CheckCircle2 size={18} strokeWidth={2.5} />
                         ) : isReward ? (
-                          <Gift size={16} />
+                          <Gift size={18} className="text-[#F5D061]" />
                         ) : (
                           <span className="text-xs font-bold">{step}</span>
                         )}
@@ -941,16 +976,18 @@ export default function CambiaLookApp() {
               </div>
 
               {/* BARCODE / QR SIMULATION */}
-              <div className="pt-3 border-t border-white/15 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <QrCode size={28} className="text-[#FDA4AF]" />
-                  <div className="text-[10px] text-white/70">
-                    Mostra in cassa al salone<br />per ricevere i punti
+              <div className="pt-3 border-t border-white/15 flex items-center justify-between relative z-10">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1 rounded-xl bg-white/10 backdrop-blur-sm">
+                    <QrCode size={26} className="text-[#FDA4AF]" />
+                  </div>
+                  <div className="text-[10px] text-white/70 leading-tight">
+                    Mostra il QR in cassa al salone<br />per accreditare i tuoi punti
                   </div>
                 </div>
                 <button 
                   onClick={() => triggerPushDemo("🎁 Timbro aggiunto! Hai ora 8 timbri sulla tua tessera.")}
-                  className="px-3 py-1.5 rounded-lg bg-black/40 hover:bg-[#D91B42] text-white border border-white/20 text-[10px] font-bold uppercase transition-all"
+                  className="px-3.5 py-1.5 rounded-xl bg-black/40 hover:bg-[#E11D48] text-white border border-white/20 text-[10px] font-bold uppercase transition-all shadow"
                 >
                   Simula Timbro
                 </button>
@@ -960,27 +997,27 @@ export default function CambiaLookApp() {
             {/* REWARDS AVAILABLE */}
             <div className="space-y-3">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Gift size={15} className="text-[#E63956]" />
-                <span>Premi & Sconti Attivi</span>
+                <Gift size={16} className="text-[#FB7185]" />
+                <span>I Tuoi Vantaggi Esclusivi</span>
               </h3>
 
               <div className="space-y-2.5">
-                <div className="p-3.5 rounded-2xl bg-[#1C0E13] border border-[#421C28]/60 flex items-center justify-between">
+                <div className="p-4 rounded-2xl glass-panel flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <span className="text-[10px] text-[#FDA4AF] font-bold uppercase">Premio 10° Timbro</span>
+                    <span className="text-[10px] text-[#FDA4AF] font-bold uppercase tracking-wider">Premio Traguardo 10° Timbro</span>
                     <h4 className="text-xs font-bold text-white">Piega Glamour o Maschera Sublime Omaggio</h4>
-                    <p className="text-[10px] text-white/40">Valore € 25,00</p>
+                    <p className="text-[10px] text-white/40">Valore € 25,00 in regalo</p>
                   </div>
-                  <span className="text-xs font-black text-white/40 px-3 py-1 bg-white/5 rounded-lg">Mancano 3</span>
+                  <span className="text-xs font-black text-white/50 px-3 py-1.5 bg-white/5 rounded-xl border border-white/10">Mancano 3</span>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-[#1C0E13] border border-emerald-500/20 flex items-center justify-between">
+                <div className="p-4 rounded-2xl glass-panel border-emerald-500/25 flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <span className="text-[10px] text-emerald-400 font-bold uppercase">Sconto Compleanno 🎂</span>
-                    <h4 className="text-xs font-bold text-white">-20% su tutti i Prodotti & Servizi</h4>
+                    <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Regalo Compleanno 🎂</span>
+                    <h4 className="text-xs font-bold text-white">-20% su qualsiasi Servizio o Prodotto</h4>
                     <p className="text-[10px] text-white/40">Valido per tutto il mese</p>
                   </div>
-                  <span className="text-xs font-black text-emerald-400 px-3 py-1 bg-emerald-500/10 rounded-lg">Attivo</span>
+                  <span className="text-xs font-black text-emerald-400 px-3 py-1.5 bg-emerald-500/10 rounded-xl border border-emerald-500/30">Attivo</span>
                 </div>
               </div>
             </div>
@@ -991,72 +1028,77 @@ export default function CambiaLookApp() {
         {activeTab === "profilo" && (
           <div className="space-y-6 animate-in fade-in duration-300">
             <div>
-              <h2 className="text-xl font-black font-serif text-white">Profilo & Salone</h2>
-              <p className="text-xs text-white/50">Appuntamenti, tessere e gestione salone.</p>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full glass-badge text-[#FDA4AF] text-[9px] font-black uppercase tracking-wider mb-2">
+                <User size={11} className="text-[#FB7185]" />
+                <span>Account & Atelier</span>
+              </div>
+              <h2 className="text-2xl font-black font-serif text-white tracking-tight">Profilo & Salone</h2>
+              <p className="text-xs text-white/50">Appuntamenti, preferenze e gestione atelier.</p>
             </div>
 
             {/* USER CARD */}
-            <div className="p-4 rounded-2xl bg-[#1C0E13] border border-[#421C28]/60 flex items-center gap-3.5">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#9F1239] to-[#E11D48] text-white font-black text-lg flex items-center justify-center shadow-lg">
+            <div className="p-4 rounded-[22px] glass-panel flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#9F1239] via-[#E11D48] to-[#FDA4AF] text-white font-black text-lg flex items-center justify-center shadow-lg shadow-[#E11D48]/30">
                 GB
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-bold text-white">Giulia Bianchi</h3>
-                <p className="text-xs text-white/50">giulia.bianchi@example.com</p>
-                <span className="inline-block mt-1 text-[10px] font-bold text-[#FDA4AF] bg-[#D91B42]/15 px-2 py-0.5 rounded">
+                <p className="text-xs text-white/50 truncate">giulia.bianchi@example.com</p>
+                <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-bold text-[#FDA4AF] bg-[#E11D48]/15 border border-[#FB7185]/30 px-2 py-0.5 rounded-full">
+                  <Crown size={10} className="text-[#F5D061]" />
                   Cliente VIP Salone
                 </span>
               </div>
             </div>
 
             {/* SEZIONE SPECIALE: ACCESSO TITOLARE SALONE (Per far capire la differenza clienti/parrucchiere) */}
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-[#2D121C] to-[#1C0E13] border border-[#D91B42]/50 space-y-3">
+            <div className="p-5 rounded-[22px] glass-panel-elevated space-y-3.5 border border-[#FB7185]/40">
               <div className="flex items-center gap-2 text-white font-bold text-xs">
-                <ShieldCheck size={16} className="text-[#E63956]" />
-                <span>Area Riservata Parrucchieri (Titolare)</span>
+                <ShieldCheck size={18} className="text-[#FB7185]" />
+                <span className="text-sm">Area Riservata Staff & Titolare</span>
               </div>
-              <p className="text-[11px] text-white/60 leading-relaxed">
-                Le clienti vedono solo i prodotti e i servizi. I parrucchieri possono attivare la modalità titolare per inserire nuove foto di prodotti, descrizioni e prezzi direttamente dall'app.
+              <p className="text-xs text-white/65 leading-relaxed">
+                Le clienti hanno un catalogo in sola consultazione. I parrucchieri possono sbloccare l'area titolare per aggiungere nuovi prodotti con foto da smartphone, prezzi e descrizioni.
               </p>
               <button
                 onClick={handleToggleStaffMode}
-                className="w-full py-2.5 px-3 rounded-xl bg-[#D91B42]/20 hover:bg-[#D91B42] text-[#FDA4AF] hover:text-white border border-[#D91B42]/40 text-xs font-bold transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 rounded-xl btn-glamour text-white text-xs font-bold transition-all flex items-center justify-center gap-2"
               >
-                {isStaffMode ? <Eye size={14} /> : <Sliders size={14} />}
-                <span>{isStaffMode ? "Passa a Vista Cliente" : "Sblocca Modalità Gestione Salone (PIN)"}</span>
+                {isStaffMode ? <Eye size={15} /> : <Sliders size={15} />}
+                <span>{isStaffMode ? "Torna a Vista Cliente" : "Sblocca Modalità Gestione Salone (PIN)"}</span>
               </button>
             </div>
 
             {/* PROSSIMO APPUNTAMENTO */}
             <div className="space-y-3">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <CalendarCheck size={15} className="text-[#E63956]" />
+                <CalendarCheck size={16} className="text-[#FB7185]" />
                 <span>Il Tuo Prossimo Appuntamento</span>
               </h3>
 
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-[#241018] to-[#180C11] border border-[#D91B42]/40 space-y-3">
+              <div className="p-4 rounded-[22px] glass-panel space-y-3 border border-[#FB7185]/20">
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="text-[10px] font-bold text-[#FDA4AF] uppercase tracking-wider">Confermato</span>
-                    <h4 className="text-sm font-bold text-white">Taglio Sartoriale & Piega Glamour</h4>
-                    <p className="text-xs text-white/60">Stylist: Valentina</p>
+                    <span className="text-[10px] font-bold text-[#FDA4AF] uppercase tracking-wider bg-[#E11D48]/20 px-2 py-0.5 rounded-md">Confermato</span>
+                    <h4 className="text-sm font-bold text-white mt-1">Taglio Sartoriale & Piega Glamour</h4>
+                    <p className="text-xs text-white/60">Stylist di fiducia: Valentina</p>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs font-black text-white">Domani</span>
-                    <span className="text-xs font-bold text-[#E63956] block">16:00</span>
+                    <span className="text-xs font-bold text-white">Domani</span>
+                    <span className="text-sm font-black text-[#FB7185] block">16:00</span>
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-white/10 flex justify-between gap-2">
+                <div className="pt-2.5 border-t border-white/5 flex justify-between gap-2.5">
                   <button 
                     onClick={() => triggerPushDemo("📅 Appuntamento salvato sul calendario del tuo telefono!")}
-                    className="flex-1 py-1.5 px-3 rounded-lg bg-white/5 border border-white/10 text-[11px] font-bold hover:bg-white/10 transition-colors"
+                    className="flex-1 py-2 px-3 rounded-xl bg-white/5 border border-white/10 text-[11px] font-bold hover:bg-white/10 transition-colors"
                   >
-                    Aggiungi a Calendario
+                    Aggiungi al Calendario
                   </button>
                   <button 
                     onClick={() => triggerPushDemo("💬 Messaggio WhatsApp inviato al salone")}
-                    className="py-1.5 px-3 rounded-lg bg-rose-500/10 text-rose-300 border border-rose-500/20 text-[11px] font-bold hover:bg-rose-500/20 transition-colors"
+                    className="py-2 px-4 rounded-xl bg-rose-500/10 text-rose-300 border border-rose-500/20 text-[11px] font-bold hover:bg-rose-500/20 transition-colors"
                   >
                     Modifica
                   </button>
@@ -1065,13 +1107,13 @@ export default function CambiaLookApp() {
             </div>
 
             {/* SALON SETTINGS TOGGLES */}
-            <div className="p-4 rounded-2xl bg-[#1C0E13] border border-[#421C28]/60 space-y-3 text-xs">
+            <div className="p-4 rounded-2xl glass-panel space-y-3 text-xs">
               <div className="flex justify-between items-center py-1">
                 <div>
                   <span className="font-bold text-white block">Promemoria Appuntamenti</span>
                   <span className="text-[11px] text-white/50">Notifica push 24h e 2h prima</span>
                 </div>
-                <div className="w-10 h-6 bg-[#D91B42] rounded-full p-1 flex justify-end items-center cursor-pointer">
+                <div className="w-10 h-6 bg-[#E11D48] rounded-full p-1 flex justify-end items-center cursor-pointer shadow-sm">
                   <div className="w-4 h-4 bg-white rounded-full shadow-md" />
                 </div>
               </div>
@@ -1079,9 +1121,9 @@ export default function CambiaLookApp() {
               <div className="border-t border-white/5 pt-3 flex justify-between items-center py-1">
                 <div>
                   <span className="font-bold text-white block">Offerte Speciali & Nuovi Prodotti</span>
-                  <span className="text-[11px] text-white/50">Avviso quando arrivano nuovi kit in salone</span>
+                  <span className="text-[11px] text-white/50">Avviso quando arrivano nuovi kit in atelier</span>
                 </div>
-                <div className="w-10 h-6 bg-[#D91B42] rounded-full p-1 flex justify-end items-center cursor-pointer">
+                <div className="w-10 h-6 bg-[#E11D48] rounded-full p-1 flex justify-end items-center cursor-pointer shadow-sm">
                   <div className="w-4 h-4 bg-white rounded-full shadow-md" />
                 </div>
               </div>
@@ -1092,17 +1134,17 @@ export default function CambiaLookApp() {
 
       {/* MODAL 1: PRENOTAZIONE SERVIZIO */}
       {isBookingOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#1C0E13] border-t border-[#D91B42]/50 rounded-t-3xl p-6 space-y-5 animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto no-scrollbar shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[#13070C] border-t border-[#FB7185]/40 rounded-t-[32px] p-6 space-y-5 animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto no-scrollbar shadow-[0_-15px_40px_rgba(0,0,0,0.8)]">
             
-            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+            <div className="flex justify-between items-center border-b border-white/10 pb-3.5">
               <div>
-                <span className="text-[10px] font-bold text-[#FDA4AF] uppercase tracking-wider">Prenota Trattamento</span>
-                <h3 className="text-base font-bold text-white font-serif">{bookingService?.name}</h3>
+                <span className="text-[10px] font-black text-[#FDA4AF] uppercase tracking-wider">Prenota Trattamento</span>
+                <h3 className="text-lg font-black text-white font-serif tracking-tight">{bookingService?.name}</h3>
               </div>
               <button 
                 onClick={() => setIsBookingOpen(false)}
-                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:text-white"
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition-all"
               >
                 <X size={16} />
               </button>
@@ -1111,21 +1153,21 @@ export default function CambiaLookApp() {
             {/* Step 1: Stylist */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-white/80 block">1. Scegli la tua Stylist</label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2.5">
                 {STYLISTS.map(stylist => (
                   <button
                     key={stylist.id}
                     onClick={() => setBookingStylist(stylist.id)}
-                    className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all ${
+                    className={`p-3 rounded-2xl border text-left flex items-center gap-2.5 transition-all ${
                       bookingStylist === stylist.id 
-                        ? "bg-[#D91B42]/20 border-[#D91B42] text-white" 
-                        : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
+                        ? "bg-[#E11D48]/20 border-[#FB7185] text-white shadow-md shadow-[#E11D48]/30" 
+                        : "glass-panel text-white/60 hover:border-white/20 hover:text-white"
                     }`}
                   >
-                    <span className="text-lg">{stylist.avatar}</span>
+                    <span className="text-xl">{stylist.avatar}</span>
                     <div className="min-w-0 flex-1">
                       <div className="text-xs font-bold truncate">{stylist.name}</div>
-                      <div className="text-[9px] text-white/40 truncate">{stylist.role}</div>
+                      <div className="text-[9px] text-white/45 truncate">{stylist.role}</div>
                     </div>
                   </button>
                 ))}
@@ -1147,10 +1189,10 @@ export default function CambiaLookApp() {
                   <button
                     key={slot}
                     onClick={() => setBookingDate(slot)}
-                    className={`py-2 px-1 text-center rounded-xl text-xs font-bold border transition-all ${
+                    className={`py-2.5 px-1.5 text-center rounded-2xl text-xs font-bold border transition-all ${
                       bookingDate === slot 
-                        ? "bg-[#D91B42] text-white border-[#D91B42] shadow-md shadow-[#D91B42]/30" 
-                        : "bg-white/5 border-white/10 text-white/70 hover:border-white/20"
+                        ? "btn-glamour text-white border-[#FB7185] shadow-md shadow-[#E11D48]/30 font-black" 
+                        : "glass-panel text-white/70 hover:border-white/25 hover:text-white"
                     }`}
                   >
                     {slot}
@@ -1163,13 +1205,13 @@ export default function CambiaLookApp() {
             <div className="pt-3 border-t border-white/10 space-y-3">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-white/60 font-medium">Prezzo trattamento:</span>
-                <span className="text-lg font-black text-[#E63956]">€ {bookingService?.price}</span>
+                <span className="text-xl font-black text-[#FB7185]">€ {bookingService?.price}</span>
               </div>
 
               <button
                 onClick={handleConfirmBooking}
                 disabled={bookingConfirmed}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#D91B42] to-[#A80F30] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-[#D91B42]/30 flex items-center justify-center gap-2 active:scale-95 transition-all"
+                className="w-full py-4 rounded-2xl btn-glamour text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl"
               >
                 {bookingConfirmed ? (
                   <>
@@ -1190,25 +1232,25 @@ export default function CambiaLookApp() {
 
       {/* MODAL 2: DETTAGLIO & RISERVA PRODOTTO (VISTA CLIENTE) */}
       {selectedProduct && !isStaffMode && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#1C0E13] border-t border-[#D91B42]/50 rounded-t-3xl p-6 space-y-5 animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto no-scrollbar shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[#13070C] border-t border-[#FB7185]/40 rounded-t-[32px] p-6 space-y-5 animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto no-scrollbar shadow-[0_-15px_40px_rgba(0,0,0,0.8)]">
             
-            <div className="flex justify-between items-start border-b border-white/10 pb-3">
+            <div className="flex justify-between items-start border-b border-white/10 pb-3.5">
               <div>
                 <span className="text-[10px] font-bold text-[#FDA4AF] uppercase tracking-wider">{selectedProduct.brand}</span>
-                <h3 className="text-base font-bold text-white font-serif">{selectedProduct.name}</h3>
+                <h3 className="text-lg font-black text-white font-serif">{selectedProduct.name}</h3>
                 <span className="text-xs text-white/50">{selectedProduct.size}</span>
               </div>
               <button 
                 onClick={() => setSelectedProduct(null)}
-                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:text-white"
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 hover:text-white"
               >
                 <X size={16} />
               </button>
             </div>
 
             {/* Product Image Large */}
-            <div className="relative aspect-video rounded-2xl overflow-hidden bg-black/40">
+            <div className="relative aspect-video rounded-2xl overflow-hidden bg-black/50 border border-white/10">
               <Image 
                 src={selectedProduct.img} 
                 alt={selectedProduct.name} 
@@ -1218,14 +1260,14 @@ export default function CambiaLookApp() {
             </div>
 
             {/* Description */}
-            <div className="space-y-2">
-              <p className="text-xs text-white/70 leading-relaxed">{selectedProduct.desc}</p>
+            <div className="space-y-2.5">
+              <p className="text-xs text-white/75 leading-relaxed">{selectedProduct.desc}</p>
               
               <div className="space-y-1.5 pt-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-white/50">Benefici per i tuoi capelli:</span>
                 <div className="flex flex-wrap gap-1.5">
                   {(selectedProduct.benefits || []).map((b: string, i: number) => (
-                    <span key={i} className="inline-flex items-center gap-1 text-[10px] bg-white/5 border border-white/10 text-white/80 px-2.5 py-1 rounded-lg">
+                    <span key={i} className="inline-flex items-center gap-1 text-[10px] glass-badge text-white/90 px-3 py-1 rounded-xl">
                       <Sparkle size={10} className="text-[#FDA4AF]" />
                       <span>{b}</span>
                     </span>
@@ -1236,25 +1278,25 @@ export default function CambiaLookApp() {
 
             {/* Quantity Selector & Price */}
             <div className="pt-3 border-t border-white/10 flex items-center justify-between">
-              <div className="flex items-center gap-3 bg-white/5 p-1 rounded-xl border border-white/10">
+              <div className="flex items-center gap-3 glass-panel p-1 rounded-2xl border border-white/15">
                 <button 
                   onClick={() => setReservedCount(Math.max(1, reservedCount - 1))}
-                  className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-white hover:bg-white/20"
+                  className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition-all"
                 >
                   <Minus size={14} />
                 </button>
-                <span className="text-xs font-bold px-1">{reservedCount}</span>
+                <span className="text-xs font-bold px-2">{reservedCount}</span>
                 <button 
                   onClick={() => setReservedCount(reservedCount + 1)}
-                  className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-white hover:bg-white/20"
+                  className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition-all"
                 >
                   <Plus size={14} />
                 </button>
               </div>
 
               <div className="text-right">
-                <span className="text-[10px] text-white/50 block">Totale:</span>
-                <span className="text-lg font-black text-[#E63956]">€ {(selectedProduct.price * reservedCount).toFixed(2)}</span>
+                <span className="text-[10px] text-white/50 block">Totale da pagare in salone:</span>
+                <span className="text-xl font-black text-[#FB7185]">€ {(selectedProduct.price * reservedCount).toFixed(2)}</span>
               </div>
             </div>
 
@@ -1262,7 +1304,7 @@ export default function CambiaLookApp() {
             <button
               onClick={handleReserveProduct}
               disabled={productReserved}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#D91B42] to-[#A80F30] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-[#D91B42]/30 flex items-center justify-center gap-2 active:scale-95 transition-all"
+              className="w-full py-4 rounded-2xl btn-glamour text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl"
             >
               {productReserved ? (
                 <>
@@ -1282,13 +1324,13 @@ export default function CambiaLookApp() {
 
       {/* MODAL 3: INSERIMENTO NUOVO PRODOTTO (VISTA TITOLARE / PARRUCCHIERE) */}
       {isNewProductModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#1C0E13] border-t-2 border-[#D91B42] rounded-t-3xl p-6 space-y-4 animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto no-scrollbar shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[#13070C] border-t-2 border-[#E11D48] rounded-t-[32px] p-6 space-y-4 animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto no-scrollbar shadow-[0_-15px_40px_rgba(0,0,0,0.8)]">
             
-            <div className="flex justify-between items-center border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[#D91B42]/20 text-[#E63956] flex items-center justify-center">
-                  <Plus size={16} />
+            <div className="flex justify-between items-center border-b border-white/10 pb-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-[#E11D48]/20 text-[#FB7185] flex items-center justify-center border border-[#FB7185]/30">
+                  <Plus size={18} />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white font-serif">Aggiungi Prodotto al Salone</h3>
@@ -1309,7 +1351,7 @@ export default function CambiaLookApp() {
               <div>
                 <label className="font-bold text-white/80 block mb-1.5">1. Foto del Prodotto</label>
                 <div className="flex items-center gap-3">
-                  <div className="w-20 h-20 rounded-2xl border-2 border-dashed border-[#D91B42]/40 bg-black/40 overflow-hidden relative flex items-center justify-center shrink-0">
+                  <div className="w-20 h-20 rounded-2xl border-2 border-dashed border-[#FB7185]/40 bg-black/50 overflow-hidden relative flex items-center justify-center shrink-0">
                     {newProdImage ? (
                       <Image src={newProdImage} alt="Preview" fill className="object-cover" />
                     ) : (
@@ -1317,7 +1359,7 @@ export default function CambiaLookApp() {
                     )}
                   </div>
                   <div className="space-y-1.5 flex-1">
-                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-[#D91B42] text-white font-bold text-[11px] transition-colors">
+                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-[#E11D48] text-white font-bold text-[11px] transition-colors border border-white/15">
                       <Upload size={13} />
                       <span>{newProdImage ? "Cambia Foto" : "Carica o Scatta Foto"}</span>
                       <input 
@@ -1341,7 +1383,7 @@ export default function CambiaLookApp() {
                   placeholder="Es. Shampoo Riparatore Nutritivo"
                   value={newProdName}
                   onChange={e => setNewProdName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#28141C] border border-[#421C28] text-white placeholder-white/30 focus:border-[#D91B42] outline-none font-medium"
+                  className="w-full px-3.5 py-2.5 rounded-xl glass-panel text-white placeholder-white/30 focus:border-[#FB7185] outline-none font-medium"
                 />
               </div>
 
@@ -1352,7 +1394,7 @@ export default function CambiaLookApp() {
                   <select
                     value={newProdCategory}
                     onChange={e => setNewProdCategory(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-[#28141C] border border-[#421C28] text-white focus:border-[#D91B42] outline-none font-medium"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#1C0A13] border border-[#FB7185]/30 text-white focus:border-[#FB7185] outline-none font-medium"
                   >
                     <option value="shampoo">Shampoo</option>
                     <option value="maschere">Maschera / Balsamo</option>
@@ -1369,7 +1411,7 @@ export default function CambiaLookApp() {
                     placeholder="Es. 250 ml / 100 ml"
                     value={newProdSize}
                     onChange={e => setNewProdSize(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#28141C] border border-[#421C28] text-white placeholder-white/30 focus:border-[#D91B42] outline-none font-medium"
+                    className="w-full px-3.5 py-2.5 rounded-xl glass-panel text-white placeholder-white/30 focus:border-[#FB7185] outline-none font-medium"
                   />
                 </div>
               </div>
@@ -1384,7 +1426,7 @@ export default function CambiaLookApp() {
                     placeholder="Es. 24.50"
                     value={newProdPrice}
                     onChange={e => setNewProdPrice(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#28141C] border border-[#421C28] text-white placeholder-white/30 focus:border-[#D91B42] outline-none font-bold text-[#E63956]"
+                    className="w-full px-3.5 py-2.5 rounded-xl glass-panel text-white placeholder-white/30 focus:border-[#FB7185] outline-none font-bold text-[#FB7185]"
                   />
                 </div>
 
@@ -1395,7 +1437,7 @@ export default function CambiaLookApp() {
                     placeholder="Es. Cambia Look Care"
                     value={newProdBrand}
                     onChange={e => setNewProdBrand(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#28141C] border border-[#421C28] text-white placeholder-white/30 focus:border-[#D91B42] outline-none font-medium"
+                    className="w-full px-3.5 py-2.5 rounded-xl glass-panel text-white placeholder-white/30 focus:border-[#FB7185] outline-none font-medium"
                   />
                 </div>
               </div>
@@ -1408,7 +1450,7 @@ export default function CambiaLookApp() {
                   placeholder="Spiega alle clienti a cosa serve e come applicarlo..."
                   value={newProdDesc}
                   onChange={e => setNewProdDesc(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-[#28141C] border border-[#421C28] text-white placeholder-white/30 focus:border-[#D91B42] outline-none font-medium resize-none"
+                  className="w-full px-3.5 py-2 rounded-xl glass-panel text-white placeholder-white/30 focus:border-[#FB7185] outline-none font-medium resize-none"
                 />
               </div>
 
@@ -1420,14 +1462,14 @@ export default function CambiaLookApp() {
                   placeholder="Es. Anticrespo, Lucidante, Termoprotettore"
                   value={newProdBenefits}
                   onChange={e => setNewProdBenefits(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-[#28141C] border border-[#421C28] text-white placeholder-white/30 focus:border-[#D91B42] outline-none font-medium"
+                  className="w-full px-3.5 py-2 rounded-xl glass-panel text-white placeholder-white/30 focus:border-[#FB7185] outline-none font-medium"
                 />
               </div>
 
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#D91B42] to-[#A80F30] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-[#D91B42]/30 flex items-center justify-center gap-2 active:scale-95 transition-all"
+                  className="w-full py-4 rounded-2xl btn-glamour text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl"
                 >
                   <Check size={16} />
                   <span>Pubblica Prodotto nell'App</span>
@@ -1440,9 +1482,9 @@ export default function CambiaLookApp() {
 
       {/* MODAL 4: PIN ACCESS (PER PROTEGGERE L'AREA TITOLARE) */}
       {isPinModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-xs bg-[#1C0E13] border border-[#D91B42]/50 rounded-3xl p-6 space-y-4 shadow-2xl text-center">
-            <div className="w-12 h-12 rounded-2xl bg-[#D91B42]/20 text-[#E63956] mx-auto flex items-center justify-center">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-xs glass-panel-elevated rounded-[30px] p-6 space-y-4 shadow-2xl text-center border border-[#FB7185]/40">
+            <div className="w-12 h-12 rounded-2xl bg-[#E11D48]/20 text-[#FB7185] mx-auto flex items-center justify-center border border-[#FB7185]/30">
               <Lock size={22} />
             </div>
 
@@ -1459,7 +1501,7 @@ export default function CambiaLookApp() {
               placeholder="••••"
               value={pinInput}
               onChange={e => setPinInput(e.target.value)}
-              className="w-32 mx-auto text-center text-xl tracking-widest px-3 py-2 rounded-xl bg-[#28141C] border border-[#421C28] text-white outline-none focus:border-[#D91B42]"
+              className="w-32 mx-auto text-center text-xl tracking-widest px-3 py-2 rounded-xl bg-black/50 border border-[#FB7185]/40 text-white outline-none focus:border-[#FB7185]"
             />
 
             {pinError && (
@@ -1470,14 +1512,14 @@ export default function CambiaLookApp() {
               <button
                 type="button"
                 onClick={() => setIsPinModalOpen(false)}
-                className="flex-1 py-2 rounded-xl bg-white/10 text-white text-xs font-bold hover:bg-white/20"
+                className="flex-1 py-2.5 rounded-xl bg-white/10 text-white text-xs font-bold hover:bg-white/20 transition-colors"
               >
                 Annulla
               </button>
               <button
                 type="button"
                 onClick={handleVerifyPin}
-                className="flex-1 py-2 rounded-xl bg-[#D91B42] text-white text-xs font-black shadow-lg shadow-[#D91B42]/30"
+                className="flex-1 py-2.5 rounded-xl btn-glamour text-white text-xs font-black shadow-lg shadow-[#E11D48]/30"
               >
                 Sblocca
               </button>
@@ -1486,9 +1528,9 @@ export default function CambiaLookApp() {
         </div>
       )}
 
-      {/* BOTTOM NAVIGATION BAR (Red Glamour Luxury Theme) */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#160A0F]/95 backdrop-blur-xl border-t border-[#421C28]/80 max-w-md mx-auto safe-pb">
-        <div className="grid grid-cols-5 h-16 items-center px-1">
+      {/* BOTTOM NAVIGATION BAR (Luxury Red Glamour Theme) */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#0A0407]/85 backdrop-blur-2xl border-t border-[#FB7185]/20 max-w-md mx-auto safe-pb shadow-[0_-10px_30px_rgba(0,0,0,0.7)]">
+        <div className="grid grid-cols-5 h-16 items-center px-2">
           {[
             { id: "home", label: "Home", icon: Home },
             { id: "servizi", label: "Servizi", icon: Scissors },
@@ -1502,12 +1544,15 @@ export default function CambiaLookApp() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex flex-col items-center justify-center gap-1 transition-all py-1 ${
-                  isActive ? "text-[#E63956]" : "text-white/40 hover:text-white/70"
+                className={`flex flex-col items-center justify-center gap-1 transition-all py-1 relative ${
+                  isActive ? "text-white" : "text-white/40 hover:text-white/70"
                 }`}
               >
-                <div className={`p-1 rounded-xl transition-all ${isActive ? "bg-[#D91B42]/20 scale-110" : ""}`}>
-                  <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                {isActive && (
+                  <span className="absolute -top-1 w-6 h-1 rounded-full bg-gradient-to-r from-[#FB7185] to-[#E11D48] shadow-[0_0_10px_#E11D48]" />
+                )}
+                <div className={`p-1.5 rounded-2xl transition-all ${isActive ? "bg-gradient-to-tr from-[#9F1239] to-[#E11D48] text-white shadow-lg shadow-[#E11D48]/35 scale-110" : ""}`}>
+                  <Icon size={19} strokeWidth={isActive ? 2.5 : 2} />
                 </div>
                 <span className={`text-[10px] ${isActive ? "font-black tracking-tight text-[#FDA4AF]" : "font-medium"}`}>
                   {tab.label}
