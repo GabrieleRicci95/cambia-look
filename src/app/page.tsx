@@ -28,7 +28,16 @@ import {
   MessageCircle,
   Clock,
   Compass,
-  Store
+  Store,
+  Calendar,
+  CalendarCheck,
+  CalendarPlus,
+  CalendarDays,
+  Smartphone,
+  AlertCircle,
+  Edit3,
+  Share2,
+  ExternalLink
 } from "lucide-react";
 
 // --- SALONI FISICI REALI CAMBIA LOOK (DALL'APP ORIGINALE) ---
@@ -189,8 +198,48 @@ const INITIAL_PRODUCTS = [
   }
 ];
 
+export interface ClientAppointment {
+  id: string;
+  salonId: "cisterna" | "roma";
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm
+  service: string;
+  stylist?: string;
+  notes?: string;
+  reminder24h: boolean;
+  reminder2h: boolean;
+  createdAt: string;
+}
+
+const getTomorrowString = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+const getInitialSampleAppointment = (): ClientAppointment => {
+  const future = new Date();
+  future.setDate(future.getDate() + 2);
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const dateStr = `${future.getFullYear()}-${pad(future.getMonth() + 1)}-${pad(future.getDate())}`;
+
+  return {
+    id: "sample-demo-1",
+    salonId: "cisterna",
+    date: dateStr,
+    time: "10:30",
+    service: "Balayage Soleil & Gloss Tonificante",
+    stylist: "Simona",
+    notes: "Consulenza tonalizzazione biondo caldo",
+    reminder24h: true,
+    reminder2h: true,
+    createdAt: new Date().toISOString()
+  };
+};
+
 export default function CambiaLookApp() {
-  const [activeTab, setActiveTab] = useState<"saloni" | "servizi" | "prodotti" | "info">("saloni");
+  const [activeTab, setActiveTab] = useState<"saloni" | "servizi" | "agenda" | "prodotti" | "info">("saloni");
   
   // Selected Salon for direct contacts
   const [selectedSalon, setSelectedSalon] = useState<any | null>(null);
@@ -200,6 +249,21 @@ export default function CambiaLookApp() {
 
   // Selected Product for showcase detail popup (only viewing, no bookings)
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+
+  // Appointments / Diary State (Client Side Agenda)
+  const [myAppointments, setMyAppointments] = useState<ClientAppointment[]>([]);
+  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
+  const [editingAppointmentId, setEditingAppointmentId] = useState<string | null>(null);
+
+  // Appointment Form fields
+  const [formSalonId, setFormSalonId] = useState<"cisterna" | "roma">("cisterna");
+  const [formDate, setFormDate] = useState(getTomorrowString());
+  const [formTime, setFormTime] = useState("10:00");
+  const [formService, setFormService] = useState("Balayage Soleil & Gloss Tonificante");
+  const [formStylist, setFormStylist] = useState("");
+  const [formNotes, setFormNotes] = useState("");
+  const [formReminder24h, setFormReminder24h] = useState(true);
+  const [formReminder2h, setFormReminder2h] = useState(true);
 
   // Products Dynamic State
   const [productsList, setProductsList] = useState<any[]>(INITIAL_PRODUCTS);
@@ -228,14 +292,32 @@ export default function CambiaLookApp() {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("cambia_look_products");
-      if (saved) {
-        setProductsList(JSON.parse(saved));
+      const savedProducts = localStorage.getItem("cambia_look_products");
+      if (savedProducts) {
+        setProductsList(JSON.parse(savedProducts));
+      }
+
+      const savedAppts = localStorage.getItem("cambia_look_appointments");
+      if (savedAppts) {
+        setMyAppointments(JSON.parse(savedAppts));
+      } else {
+        const sample = getInitialSampleAppointment();
+        setMyAppointments([sample]);
+        localStorage.setItem("cambia_look_appointments", JSON.stringify([sample]));
       }
     } catch (e) {
       console.error(e);
     }
   }, []);
+
+  const saveAppointments = (newAppts: ClientAppointment[]) => {
+    setMyAppointments(newAppts);
+    try {
+      localStorage.setItem("cambia_look_appointments", JSON.stringify(newAppts));
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const saveProducts = (newList: any[]) => {
     setProductsList(newList);
@@ -250,6 +332,236 @@ export default function CambiaLookApp() {
     setNotificationText(text);
     setShowNotification(true);
     setTimeout(() => setShowNotification(false), 4500);
+  };
+
+  // Helper date formatting (in Italian)
+  const formatDateDisplay = (dateStr: string) => {
+    if (!dateStr) return "";
+    try {
+      const [y, m, d] = dateStr.split("-").map(Number);
+      const date = new Date(y, m - 1, d);
+      return date.toLocaleDateString("it-IT", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  // Remaining days calculation
+  const getDaysRemaining = (dateStr: string) => {
+    if (!dateStr) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const target = new Date(y, m - 1, d);
+    const diffTime = target.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  // Sorted appointments & next upcoming
+  const sortedAppointments = [...myAppointments].sort((a, b) => {
+    return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`);
+  });
+
+  const nextUpcomingAppointment = sortedAppointments.find(a => {
+    const days = getDaysRemaining(a.date);
+    return days !== null && days >= 0;
+  }) || sortedAppointments[0];
+
+  // Open modal to add new appointment
+  const handleOpenNewAppointmentModal = () => {
+    setEditingAppointmentId(null);
+    setFormSalonId("cisterna");
+    setFormDate(getTomorrowString());
+    setFormTime("10:00");
+    setFormService(SERVICES_SHOWCASE[0]?.name || "Taglio & Piega");
+    setFormStylist("");
+    setFormNotes("");
+    setFormReminder24h(true);
+    setFormReminder2h(true);
+    setIsAppointmentModalOpen(true);
+  };
+
+  // Open modal to edit existing appointment
+  const handleEditAppointment = (appt: ClientAppointment) => {
+    setEditingAppointmentId(appt.id);
+    setFormSalonId(appt.salonId);
+    setFormDate(appt.date);
+    setFormTime(appt.time);
+    setFormService(appt.service);
+    setFormStylist(appt.stylist || "");
+    setFormNotes(appt.notes || "");
+    setFormReminder24h(appt.reminder24h ?? true);
+    setFormReminder2h(appt.reminder2h ?? true);
+    setIsAppointmentModalOpen(true);
+  };
+
+  // Save (create or update) appointment
+  const handleSaveAppointment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formDate || !formTime || !formService) return;
+
+    if (editingAppointmentId) {
+      // Update
+      const updated = myAppointments.map(a => 
+        a.id === editingAppointmentId
+          ? {
+              ...a,
+              salonId: formSalonId,
+              date: formDate,
+              time: formTime,
+              service: formService,
+              stylist: formStylist,
+              notes: formNotes,
+              reminder24h: formReminder24h,
+              reminder2h: formReminder2h,
+            }
+          : a
+      );
+      saveAppointments(updated);
+      triggerPushDemo("✨ Appuntamento aggiornato con successo!");
+    } else {
+      // Create new
+      const newAppt: ClientAppointment = {
+        id: `appt-${Date.now()}`,
+        salonId: formSalonId,
+        date: formDate,
+        time: formTime,
+        service: formService,
+        stylist: formStylist,
+        notes: formNotes,
+        reminder24h: formReminder24h,
+        reminder2h: formReminder2h,
+        createdAt: new Date().toISOString()
+      };
+      saveAppointments([...myAppointments, newAppt]);
+      triggerPushDemo("🎉 Appuntamento salvato nella tua agenda! Ora puoi salvarlo nel calendario del telefono.");
+    }
+
+    setIsAppointmentModalOpen(false);
+  };
+
+  // Delete appointment
+  const handleDeleteAppointment = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (confirm("Vuoi cancellare questo appuntamento dalla tua agenda?")) {
+      const filtered = myAppointments.filter(a => a.id !== id);
+      saveAppointments(filtered);
+      triggerPushDemo("🗑️ Appuntamento rimosso dall'agenda");
+    }
+  };
+
+  // Native iCalendar (.ics) export with built-in alarms (24h and 2h before)
+  const handleExportIcs = (appt: ClientAppointment) => {
+    const salon = SALONS.find(s => s.id === appt.salonId) || SALONS[0];
+    const [year, month, day] = appt.date.split("-").map(Number);
+    const [hour, minute] = appt.time.split(":").map(Number);
+
+    const startDate = new Date(year, month - 1, day, hour, minute);
+    const endDate = new Date(startDate.getTime() + 90 * 60 * 1000); // 90 min default
+
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    const formatUtc = (d: Date) => 
+      `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
+
+    const alarms: string[] = [];
+    if (appt.reminder24h) {
+      alarms.push([
+        "BEGIN:VALARM",
+        "ACTION:DISPLAY",
+        `DESCRIPTION:Promemoria Cambia Look: Domani hai l'appuntamento da ${salon.name}!`,
+        "TRIGGER:-P1D",
+        "END:VALARM"
+      ].join("\r\n"));
+    }
+    if (appt.reminder2h) {
+      alarms.push([
+        "BEGIN:VALARM",
+        "ACTION:DISPLAY",
+        `DESCRIPTION:Promemoria Cambia Look: Tra 2 ore hai l'appuntamento a ${salon.name}!`,
+        "TRIGGER:-PT2H",
+        "END:VALARM"
+      ].join("\r\n"));
+    }
+
+    const icsRows = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Cambia Look//Agenda Salone//IT",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
+      "BEGIN:VEVENT",
+      `UID:cambialook-${appt.id}-${Date.now()}@cambialook.it`,
+      `DTSTAMP:${formatUtc(new Date())}`,
+      `DTSTART:${formatUtc(startDate)}`,
+      `DTEND:${formatUtc(endDate)}`,
+      `SUMMARY:Cambia Look - ${appt.service || "Appuntamento Capelli"}`,
+      `DESCRIPTION:Salone Cambia Look (${salon.name})\\nTrattamento: ${appt.service}\\nIndirizzo: ${salon.address}\\nTelefono: ${salon.phone}${appt.notes ? `\\nNote: ${appt.notes}` : ""}`,
+      `LOCATION:${salon.address}`,
+      "STATUS:CONFIRMED",
+      ...alarms,
+      "END:VEVENT",
+      "END:VCALENDAR"
+    ];
+
+    const icsContent = icsRows.join("\r\n");
+    const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `appuntamento-cambia-look.ics`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    triggerPushDemo("📲 Evento calendario generato! Tocca 'Aggiungi' sul tuo telefono per attivare i promemoria.");
+  };
+
+  // Google Calendar Link generator
+  const openGoogleCalendar = (appt: ClientAppointment) => {
+    const salon = SALONS.find(s => s.id === appt.salonId) || SALONS[0];
+    const [year, month, day] = appt.date.split("-").map(Number);
+    const [hour, minute] = appt.time.split(":").map(Number);
+    const startDate = new Date(year, month - 1, day, hour, minute);
+    const endDate = new Date(startDate.getTime() + 90 * 60 * 1000);
+
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    const formatUtc = (d: Date) => `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`;
+
+    const title = encodeURIComponent(`Cambia Look - ${appt.service || "Appuntamento Capelli"}`);
+    const details = encodeURIComponent(`Appuntamento presso Salone Cambia Look (${salon.name})\nTrattamento: ${appt.service}\nIndirizzo: ${salon.address}\nTelefono: ${salon.phone}\n${appt.notes ? `Note: ${appt.notes}` : ""}`);
+    const location = encodeURIComponent(salon.address);
+    const dates = `${formatUtc(startDate)}/${formatUtc(endDate)}`;
+
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
+    window.open(url, "_blank");
+    triggerPushDemo("📅 Apertura Google Calendar...");
+  };
+
+  // Web Notification API activation
+  const handleEnablePushNotifications = async () => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+          new Notification("Cambia Look", {
+            body: "🔔 Promemoria attivo! Ti ricorderemo il tuo prossimo appuntamento.",
+            icon: "/app_icon_192.png"
+          });
+          triggerPushDemo("✅ Promemoria notifiche attivato con successo sul tuo smartphone!");
+        } else {
+          triggerPushDemo("⚠️ Notifiche web bloccate. Usa il pulsante 'Salva nel Calendario iPhone / Android'!");
+        }
+      } catch {
+        triggerPushDemo("Promemoria salvato!");
+      }
+    } else {
+      triggerPushDemo("💡 Usa il tasto 'Salva nel Calendario iPhone / Android' per la sveglia nativa del telefono!");
+    }
   };
 
   const handleToggleStaffMode = () => {
@@ -430,6 +742,47 @@ export default function CambiaLookApp() {
             <div className="w-16 h-0.5 bg-[#E8D3A2] mx-auto rounded-full mt-1" />
           </div>
 
+          {/* BANNER PROMEMORIA PROSSIMO APPUNTAMENTO */}
+          {nextUpcomingAppointment && (
+            <div 
+              onClick={() => setActiveTab("agenda")}
+              className="bg-black/50 border-2 border-[#E8D3A2] rounded-2xl p-3.5 flex items-center justify-between cursor-pointer hover:bg-black/60 transition-all shadow-xl group active:scale-[0.99] relative overflow-hidden"
+            >
+              <div className="absolute -right-3 -bottom-3 text-[#E8D3A2]/10 pointer-events-none">
+                <Calendar size={75} />
+              </div>
+              <div className="flex items-center gap-3 relative z-10 min-w-0">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#E8D3A2] to-[#B38F46] flex items-center justify-center text-[#D11936] shadow shrink-0">
+                  <CalendarCheck size={22} strokeWidth={2.5} />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-black uppercase text-[#E8D3A2] tracking-wider">Il Tuo Appuntamento</span>
+                    {getDaysRemaining(nextUpcomingAppointment.date) !== null && (
+                      <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full font-bold">
+                        {getDaysRemaining(nextUpcomingAppointment.date) === 0 
+                          ? "Oggi! ✨" 
+                          : getDaysRemaining(nextUpcomingAppointment.date) === 1 
+                          ? "Domani" 
+                          : `Tra ${getDaysRemaining(nextUpcomingAppointment.date)} giorni`}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs font-bold text-white capitalize truncate mt-0.5">
+                    {formatDateDisplay(nextUpcomingAppointment.date)} • Ore {nextUpcomingAppointment.time}
+                  </p>
+                  <span className="text-[10px] text-white/70 block truncate">
+                    Salone {nextUpcomingAppointment.salonId === "cisterna" ? "Cisterna di Latina" : "Roma"} • {nextUpcomingAppointment.service}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 text-xs font-black text-[#E8D3A2] group-hover:translate-x-1 transition-transform shrink-0 pl-2 relative z-10">
+                <span>Agenda</span>
+                <ChevronRight size={14} />
+              </div>
+            </div>
+          )}
+
           {/* LISTA DEI 2 SALONI REALI CON LE FOTO VERE RITAGLIATE DALL'APP PRECEDENTE */}
           <div className="space-y-6">
             {SALONS.map((salon) => (
@@ -553,7 +906,270 @@ export default function CambiaLookApp() {
       )}
 
       {/* ========================================================================================= */}
-      {/* TAB 3: VETRINA PRODOTTI (IL PARRUCCHIERE PUÒ INSERIRLI CON FOTO, PREZZO E DESCRIZIONE) */}
+      {/* TAB 3: LA MIA AGENDA (APPUNTAMENTI SALONE & PROMEMORIA TELEFONO) */}
+      {/* ========================================================================================= */}
+      {activeTab === "agenda" && (
+        <main className="flex-1 px-5 pt-4 space-y-6 animate-in fade-in duration-300">
+          
+          {/* HEADER SEZIONE */}
+          <div className="flex justify-between items-end">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#E8D3A2]">Promemoria Personale</span>
+              <h2 className="text-3xl font-normal font-script text-white drop-shadow">
+                La Mia Agenda
+              </h2>
+              <p className="text-xs text-white/80">
+                I tuoi appuntamenti segnati con notifica sul telefono
+              </p>
+            </div>
+
+            <button
+              onClick={handleOpenNewAppointmentModal}
+              className="py-2.5 px-3.5 rounded-2xl bg-white text-[#D11936] text-xs font-black flex items-center gap-1.5 shadow-xl active:scale-95 transition-all shrink-0 hover:bg-[#E8D3A2]"
+            >
+              <CalendarPlus size={16} />
+              <span>Nuovo</span>
+            </button>
+          </div>
+
+          {/* NESSUN APPUNTAMENTO SEGNATO */}
+          {myAppointments.length === 0 ? (
+            <div className="p-6 rounded-3xl bg-black/40 border-2 border-white/80 text-center space-y-4 shadow-2xl relative">
+              <div className="w-16 h-16 rounded-2xl bg-white/10 text-[#E8D3A2] mx-auto flex items-center justify-center border border-[#E8D3A2]/40 shadow-inner">
+                <CalendarDays size={32} />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-white">Nessun Appuntamento Segnato</h3>
+                <p className="text-xs text-white/70 leading-relaxed max-w-xs mx-auto">
+                  Hai concordato un appuntamento con il salone a Cisterna di Latina o a Roma? Annalo qui: potrai salvarlo sul tuo telefono con allarme e notifica automatica 24 ore e 2 ore prima!
+                </p>
+              </div>
+              <button
+                onClick={handleOpenNewAppointmentModal}
+                className="w-full py-3.5 rounded-2xl bg-white text-[#D11936] font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl hover:bg-[#E8D3A2] active:scale-95 transition-all"
+              >
+                <Plus size={16} />
+                <span>Segna il Tuo Appuntamento</span>
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* LISTA DEGLI APPUNTAMENTI */}
+              {sortedAppointments.map((appt) => {
+                const salon = SALONS.find(s => s.id === appt.salonId) || SALONS[0];
+                const daysRemaining = getDaysRemaining(appt.date);
+                const isToday = daysRemaining === 0;
+                const isPast = daysRemaining !== null && daysRemaining < 0;
+
+                return (
+                  <div
+                    key={appt.id}
+                    className="relative group transition-all"
+                  >
+                    {/* Ornamenti dorati negli angoli stile Cambia Look */}
+                    <div className="absolute -top-1.5 -left-1.5 w-6 h-6 gold-corner-tl z-10 pointer-events-none" />
+                    <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 gold-corner-br z-10 pointer-events-none" />
+                    <div className="absolute -top-1 right-2 text-[#E8D3A2] text-xs pointer-events-none">✦</div>
+                    <div className="absolute -bottom-1 left-2 text-[#E8D3A2] text-xs pointer-events-none">✦</div>
+
+                    <div className="p-5 rounded-3xl bg-black/45 backdrop-blur-md border-2 border-white/90 shadow-2xl space-y-4">
+                      
+                      {/* INTESTAZIONE CARD: SALONE & COUNTDOWN */}
+                      <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#E8D3A2] animate-pulse" />
+                          <span className="text-xs font-black uppercase text-[#E8D3A2] tracking-wider">
+                            Salone {salon.name}
+                          </span>
+                        </div>
+
+                        {daysRemaining !== null && (
+                          <span className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider shadow ${
+                            isToday
+                              ? "bg-amber-400 text-black font-black animate-pulse"
+                              : isPast
+                              ? "bg-white/15 text-white/50"
+                              : daysRemaining === 1
+                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                              : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                          }`}>
+                            {isToday ? "Oggi! ✨" : isPast ? "Completato" : daysRemaining === 1 ? "Domani" : `Tra ${daysRemaining} giorni`}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* DATA & ORA GRANDE STILE VIP */}
+                      <div className="bg-black/35 rounded-2xl p-4 border border-white/10 flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-[#E8D3A2]">Data Fissata</span>
+                          <h4 className="text-base font-extrabold text-white capitalize">
+                            {formatDateDisplay(appt.date)}
+                          </h4>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-white/60">Orario</span>
+                          <div className="text-lg font-black text-[#E8D3A2] flex items-center justify-end gap-1">
+                            <Clock size={16} />
+                            <span>{appt.time}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* DETTAGLI TRATTAMENTO & NOTE */}
+                      <div className="space-y-2 text-xs">
+                        <div className="flex items-start gap-2">
+                          <Scissors size={14} className="text-[#E8D3A2] shrink-0 mt-0.5" />
+                          <div>
+                            <span className="text-white/60 block text-[10px] uppercase font-bold">Trattamento Richiesto</span>
+                            <span className="text-white font-bold text-sm">{appt.service}</span>
+                          </div>
+                        </div>
+
+                        {appt.stylist && (
+                          <div className="flex items-center gap-2 text-white/80">
+                            <User size={13} className="text-[#E8D3A2] shrink-0" />
+                            <span>Stylist di riferimento: <strong className="text-white">{appt.stylist}</strong></span>
+                          </div>
+                        )}
+
+                        {appt.notes && (
+                          <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-[11px] text-white/80 italic">
+                            "{appt.notes}"
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-2 pt-1">
+                          <MapPin size={13} className="text-[#E8D3A2] shrink-0" />
+                          <span className="text-[11px] text-white/70 truncate">{salon.address}</span>
+                        </div>
+                      </div>
+
+                      {/* STATO PROMEMORIA ATTIVI */}
+                      <div className="bg-[#80081B]/60 border border-[#E8D3A2]/30 rounded-xl p-2.5 flex items-center justify-between text-[11px]">
+                        <div className="flex items-center gap-2 text-white/90">
+                          <Bell size={14} className="text-[#E8D3A2]" />
+                          <span>Allarmi telefono:</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#E8D3A2]">
+                          {appt.reminder24h && <span>🔔 24h prima</span>}
+                          {appt.reminder24h && appt.reminder2h && <span>•</span>}
+                          {appt.reminder2h && <span>🔔 2h prima</span>}
+                        </div>
+                      </div>
+
+                      {/* ========================================================================= */}
+                      {/* IL PULSANTE PRINCIPALE: SALVA NEL CALENDARIO IPHONE / ANDROID */}
+                      {/* ========================================================================= */}
+                      <div className="space-y-2 pt-1">
+                        <button
+                          onClick={() => handleExportIcs(appt)}
+                          className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-white via-[#FFF8E7] to-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl hover:brightness-105 active:scale-95 transition-all border border-[#E8D3A2]"
+                        >
+                          <Smartphone size={16} />
+                          <span>Salva nel Calendario Telefono</span>
+                        </button>
+                        <p className="text-[10px] text-center text-white/70 leading-tight">
+                          ✦ Compatibile con iPhone (Apple Calendar) e Android: aprirà l'evento con il promemoria e la notifica già impostati!
+                        </p>
+                      </div>
+
+                      {/* PULSANTI SECONDARI CALENDARIO & NOTIFICHE */}
+                      <div className="grid grid-cols-2 gap-2 pt-1">
+                        <button
+                          onClick={() => openGoogleCalendar(appt)}
+                          className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors border border-white/20"
+                        >
+                          <Calendar size={13} className="text-[#E8D3A2]" />
+                          <span>Google Calendar</span>
+                        </button>
+
+                        <button
+                          onClick={handleEnablePushNotifications}
+                          className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors border border-white/20"
+                        >
+                          <Bell size={13} className="text-[#E8D3A2]" />
+                          <span>Notifiche Telefono</span>
+                        </button>
+                      </div>
+
+                      {/* CONTATTI DIRETTI AL SALONE */}
+                      <div className="grid grid-cols-3 gap-2 pt-1 border-t border-white/10">
+                        <a
+                          href={`tel:${salon.phone.replace(/\s+/g, '')}`}
+                          className="py-2 rounded-xl bg-black/40 hover:bg-black/60 text-white font-bold text-[10px] flex items-center justify-center gap-1 border border-white/15"
+                        >
+                          <Phone size={11} className="text-[#E8D3A2]" />
+                          <span>Chiama</span>
+                        </a>
+
+                        <a
+                          href={`https://wa.me/${salon.whatsapp}?text=${encodeURIComponent(`Ciao Cambia Look, ho l'appuntamento il ${formatDateDisplay(appt.date)} alle ${appt.time} a ${salon.name}.`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="py-2 rounded-xl bg-emerald-600/80 hover:bg-emerald-600 text-white font-bold text-[10px] flex items-center justify-center gap-1"
+                        >
+                          <MessageCircle size={11} />
+                          <span>WhatsApp</span>
+                        </a>
+
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(salon.address)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="py-2 rounded-xl bg-black/40 hover:bg-black/60 text-white font-bold text-[10px] flex items-center justify-center gap-1 border border-white/15"
+                        >
+                          <MapPin size={11} className="text-[#E8D3A2]" />
+                          <span>Mappa</span>
+                        </a>
+                      </div>
+
+                      {/* MODIFICA O CANCELLA */}
+                      <div className="flex justify-end gap-3 pt-2 text-xs border-t border-white/10">
+                        <button
+                          onClick={() => handleEditAppointment(appt)}
+                          className="text-white/70 hover:text-white flex items-center gap-1 text-[11px]"
+                        >
+                          <Edit3 size={12} />
+                          <span>Modifica</span>
+                        </button>
+                        <button
+                          onClick={(e) => handleDeleteAppointment(appt.id, e)}
+                          className="text-rose-300 hover:text-white flex items-center gap-1 text-[11px]"
+                        >
+                          <Trash2 size={12} />
+                          <span>Rimuovi</span>
+                        </button>
+                      </div>
+
+                    </div>
+                  </div>
+                );
+              })}
+
+              <button
+                onClick={handleOpenNewAppointmentModal}
+                className="w-full py-3 rounded-2xl bg-black/40 border border-white/25 text-white hover:border-[#E8D3A2] font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-98"
+              >
+                <Plus size={15} />
+                <span>Segna un Altro Appuntamento</span>
+              </button>
+            </div>
+          )}
+
+          {/* BANNER SPIEGAZIONE NOTIFICHE */}
+          <div className="p-4 rounded-2xl bg-black/30 border border-white/15 text-center space-y-1.5">
+            <Sparkles size={18} className="mx-auto text-[#E8D3A2]" />
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Come Funzionano i Promemoria?</h4>
+            <p className="text-[11px] text-white/75 leading-relaxed">
+              Dopo aver segnato la data, tocca <strong>"Salva nel Calendario Telefono"</strong>. L'app sincronizzerà l'evento con il calendario del tuo dispositivo (iOS o Android) impostando gli allarmi 24h e 2h prima per ricordarti l'orario esatto.
+            </p>
+          </div>
+
+        </main>
+      )}
+
+      {/* ========================================================================================= */}
+      {/* TAB 4: VETRINA PRODOTTI (IL PARRUCCHIERE PUÒ INSERIRLI CON FOTO, PREZZO E DESCRIZIONE) */}
       {/* ========================================================================================= */}
       {activeTab === "prodotti" && (
         <main className="flex-1 px-5 pt-4 space-y-5 animate-in fade-in duration-300">
@@ -1091,14 +1707,248 @@ export default function CambiaLookApp() {
       )}
 
       {/* ========================================================================================= */}
-      {/* BOTTOM NAVIGATION BAR (VETRINA ROSSO CAMBIA LOOK) */}
+      {/* MODAL: SEGNA / MODIFICA APPUNTAMENTO CLIENTE (AGENDA & PROMEMORIA TELEFONO) */}
+      {/* ========================================================================================= */}
+      {isAppointmentModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-end sm:items-center justify-center p-3 animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-[#80081B] border-2 border-[#E8D3A2] rounded-3xl p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-white/10 text-[#E8D3A2] flex items-center justify-center border border-[#E8D3A2]/40">
+                  <Calendar size={18} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white leading-tight">
+                    {editingAppointmentId ? "Modifica Appuntamento" : "Segna il Tuo Appuntamento"}
+                  </h3>
+                  <p className="text-[10px] text-white/70">
+                    Sincronizza data e orario con il promemoria dello smartphone
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsAppointmentModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveAppointment} className="space-y-3.5 text-xs text-left">
+              
+              {/* Salone */}
+              <div>
+                <label className="font-bold text-white/90 block mb-1.5">Scegli il Salone *</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormSalonId("cisterna")}
+                    className={`p-2.5 rounded-xl border text-center transition-all ${
+                      formSalonId === "cisterna"
+                        ? "bg-white text-[#D11936] font-black border-white shadow-md"
+                        : "bg-black/40 text-white/80 border-white/20 hover:text-white"
+                    }`}
+                  >
+                    <span className="block font-bold text-xs">Cisterna di Latina</span>
+                    <span className="text-[9px] opacity-80 block truncate">Corso della Repubblica</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormSalonId("roma")}
+                    className={`p-2.5 rounded-xl border text-center transition-all ${
+                      formSalonId === "roma"
+                        ? "bg-white text-[#D11936] font-black border-white shadow-md"
+                        : "bg-black/40 text-white/80 border-white/20 hover:text-white"
+                    }`}
+                  >
+                    <span className="block font-bold text-xs">Roma</span>
+                    <span className="text-[9px] opacity-80 block truncate">Via delle Cave, 72</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Data dell'appuntamento */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-bold text-white/90">Data dell'Appuntamento *</label>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const d = new Date();
+                        const pad = (n: number) => n.toString().padStart(2, "0");
+                        setFormDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
+                      }}
+                      className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white/80"
+                    >
+                      Oggi
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const d = new Date();
+                        d.setDate(d.getDate() + 1);
+                        const pad = (n: number) => n.toString().padStart(2, "0");
+                        setFormDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
+                      }}
+                      className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white/80"
+                    >
+                      Domani
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const d = new Date();
+                        const diff = (6 - d.getDay() + 7) % 7 || 7;
+                        d.setDate(d.getDate() + diff);
+                        const pad = (n: number) => n.toString().padStart(2, "0");
+                        setFormDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
+                      }}
+                      className="text-[9px] px-1.5 py-0.5 rounded bg-[#E8D3A2]/20 hover:bg-[#E8D3A2]/30 text-[#E8D3A2] font-bold"
+                    >
+                      Sabato
+                    </button>
+                  </div>
+                </div>
+                <input
+                  type="date"
+                  required
+                  value={formDate}
+                  onChange={e => setFormDate(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/20 text-white outline-none font-bold"
+                />
+              </div>
+
+              {/* Orario */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-bold text-white/90">Orario *</label>
+                  <div className="flex items-center gap-1">
+                    {["09:30", "11:00", "15:00", "16:30", "18:00"].map(t => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setFormTime(t)}
+                        className={`text-[9px] px-1.5 py-0.5 rounded transition-colors ${
+                          formTime === t ? "bg-white text-[#D11936] font-bold" : "bg-white/10 text-white/70 hover:bg-white/20"
+                        }`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <input
+                  type="time"
+                  required
+                  value={formTime}
+                  onChange={e => setFormTime(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-[#E8D3A2]/60 text-[#E8D3A2] font-black outline-none text-base tracking-wider"
+                />
+              </div>
+
+              {/* Trattamento / Servizio */}
+              <div>
+                <label className="font-bold text-white/90 block mb-1">Trattamento Richiesto *</label>
+                <select
+                  value={formService}
+                  onChange={e => setFormService(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl bg-black/60 border border-white/20 text-white outline-none font-medium"
+                >
+                  <option value="Balayage Soleil & Gloss Tonificante">Balayage Soleil & Gloss Tonificante</option>
+                  <option value="Taglio Sartoriale Donna & Piega Glamour">Taglio Sartoriale Donna & Piega Glamour</option>
+                  <option value="Botox Capillare & Cheratina Rimpolpante">Botox Capillare & Cheratina Rimpolpante</option>
+                  <option value="Colore Radici Botanico No Ammoniaca">Colore Radici Botanico No Ammoniaca</option>
+                  <option value="Piega Glamour & Trattamento Lucidante">Piega Glamour & Trattamento Lucidante</option>
+                  <option value="Consulenza Completa Cambio Look">Consulenza Completa Cambio Look</option>
+                  <option value="Altro / Trattamento Personalizzato">Altro / Trattamento Personalizzato</option>
+                </select>
+              </div>
+
+              {/* Stylist & Note */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="font-bold text-white/90 block mb-1">Stylist (Opzionale)</label>
+                  <input
+                    type="text"
+                    placeholder="Es. Simona / Giorgia"
+                    value={formStylist}
+                    onChange={e => setFormStylist(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/20 text-white placeholder-white/40 outline-none text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-white/90 block mb-1">Note (Opzionale)</label>
+                  <input
+                    type="text"
+                    placeholder="Es. Onde finish"
+                    value={formNotes}
+                    onChange={e => setFormNotes(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/20 text-white placeholder-white/40 outline-none text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Opzioni Promemoria Telefono */}
+              <div className="p-3 rounded-2xl bg-black/40 border border-[#E8D3A2]/40 space-y-2">
+                <span className="text-[10px] font-black uppercase text-[#E8D3A2] tracking-wider block">
+                  🔔 Promemoria Notifica Telefono
+                </span>
+                
+                <label className="flex items-center gap-2 cursor-pointer text-[11px] text-white/90">
+                  <input
+                    type="checkbox"
+                    checked={formReminder24h}
+                    onChange={e => setFormReminder24h(e.target.checked)}
+                    className="w-4 h-4 rounded text-[#D11936] accent-[#D11936]"
+                  />
+                  <span>Avvisami 24 ore prima (il giorno prima)</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer text-[11px] text-white/90">
+                  <input
+                    type="checkbox"
+                    checked={formReminder2h}
+                    onChange={e => setFormReminder2h(e.target.checked)}
+                    className="w-4 h-4 rounded text-[#D11936] accent-[#D11936]"
+                  />
+                  <span>Avvisami 2 ore prima dell'appuntamento</span>
+                </label>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAppointmentModalOpen(false)}
+                  className="flex-1 py-3 rounded-xl bg-white/10 text-white font-bold text-xs hover:bg-white/20 transition-colors"
+                >
+                  Annulla
+                </button>
+                <button
+                  type="submit"
+                  className="flex-[2] py-3 rounded-xl bg-gradient-to-r from-white to-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider shadow-xl hover:brightness-105 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Check size={16} />
+                  <span>{editingAppointmentId ? "Aggiorna Agenda" : "Salva in Agenda"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================================= */}
+      {/* BOTTOM NAVIGATION BAR (VETRINA ROSSO CAMBIA LOOK - 5 TABS) */}
       {/* ========================================================================================= */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#A60F25]/95 backdrop-blur-xl border-t border-black/20 max-w-md mx-auto safe-pb shadow-[0_-5px_25px_rgba(0,0,0,0.4)]">
-        <div className="grid grid-cols-4 h-16 items-center px-2">
+        <div className="grid grid-cols-5 h-16 items-center px-1">
           {[
-            { id: "saloni", label: "I Saloni", icon: Store },
-            { id: "servizi", label: "Trattamenti", icon: Scissors },
-            { id: "prodotti", label: "I Prodotti", icon: ShoppingBag },
+            { id: "saloni", label: "Saloni", icon: Store },
+            { id: "servizi", label: "Servizi", icon: Scissors },
+            { id: "agenda", label: "Mia Agenda", icon: Calendar, badge: myAppointments.length > 0 },
+            { id: "prodotti", label: "Prodotti", icon: ShoppingBag },
             { id: "info", label: "Contatti", icon: MapPin },
           ].map(tab => {
             const Icon = tab.icon;
@@ -1107,14 +1957,17 @@ export default function CambiaLookApp() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex flex-col items-center justify-center gap-1 transition-all py-1 ${
+                className={`flex flex-col items-center justify-center gap-1 transition-all py-1 relative ${
                   isActive ? "text-white" : "text-white/60 hover:text-white"
                 }`}
               >
-                <div className={`p-1 rounded-xl transition-all ${isActive ? "bg-white text-[#D11936] shadow-md scale-105" : ""}`}>
-                  <Icon size={19} strokeWidth={isActive ? 2.5 : 2} />
+                <div className={`p-1 rounded-xl transition-all relative ${isActive ? "bg-white text-[#D11936] shadow-md scale-105" : ""}`}>
+                  <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                  {tab.badge && !isActive && (
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#E8D3A2] ring-2 ring-[#A60F25]" />
+                  )}
                 </div>
-                <span className={`text-[10px] ${isActive ? "font-black text-white" : "font-medium"}`}>
+                <span className={`text-[9.5px] truncate max-w-[62px] text-center ${isActive ? "font-black text-white" : "font-medium"}`}>
                   {tab.label}
                 </span>
               </button>
