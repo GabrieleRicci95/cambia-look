@@ -10,20 +10,22 @@ export default {
     extend: {
       colors: {
         salon: {
-          dark: "#141218",
-          card: "#1E1A24",
-          surface: "#262130",
-          accent: "#D4AF37",
-          gold: "#E0B768",
-          rose: "#E5B8A8",
-          purple: "#442A5C",
-          cream: "#FBF9F5",
-          muted: "#9D95A5"
+          dark: "#12090C",
+          card: "#1C0E13",
+          surface: "#28141C",
+          border: "#421C28",
+          red: "#D91B42",
+          ruby: "#C01438",
+          crimson: "#E63956",
+          rose: "#FDA4AF",
+          cream: "#FFF5F6",
+          muted: "#A88D95",
+          gold: "#E0B768"
         }
       },
       fontFamily: {
         serif: ["Playfair Display", "serif"],
-        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"]
+        sans: ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "sans-serif"]
       }
     },
   },

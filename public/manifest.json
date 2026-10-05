@@ -1,11 +1,11 @@
 {
   "name": "Cambia Look",
   "short_name": "Cambia Look",
-  "description": "App Ufficiale Cambia Look Hair Salon - Prenota il tuo stile",
+  "description": "App Ufficiale Salone Donna Cambia Look - Prenota Servizi & Acquista Prodotti Hair Care",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#141218",
-  "theme_color": "#141218",
+  "background_color": "#12090C",
+  "theme_color": "#D91B42",
   "orientation": "portrait",
   "icons": [
     {
