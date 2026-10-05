@@ -3,155 +3,123 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { 
-  Calendar, 
-  Clock, 
   Sparkles, 
-  Gift, 
   ShoppingBag, 
   User, 
   Home, 
   Scissors, 
   ChevronRight, 
-  ChevronLeft,
-  Star, 
   Bell, 
   MapPin, 
   Phone, 
   CheckCircle2, 
   X, 
-  QrCode,
-  Heart,
-  CalendarCheck,
-  Award,
-  Package,
-  Plus,
-  Minus,
-  Check,
+  Plus, 
+  Check, 
+  Upload, 
+  Camera, 
+  Trash2, 
+  Lock, 
+  Unlock, 
+  ShieldCheck, 
+  Eye, 
+  Sliders, 
   Sparkle,
-  Upload,
-  Camera,
-  Trash2,
-  Lock,
-  Unlock,
-  ShieldCheck,
-  Eye,
-  Sliders,
-  Crown,
-  Flame,
-  Gem,
   MessageCircle,
-  Play
+  Clock,
+  Compass,
+  Store
 } from "lucide-react";
 
-// --- LOOKBOOK SLIDES PER LO SFONDO FULLSCREEN IMMERSIVO ---
-const HERO_STORIES = [
+// --- SALONI FISICI REALI CAMBIA LOOK (DALL'APP ORIGINALE) ---
+const SALONS = [
   {
-    id: "balayage",
-    title: "Balayage Soleil & Luce d'Autunno",
-    subtitle: "Sfumature a mano libera che illuminano i tratti del viso senza stacchi",
-    tag: "Trend Esclusivo",
-    serviceId: "balayage-sfumature",
-    bg: "https://images.unsplash.com/photo-1560869713-7d0a29430803?q=80&w=1200&auto=format&fit=crop",
-    price: "da 95€",
-    duration: "130 min"
+    id: "cisterna",
+    name: "Cisterna di Latina",
+    address: "Corso della Repubblica, 184 • Cisterna di Latina (LT)",
+    phone: "06 969 9412",
+    whatsapp: "39069699412",
+    hours: "Mar - Sab: 08:30 - 19:30 • Lun e Dom Chiuso",
+    image: "/salone_cisterna.jpg",
+    description: "Atelier spazioso ed elegante con lampadario barocco fucsia, postazioni specchio luminose e consulenza personalizzata.",
   },
   {
-    id: "taglio",
-    title: "Taglio Sartoriale & Piega Luxury",
-    subtitle: "Geometrie morbide studiate per valorizzare la tua naturale bellezza",
-    tag: "Consulenza Morfologica",
-    serviceId: "taglio-donna-sartoriale",
-    bg: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1200&auto=format&fit=crop",
-    price: "48€",
-    duration: "55 min"
-  },
-  {
-    id: "botox",
-    title: "Rituale Botox & Rigenerazione Seta",
-    subtitle: "Ristrutturazione profonda allo stelo: elimina il crespo e dona morbidezza",
-    tag: "Spa Benessere",
-    serviceId: "trattamento-botox-cheratina",
-    bg: "https://images.unsplash.com/photo-1519699047748-de8e457a634e?q=80&w=1200&auto=format&fit=crop",
-    price: "45€",
-    duration: "45 min"
-  },
-  {
-    id: "cambio-look",
-    title: "Trasformazione Completa Cambia Look",
-    subtitle: "Analisi visagista, armocromia e il nuovo stile che parla davvero di te",
-    tag: "Firma Salone",
-    serviceId: "taglio-cambio-look",
-    bg: "https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?q=80&w=1200&auto=format&fit=crop",
-    price: "58€",
-    duration: "70 min"
+    id: "roma",
+    name: "Roma",
+    address: "Via delle Cave, 72 • Roma (Zona Colli Albani / Appia)",
+    phone: "06 780 4521",
+    whatsapp: "39067804521",
+    hours: "Mar - Sab: 09:00 - 19:30 • Lun e Dom Chiuso",
+    image: "/salone_roma.jpg",
+    description: "Salone moderno nel cuore di Roma con specchiere barocche nere, team specializzato in biondi, balayage e cambi look donna.",
   }
 ];
 
-// --- SERVIZI DONNA ---
-const INITIAL_SERVICES = [
+// --- LISTINO SERVIZI VETRINA (SOLA CONSULTAZIONE) ---
+const SERVICES_SHOWCASE = [
   {
-    id: "piega-glamour",
-    category: "piega",
-    name: "Piega Glamour & Trattamento Lucidante",
-    price: 25,
-    duration: "40 min",
-    desc: "Detersione con bagno capillare nutriente, massaggio cutaneo distensivo, maschera idratante e piega a scelta (onde morbide, beach waves o liscia specchio).",
-    badge: "Più Amata",
-    bg: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop"
-  },
-  {
-    id: "taglio-donna-sartoriale",
-    category: "taglio",
-    name: "Taglio Sartoriale Donna & Piega",
-    price: 48,
-    duration: "55 min",
-    desc: "Consulenza morfologica e visagismo personalizzato. Taglio calibrato sulle proporzioni del viso e styling finale a lunga tenuta.",
-    badge: "Must Have",
-    bg: "https://images.unsplash.com/photo-1560869713-7d0a29430803?q=80&w=1000&auto=format&fit=crop"
-  },
-  {
-    id: "balayage-sfumature",
-    category: "colore",
+    id: "balayage-soleil",
+    category: "Colore & Effetti Luce",
     name: "Balayage Soleil & Gloss Tonificante",
-    price: 95,
-    duration: "130 min",
-    desc: "Schiariture tridimensionali a mano libera senza barrature né effetto ricrescita, con bagno di luce Gloss tonalizzante sigillante.",
-    badge: "Trend 2026",
-    bg: "https://images.unsplash.com/photo-1519699047748-de8e457a634e?q=80&w=1000&auto=format&fit=crop"
+    price: "da € 95",
+    desc: "Schiariture tridimensionali a mano libera senza barrature né effetto ricrescita, con bagno di luce Gloss tonalizzante.",
+    duration: "120 min",
+    tag: "Il Nostro Trend",
+    image: "https://images.unsplash.com/photo-1560869713-7d0a29430803?q=80&w=900&auto=format&fit=crop"
   },
   {
-    id: "colore-radice-organico",
-    category: "colore",
-    name: "Colore Radici Botanico No Ammoniaca",
-    price: 42,
-    duration: "60 min",
-    desc: "Colorazione ad alta tollerabilità cutanea arricchita con oli vegetali. Copertura totale dei capelli bianchi e brillantezza estrema.",
-    badge: null,
-    bg: "https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?q=80&w=1000&auto=format&fit=crop"
+    id: "taglio-sartoriale",
+    category: "Taglio & Morphing",
+    name: "Taglio Sartoriale Donna & Piega Glamour",
+    price: "€ 48",
+    desc: "Studio della forma del viso e visagismo personalizzato. Taglio di precisione e finish con onde o liscio specchio.",
+    duration: "55 min",
+    tag: "Signature",
+    image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=900&auto=format&fit=crop"
   },
   {
-    id: "trattamento-botox-cheratina",
-    category: "cura",
+    id: "botox-seta",
+    category: "Trattamenti Benessere",
     name: "Botox Capillare & Cheratina Rimpolpante",
-    price: 45,
+    price: "€ 45",
+    desc: "Trattamento d'urto rigenerante per capelli sfibrati o decolorati. Rimpolpa lo stelo e dona setosità immediata fino a 6 settimane.",
     duration: "45 min",
-    desc: "Trattamento d'urto rigenerante per capelli sfibrati o decolorati. Rimpolpa lo stelo e dona setosità immediata con durata fino a 6 settimane.",
-    badge: "Risultato Immediato",
-    bg: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop"
+    tag: "Rigenerante",
+    image: "https://images.unsplash.com/photo-1519699047748-de8e457a634e?q=80&w=900&auto=format&fit=crop"
   },
   {
-    id: "taglio-cambio-look",
-    category: "taglio",
-    name: "Consulenza Completa 'Cambia Look' & Taglio",
-    price: 58,
-    duration: "70 min",
-    desc: "Studio completo di cromocromia e forma del viso per una trasformazione radicale del tuo stile in totale sicurezza.",
-    badge: "Esclusiva",
-    bg: "https://images.unsplash.com/photo-1560869713-7d0a29430803?q=80&w=1000&auto=format&fit=crop"
+    id: "colore-botanico",
+    category: "Colore & Effetti Luce",
+    name: "Colore Radici Botanico No Ammoniaca",
+    price: "€ 42",
+    desc: "Colorazione delicata ad alta tollerabilità arricchita con oli vegetali. Copertura totale e riflessi naturali brillanti.",
+    duration: "60 min",
+    tag: "Organico",
+    image: "https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?q=80&w=900&auto=format&fit=crop"
+  },
+  {
+    id: "cambia-look-total",
+    category: "Taglio & Morphing",
+    name: "Consulenza Completa 'Cambia Look'",
+    price: "€ 58",
+    desc: "Studio completo di armocromia, proporzioni del viso e texture per una trasformazione radicale del tuo stile in totale armonia.",
+    duration: "75 min",
+    tag: "Firma Salone",
+    image: "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?q=80&w=900&auto=format&fit=crop"
+  },
+  {
+    id: "piega-finish",
+    category: "Piega & Styling",
+    name: "Piega Glamour & Maschera Idratante",
+    price: "€ 25",
+    desc: "Bagno capillare nutriente, massaggio cutaneo distensivo, maschera intensiva e styling finale a scelta.",
+    duration: "40 min",
+    tag: "Sempre Perfetta",
+    image: "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?q=80&w=900&auto=format&fit=crop"
   }
 ];
 
-// --- PRODOTTI VENDUTI IN SALONE CON FOTO IMMERSIVE ---
+// --- PRODOTTI VENDUTI IN SALONE (VETRINA) ---
 const INITIAL_PRODUCTS = [
   {
     id: "shampoo-cheratina",
@@ -161,10 +129,8 @@ const INITIAL_PRODUCTS = [
     price: 22.00,
     size: "250 ml",
     desc: "Bagno rigenerante formulato con cheratina idrolizzata e olio di argan. Deterge delicatamente rinforzando le fibre danneggiate.",
-    benefits: ["Rinforza le fibre", "Zero solfati aggressivi", "Luminosità intensa"],
+    benefits: ["Rinforza le fibre capillari", "Senza solfati aggressivi", "Luminosità estrema"],
     img: "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?q=80&w=900&auto=format&fit=crop",
-    inStock: true,
-    bestseller: true,
   },
   {
     id: "maschera-botox",
@@ -176,8 +142,6 @@ const INITIAL_PRODUCTS = [
     desc: "Impacco intensivo a penetrazione profonda. Elimina il crespo, districa all'istante e conferisce una morbidezza vellutata e corposa.",
     benefits: ["Addio crespo", "Nutrimento profondo", "Profumazione avvolgente"],
     img: "https://images.unsplash.com/photo-1608248597359-0a64980654bc?q=80&w=900&auto=format&fit=crop",
-    inStock: true,
-    bestseller: true,
   },
   {
     id: "elisir-olio-argan",
@@ -189,8 +153,6 @@ const INITIAL_PRODUCTS = [
     desc: "Gocce preziose lucidanti da applicare su capelli umidi o asciutti. Sigilla le doppie punte e protegge da piastra e phon senza appesantire.",
     benefits: ["Termoprotettore 230°C", "Anti-doppie punte", "Lucentezza specchio"],
     img: "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?q=80&w=900&auto=format&fit=crop",
-    inStock: true,
-    bestseller: false,
   },
   {
     id: "spray-volumizzante",
@@ -202,8 +164,6 @@ const INITIAL_PRODUCTS = [
     desc: "Lozione texturizzante ultra-leggera che solleva le radici donando volume naturale a lunga tenuta per capelli fini.",
     benefits: ["Volume immediato", "Tenuta morbida", "Effetto anticaduta"],
     img: "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?q=80&w=900&auto=format&fit=crop",
-    inStock: true,
-    bestseller: false,
   },
   {
     id: "kit-mantenimento-biondo",
@@ -212,11 +172,9 @@ const INITIAL_PRODUCTS = [
     brand: "Cambia Look Colors",
     price: 45.00,
     size: "Shampoo 250ml + Mask 200ml",
-    desc: "Il rituale completo a casa per mantenere il tuo biondo o balayage fresco, privo di riflessi arancio/gialli e ultra-brillante come appena uscita dal salone.",
+    desc: "Il rituale completo a casa per mantenere il tuo biondo o balayage privo di riflessi arancio/gialli e brillante come appena uscita dal salone.",
     benefits: ["Neutralizza il giallo", "Prolunga il balayage", "Massima idratazione"],
     img: "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=900&auto=format&fit=crop",
-    inStock: true,
-    bestseller: true,
   },
   {
     id: "crema-definizione-ricci",
@@ -228,38 +186,26 @@ const INITIAL_PRODUCTS = [
     desc: "Attiva-ricci nutriente all'estratto di semi di lino per ricci elastici, lucenti, ultra-definiti e protetti dall'umidità.",
     benefits: ["Ricci elastici", "Zero effetto cartone", "Antiumidità 24h"],
     img: "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?q=80&w=900&auto=format&fit=crop",
-    inStock: true,
-    bestseller: false,
   }
 ];
 
-const STYLISTS = [
-  { id: "any", name: "Prima Stylist Disponibile", role: "Disponibilità più veloce", avatar: "✨" },
-  { id: "valentina", name: "Valentina", role: "Master Colorist & Balayage", avatar: "👩🏼" },
-  { id: "sara", name: "Sara", role: "Specialista Taglio & Visagismo", avatar: "👩🏻" },
-  { id: "elena", name: "Elena", role: "Rituali Spa & Styling", avatar: "💇🏼‍♀️" },
-];
-
 export default function CambiaLookApp() {
-  const [activeTab, setActiveTab] = useState<"home" | "servizi" | "prodotti" | "fidelity" | "profilo">("home");
+  const [activeTab, setActiveTab] = useState<"saloni" | "servizi" | "prodotti" | "info">("saloni");
   
-  // Hero Story Slider Index
-  const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
-  const [serviceCategory, setServiceCategory] = useState<string>("tutti");
-  const [productCategory, setProductCategory] = useState<string>("tutti");
-  
-  // Products Dynamic State (with localStorage persistence)
+  // Selected Salon for direct contacts
+  const [selectedSalon, setSelectedSalon] = useState<any | null>(null);
+
+  // Selected Service for showcase detail popup
+  const [selectedService, setSelectedService] = useState<any | null>(null);
+
+  // Selected Product for showcase detail popup (only viewing, no bookings)
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+
+  // Products Dynamic State
   const [productsList, setProductsList] = useState<any[]>(INITIAL_PRODUCTS);
+  const [productCategory, setProductCategory] = useState<string>("tutti");
 
-  // Selected Service for Quick Preview Sheet
-  const [activeServiceSheet, setActiveServiceSheet] = useState<any | null>(null);
-
-  // Selected Product for Fullscreen/Sheet view
-  const [activeProductSheet, setActiveProductSheet] = useState<any | null>(null);
-  const [reservedCount, setReservedCount] = useState<number>(1);
-  const [productReserved, setProductReserved] = useState(false);
-
-  // Staff / Salon Mode State
+  // Staff / Salon Mode State (To let the hairdresser add products with photo, price, description)
   const [isStaffMode, setIsStaffMode] = useState<boolean>(false);
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [pinInput, setPinInput] = useState("");
@@ -276,14 +222,7 @@ export default function CambiaLookApp() {
   const [newProdBenefits, setNewProdBenefits] = useState("");
   const [newProdImage, setNewProdImage] = useState<string>("");
 
-  // Booking Modal State
-  const [bookingService, setBookingService] = useState<any | null>(null);
-  const [bookingStylist, setBookingStylist] = useState<string>("any");
-  const [bookingDate, setBookingDate] = useState<string>("Oggi, 16:00");
-  const [bookingConfirmed, setBookingConfirmed] = useState(false);
-  const [isBookingOpen, setIsBookingOpen] = useState(false);
-
-  // Push Notification Simulation
+  // Notification simulation
   const [showNotification, setShowNotification] = useState(false);
   const [notificationText, setNotificationText] = useState("");
 
@@ -297,15 +236,6 @@ export default function CambiaLookApp() {
       console.error(e);
     }
   }, []);
-
-  // Auto-play lookbook stories if on Home
-  useEffect(() => {
-    if (activeTab !== "home") return;
-    const interval = setInterval(() => {
-      setCurrentStoryIndex((prev) => (prev + 1) % HERO_STORIES.length);
-    }, 6500);
-    return () => clearInterval(interval);
-  }, [activeTab]);
 
   const saveProducts = (newList: any[]) => {
     setProductsList(newList);
@@ -325,7 +255,7 @@ export default function CambiaLookApp() {
   const handleToggleStaffMode = () => {
     if (isStaffMode) {
       setIsStaffMode(false);
-      triggerPushDemo("👤 Modalità Cliente Attiva (Catalogo in sola consultazione)");
+      triggerPushDemo("👤 Modalità Cliente Attiva (Vetrina in sola consultazione)");
     } else {
       setIsPinModalOpen(true);
       setPinInput("");
@@ -337,7 +267,7 @@ export default function CambiaLookApp() {
     if (pinInput === "1234" || pinInput === "") {
       setIsStaffMode(true);
       setIsPinModalOpen(false);
-      triggerPushDemo("👑 Accesso Titolare Salone Attivato! Ora puoi inserire e gestire i prodotti.");
+      triggerPushDemo("👑 Accesso Titolare Salone Attivato! Ora puoi inserire nuovi prodotti con foto.");
     } else {
       setPinError(true);
     }
@@ -361,7 +291,7 @@ export default function CambiaLookApp() {
     const parsedPrice = parseFloat(newProdPrice.replace(",", ".")) || 0;
     const benefitsList = newProdBenefits
       ? newProdBenefits.split(",").map(b => b.trim()).filter(Boolean)
-      : ["Idratazione professionale", "Formula salone esclusiva"];
+      : ["Formula professionale salone", "Consigliato dalle nostre stylist"];
 
     const fallbackImg = newProdCategory === "shampoo" 
       ? "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?q=80&w=900&auto=format&fit=crop"
@@ -376,11 +306,9 @@ export default function CambiaLookApp() {
       brand: newProdBrand || "Cambia Look Care",
       price: parsedPrice,
       size: newProdSize || "Formato Salone",
-      desc: newProdDesc || "Prodotto professionale testato e consigliato dalle stylist del salone Cambia Look.",
+      desc: newProdDesc || "Prodotto esclusivo disponibile nei saloni Cambia Look di Roma e Cisterna di Latina.",
       benefits: benefitsList,
       img: newProdImage || fallbackImg,
-      inStock: true,
-      bestseller: false
     };
 
     saveProducts([newProduct, ...productsList]);
@@ -392,57 +320,31 @@ export default function CambiaLookApp() {
     setNewProdBenefits("");
     setNewProdImage("");
 
-    triggerPushDemo(`🎉 Prodotto "${newProduct.name}" aggiunto al salone!`);
+    triggerPushDemo(`🎉 Prodotto "${newProduct.name}" pubblicato in vetrina!`);
   };
 
   const handleDeleteProduct = (productId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm("Vuoi rimuovere questo prodotto dal catalogo?")) {
+    if (confirm("Vuoi rimuovere questo prodotto dalla vetrina?")) {
       const filtered = productsList.filter(p => p.id !== productId);
       saveProducts(filtered);
-      triggerPushDemo("🗑️ Prodotto rimosso dal catalogo");
+      triggerPushDemo("🗑️ Prodotto rimosso dalla vetrina");
     }
   };
 
-  const handleStartBooking = (service: any) => {
-    setBookingService(service);
-    setIsBookingOpen(true);
-    setActiveServiceSheet(null);
-  };
-
-  const handleConfirmBooking = () => {
-    setBookingConfirmed(true);
-    setTimeout(() => {
-      setIsBookingOpen(false);
-      setBookingConfirmed(false);
-      triggerPushDemo(`✨ Appuntamento fissato per ${bookingService?.name} (${bookingDate})!`);
-    }, 1200);
-  };
-
-  const handleReserveProduct = () => {
-    setProductReserved(true);
-    setTimeout(() => {
-      setActiveProductSheet(null);
-      setProductReserved(false);
-      triggerPushDemo(`🛍️ Il tuo prodotto "${activeProductSheet?.name}" è riservato in salone!`);
-    }, 1200);
-  };
-
-  const currentHero = HERO_STORIES[currentStoryIndex];
-
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-[#070305] text-[#FFF5F7] flex flex-col relative select-none font-sans overflow-hidden">
+    <div className="max-w-md mx-auto min-h-screen bg-[#D11936] text-white flex flex-col relative select-none font-sans overflow-x-hidden pb-24 shadow-2xl">
       
-      {/* SIMULATED PUSH NOTIFICATION (iOS Modern Style) */}
+      {/* SIMULATED PUSH NOTIFICATION */}
       {showNotification && (
         <div className="fixed top-4 left-4 right-4 z-50 animate-in slide-in-from-top duration-300">
-          <div className="max-w-sm mx-auto glass-pill rounded-2xl p-3 shadow-2xl flex items-center gap-3 border border-[#FB7185]/40">
-            <div className="w-9 h-9 rounded-xl bg-[#18050E] flex items-center justify-center shrink-0 border border-[#E11D48]/40">
+          <div className="max-w-sm mx-auto bg-black/85 backdrop-blur-xl rounded-2xl p-3.5 shadow-2xl flex items-center gap-3 border border-[#E8D3A2]/40">
+            <div className="w-9 h-9 rounded-xl bg-[#9E0B22] flex items-center justify-center shrink-0 border border-white/20">
               <Image src="/app_icon_192.png" alt="Icon" width={24} height={24} className="rounded-lg" />
             </div>
             <div className="flex-1 min-w-0 pr-1">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black tracking-wider uppercase text-[#FB7185]">Cambia Look</span>
+                <span className="text-[10px] font-black tracking-wider uppercase text-[#E8D3A2]">Cambia Look</span>
                 <span className="text-[9px] text-white/40">Adesso</span>
               </div>
               <p className="text-xs text-white/95 font-medium leading-tight truncate">{notificationText}</p>
@@ -456,51 +358,48 @@ export default function CambiaLookApp() {
 
       {/* STAFF MODE BANNER */}
       {isStaffMode && (
-        <div className="bg-gradient-to-r from-[#9F1239] via-[#E11D48] to-[#FB7185] text-white px-4 py-2 text-xs font-bold flex items-center justify-between shadow-xl fixed top-0 left-0 right-0 z-50 max-w-md mx-auto">
+        <div className="bg-black/90 text-white px-4 py-2 text-xs font-bold flex items-center justify-between sticky top-0 z-50 border-b border-[#E8D3A2]/50">
           <div className="flex items-center gap-2">
-            <ShieldCheck size={16} />
-            <span className="text-[11px] font-black uppercase tracking-wider">Modalità Titolare (Salone)</span>
+            <ShieldCheck size={16} className="text-[#E8D3A2]" />
+            <span className="text-[11px] font-black uppercase tracking-wider text-[#E8D3A2]">Gestione Vetrina Titolare</span>
           </div>
           <button 
             onClick={handleToggleStaffMode}
-            className="px-2.5 py-1 bg-black/40 hover:bg-black/60 text-[10px] uppercase font-black rounded-lg transition-colors border border-white/20"
+            className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-[10px] uppercase font-black rounded-lg transition-colors border border-white/20"
           >
-            Esci a Cliente
+            Vista Cliente
           </button>
         </div>
       )}
 
-      {/* TOP FLOATING MINIMAL HEADER (Non copre le foto!) */}
-      <header className={`px-5 ${isStaffMode ? "pt-12" : "pt-8"} pb-2 fixed top-0 left-0 right-0 z-30 max-w-md mx-auto flex items-center justify-between pointer-events-none`}>
-        <div className="flex items-center gap-2.5 pointer-events-auto">
-          <div className="w-10 h-10 rounded-2xl glass-pill p-1.5 flex items-center justify-center border border-white/20 shadow-lg">
+      {/* HEADER ROSSO CON LOGO ORIGINALE & TASTO ACCESSO TITOLARE */}
+      <header className="px-5 pt-8 pb-4 bg-gradient-to-b from-[#B80F29] to-[#D11936] flex items-center justify-between sticky top-0 z-40 border-b border-black/10">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-lg border border-white/30">
             <Image 
               src="/logo_transparent.png" 
               alt="Logo Cambia Look" 
-              width={28} 
-              height={28} 
-              className="object-contain filter invert contrast-150"
+              width={38} 
+              height={38} 
+              className="object-contain"
             />
           </div>
           <div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[9px] font-black uppercase tracking-widest text-[#FB7185] drop-shadow">Salone Donna</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34D399]" />
-            </div>
-            <h1 className="text-lg font-black tracking-tight font-serif drop-shadow-md text-white">
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#E8D3A2] block">Salone Donna</span>
+            <h1 className="text-xl font-extrabold tracking-tight text-white leading-tight font-script text-2xl">
               Cambia Look
             </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 pointer-events-auto">
-          {/* Staff Switch Lock Button */}
+        <div className="flex items-center gap-2">
+          {/* Tasto Titolare per sbloccare l'inserimento prodotti */}
           <button 
             onClick={handleToggleStaffMode}
-            className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 transition-all shadow-lg ${
+            className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 transition-all shadow-md ${
               isStaffMode 
-                ? "bg-[#E11D48] text-white border border-[#FB7185]" 
-                : "glass-pill text-white/80 hover:text-white"
+                ? "bg-white text-[#D11936] font-bold" 
+                : "bg-black/30 text-white/90 border border-white/20 hover:bg-black/50"
             }`}
           >
             {isStaffMode ? <Unlock size={12} /> : <Lock size={12} />}
@@ -508,279 +407,185 @@ export default function CambiaLookApp() {
           </button>
 
           <button 
-            onClick={() => triggerPushDemo("🔔 Giulia, ricordati il tuo trattamento domani alle 15:30!")}
-            className="w-9 h-9 rounded-full glass-pill flex items-center justify-center text-white/80 hover:text-white shadow-lg relative"
+            onClick={() => triggerPushDemo("🔔 Benvenuta nell'app ufficiale di Cambia Look!")}
+            className="w-9 h-9 rounded-full bg-black/25 flex items-center justify-center text-white/90 hover:text-white border border-white/15 shadow"
           >
             <Bell size={16} />
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#E11D48] shadow-sm" />
           </button>
         </div>
       </header>
 
       {/* ========================================================================================= */}
-      {/* TAB 1: HOME (LOOKBOOK CINEMATOGRAFICO FULLSCREEN CON FOTO VERE E INTERAZIONI A SCHERMO) */}
+      {/* TAB 1: I SALONI (IDENTICO ALLO STILE DELL'APP ORIGINALE: ROSSO + FOTO REALI + SCRIP FONT) */}
       {/* ========================================================================================= */}
-      {activeTab === "home" && (
-        <div className="relative w-full h-screen overflow-hidden flex flex-col justify-between">
+      {activeTab === "saloni" && (
+        <main className="flex-1 px-5 pt-4 space-y-6 animate-in fade-in duration-300">
           
-          {/* BACKGROUND FULLSCREEN PHOTO WITH SMOOTH TRANSITION */}
-          <div className="absolute inset-0 z-0">
-            <Image 
-              key={currentHero.id}
-              src={currentHero.bg} 
-              alt={currentHero.title} 
-              fill 
-              priority
-              className="object-cover object-center transform scale-105 transition-all duration-1000 ease-out"
-            />
-            {/* Cinematic Gradient Vignette */}
-            <div className="absolute inset-0 cinematic-vignette" />
+          {/* INTRO TITLE WITH GOLD FLOURISH */}
+          <div className="text-center space-y-1 py-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#E8D3A2]">Atelier Donna</span>
+            <h2 className="text-3xl font-normal font-script text-white drop-shadow">
+              I Nostri Saloni
+            </h2>
+            <div className="w-16 h-0.5 bg-[#E8D3A2] mx-auto rounded-full mt-1" />
           </div>
 
-          {/* TOP STORIES PROGRESS BARS (Like Instagram / TikTok) */}
-          <div className={`px-5 ${isStaffMode ? "pt-24" : "pt-20"} relative z-20 space-y-3`}>
-            <div className="grid grid-cols-4 gap-1.5">
-              {HERO_STORIES.map((story, idx) => (
-                <div 
-                  key={story.id} 
-                  onClick={() => setCurrentStoryIndex(idx)}
-                  className="h-1 rounded-full bg-white/20 cursor-pointer overflow-hidden backdrop-blur-sm"
-                >
-                  <div 
-                    className={`h-full bg-gradient-to-r from-[#FB7185] to-[#E11D48] transition-all duration-300 ${
-                      idx === currentStoryIndex ? "w-full shadow-[0_0_8px_#E11D48]" : idx < currentStoryIndex ? "w-full opacity-60" : "w-0"
-                    }`}
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* QUICK STORY CIRCLE AVATARS (Interattivi con tocco) */}
-            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pt-1">
-              {HERO_STORIES.map((story, idx) => {
-                const isSelected = idx === currentStoryIndex;
-                return (
-                  <button
-                    key={story.id}
-                    onClick={() => setCurrentStoryIndex(idx)}
-                    className="flex flex-col items-center gap-1 shrink-0 group focus:outline-none"
-                  >
-                    <div className={`w-14 h-14 rounded-full transition-all p-0.5 ${
-                      isSelected ? "story-ring-active scale-105" : "story-ring-viewed opacity-70 group-hover:opacity-100"
-                    }`}>
-                      <div className="relative w-full h-full rounded-full overflow-hidden border border-black/40">
-                        <Image src={story.bg} alt={story.title} fill className="object-cover" />
-                      </div>
-                    </div>
-                    <span className={`text-[10px] whitespace-nowrap ${isSelected ? "font-black text-[#FB7185]" : "font-medium text-white/70"}`}>
-                      {story.tag}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* PREV / NEXT TAP ZONES (Per cambiare foto cliccando a destra o sinistra) */}
-          <div className="absolute inset-y-32 inset-x-0 z-10 flex">
-            <div 
-              onClick={() => setCurrentStoryIndex((prev) => (prev - 1 + HERO_STORIES.length) % HERO_STORIES.length)} 
-              className="w-1/3 h-full cursor-pointer" 
-            />
-            <div 
-              onClick={() => setCurrentStoryIndex((prev) => (prev + 1) % HERO_STORIES.length)} 
-              className="w-2/3 h-full cursor-pointer" 
-            />
-          </div>
-
-          {/* BOTTOM FLOATING STORY INFO OVERLAY (Senza card rigide, testo elegante sulla foto) */}
-          <div className="relative z-20 px-6 pb-28 space-y-4">
-            
-            <div className="space-y-1.5 drop-shadow-lg animate-in fade-in slide-in-from-bottom-3 duration-500 key={currentHero.id}">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-pill text-white text-[10px] font-black uppercase tracking-wider">
-                <Sparkles size={12} className="text-[#F5D061]" />
-                <span>{currentHero.tag}</span>
-                <span className="text-white/40">•</span>
-                <span className="text-[#FDA4AF]">{currentHero.price}</span>
-              </div>
-
-              <h2 className="text-3xl font-black font-serif text-white tracking-tight leading-none drop-shadow-md">
-                {currentHero.title}
-              </h2>
-
-              <p className="text-xs text-white/85 leading-relaxed font-medium drop-shadow">
-                {currentHero.subtitle}
-              </p>
-            </div>
-
-            {/* ACTION PILLS SULLA FOTO */}
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <button 
-                onClick={() => {
-                  const s = INITIAL_SERVICES.find(serv => serv.id === currentHero.serviceId) || INITIAL_SERVICES[0];
-                  handleStartBooking(s);
-                }}
-                className="py-3.5 px-4 rounded-2xl btn-glamour text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-2xl active:scale-95"
+          {/* LISTA DEI 2 SALONI REALI CON LE FOTO VERE RITAGLIATE DALL'APP PRECEDENTE */}
+          <div className="space-y-6">
+            {SALONS.map((salon) => (
+              <div 
+                key={salon.id}
+                onClick={() => setSelectedSalon(salon)}
+                className="relative cursor-pointer group active:scale-[0.99] transition-all"
               >
-                <Calendar size={15} />
-                <span>Prenota Questo Look</span>
-              </button>
+                {/* Cornicette dorate ornamentali negli angoli come nell'app precedente */}
+                <div className="absolute -top-1.5 -left-1.5 w-6 h-6 gold-corner-tl z-10 pointer-events-none" />
+                <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 gold-corner-br z-10 pointer-events-none" />
+                <div className="absolute -top-1 right-2 text-[#E8D3A2] text-xs pointer-events-none">✦</div>
+                <div className="absolute -bottom-1 left-2 text-[#E8D3A2] text-xs pointer-events-none">✦</div>
 
-              <button 
-                onClick={() => setActiveTab("servizi")}
-                className="py-3.5 px-4 rounded-2xl glass-pill text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-white/10 active:scale-95 border border-white/25 shadow-lg"
-              >
-                <Scissors size={15} className="text-[#FDA4AF]" />
-                <span>Tutti i Servizi</span>
-              </button>
-            </div>
-
-            {/* MINI FLOATING QUICK BAR (Vetrina Prodotti & Salone Info) */}
-            <div className="flex items-center justify-between pt-1">
-              <button 
-                onClick={() => setActiveTab("prodotti")}
-                className="flex items-center gap-2 glass-pill px-3 py-1.5 rounded-full text-[11px] font-bold text-white hover:text-[#FDA4AF]"
-              >
-                <ShoppingBag size={14} className="text-[#FB7185]" />
-                <span>Shop Salone ({productsList.length} prodotti)</span>
-                <ChevronRight size={12} />
-              </button>
-
-              <button 
-                onClick={() => setActiveTab("fidelity")}
-                className="flex items-center gap-1.5 glass-pill px-3 py-1.5 rounded-full text-[11px] font-bold text-[#F5D061]"
-              >
-                <Crown size={13} />
-                <span>VIP Card 7/10</span>
-              </button>
-            </div>
-
-          </div>
-
-        </div>
-      )}
-
-      {/* ========================================================================================= */}
-      {/* TAB 2: SERVIZI DONNA (VISUAL IMMERSIVO CON FOTO REALI PER OGNI STILE) */}
-      {/* ========================================================================================= */}
-      {activeTab === "servizi" && (
-        <div className="flex-1 px-5 pt-24 pb-28 space-y-5 animate-in fade-in duration-300">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full glass-pill text-[#FDA4AF] text-[9px] font-black uppercase tracking-wider mb-2">
-              <Scissors size={11} className="text-[#FB7185]" />
-              <span>Alta Moda Capelli • Menu Salone</span>
-            </div>
-            <h2 className="text-2xl font-black font-serif text-white tracking-tight">I Nostri Trattamenti</h2>
-            <p className="text-xs text-white/50">Tocca un servizio per vedere la scheda completa e prenotare.</p>
-          </div>
-
-          {/* Category Filter Horizontal Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-            {[
-              { id: "tutti", label: "Tutti i Servizi" },
-              { id: "piega", label: "Piega & Finish" },
-              { id: "taglio", label: "Taglio Sartoriale" },
-              { id: "colore", label: "Colore & Balayage" },
-              { id: "cura", label: "Rituali Spa" },
-            ].map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => setServiceCategory(cat.id)}
-                className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
-                  serviceCategory === cat.id 
-                    ? "btn-glamour text-white shadow-lg shadow-[#E11D48]/30 font-black scale-105" 
-                    : "glass-pill text-white/60 hover:text-white"
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-
-          {/* IMMERSIVE PHOTO LIST (Foto grandi di sfondo con testo in sovraimpressione) */}
-          <div className="space-y-4">
-            {INITIAL_SERVICES
-              .filter(s => serviceCategory === "tutti" || s.category === serviceCategory)
-              .map(serv => (
-                <div 
-                  key={serv.id}
-                  onClick={() => setActiveServiceSheet(serv)}
-                  className="relative rounded-3xl overflow-hidden cursor-pointer group active:scale-[0.98] transition-all h-44 shadow-xl border border-white/10"
-                >
-                  {/* Photo Background */}
+                {/* Card con foto reale del salone */}
+                <div className="relative rounded-2xl overflow-hidden bg-black/40 border-2 border-white/90 shadow-2xl h-52">
                   <Image 
-                    src={serv.bg} 
-                    alt={serv.name} 
+                    src={salon.image} 
+                    alt={salon.name} 
                     fill 
                     className="object-cover group-hover:scale-105 transition-transform duration-700" 
                   />
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
 
-                  {/* Content on Image */}
-                  <div className="absolute inset-0 p-5 flex flex-col justify-between">
-                    <div className="flex justify-between items-start">
-                      {serv.badge ? (
-                        <span className="text-[9px] px-2.5 py-1 bg-[#E11D48] text-white font-black uppercase tracking-wider rounded-full shadow-md">
-                          {serv.badge}
-                        </span>
-                      ) : <span />}
-                      <span className="text-lg font-black text-white bg-black/60 backdrop-blur-md px-3 py-1 rounded-2xl border border-white/20">
-                        € {serv.price}
-                      </span>
-                    </div>
+                  {/* Gradient scuro sotto per far risaltare la scritta in corsivo come nell'app originale */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
 
-                    <div className="space-y-1">
-                      <h3 className="text-lg font-black font-serif text-white tracking-tight leading-snug drop-shadow-md">
-                        {serv.name}
+                  {/* Scritta in corsivo elegante in sovraimpressione come nella foto originale */}
+                  <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
+                    <div>
+                      <span className="text-[10px] text-[#E8D3A2] uppercase tracking-wider font-bold block drop-shadow">Salone</span>
+                      <h3 className="text-3xl font-normal font-script text-white drop-shadow-lg leading-tight">
+                        {salon.name}
                       </h3>
-                      <div className="flex items-center justify-between text-xs text-white/70">
-                        <span className="flex items-center gap-1.5"><Clock size={12} className="text-[#FB7185]" /> {serv.duration}</span>
-                        <span className="text-[#FDA4AF] font-bold text-[11px] group-hover:translate-x-1 transition-transform flex items-center gap-0.5">
-                          Prenota ora <ChevronRight size={13} />
-                        </span>
-                      </div>
                     </div>
+
+                    <span className="px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-md text-[10px] font-bold text-white uppercase tracking-wider border border-white/30 group-hover:bg-white group-hover:text-[#D11936] transition-colors">
+                      Info & Orari →
+                    </span>
                   </div>
                 </div>
-              ))}
+
+                {/* Indirizzo rapido sotto la foto */}
+                <div className="pt-2 px-1 flex items-center justify-between text-[11px] text-white/90">
+                  <span className="flex items-center gap-1.5 truncate">
+                    <MapPin size={13} className="text-[#E8D3A2] shrink-0" />
+                    <span className="truncate">{salon.address}</span>
+                  </span>
+                  <span className="text-[#E8D3A2] font-bold shrink-0 pl-2">Aperto</span>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
+
+          {/* BANNER INFORMATIVO DI BENVENUTO */}
+          <div className="p-4 rounded-2xl cambia-glass text-center space-y-2 border border-white/20">
+            <Sparkles size={20} className="mx-auto text-[#E8D3A2]" />
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Saloni Esclusivi Per Sole Donne</h3>
+            <p className="text-xs text-white/80 leading-relaxed font-normal">
+              Scopri il nostro listino trattamenti e i prodotti professionali che usiamo e vendiamo in salone. Per informazioni o per prenotare una consulenza, contattaci direttamente!
+            </p>
+          </div>
+        </main>
       )}
 
       {/* ========================================================================================= */}
-      {/* TAB 3: PRODOTTI DEL SALONE (EDITORIAL SHOP CON FOTO GRANDI E GESTIONE STAFF) */}
+      {/* TAB 2: VETRINA SERVIZI DONNA (SOLA CONSULTAZIONE / NO PRENOTAZIONI DIRETTE) */}
+      {/* ========================================================================================= */}
+      {activeTab === "servizi" && (
+        <main className="flex-1 px-5 pt-4 space-y-5 animate-in fade-in duration-300">
+          <div className="text-center space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#E8D3A2]">Atelier Capelli</span>
+            <h2 className="text-3xl font-normal font-script text-white drop-shadow">
+              I Nostri Trattamenti
+            </h2>
+            <p className="text-xs text-white/80">Listino prezzi e trattamenti per sole donne</p>
+          </div>
+
+          {/* Services Cards (Vetrina Chiara con Foto e Prezzo) */}
+          <div className="space-y-3.5">
+            {SERVICES_SHOWCASE.map((serv) => (
+              <div 
+                key={serv.id}
+                onClick={() => setSelectedService(serv)}
+                className="p-4 rounded-2xl bg-black/35 backdrop-blur-md border border-white/20 hover:border-[#E8D3A2]/60 transition-all cursor-pointer group active:scale-[0.99] space-y-2.5"
+              >
+                <div className="flex justify-between items-start gap-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-[#E8D3A2] bg-black/40 px-2 py-0.5 rounded-full">
+                        {serv.category}
+                      </span>
+                      {serv.tag && (
+                        <span className="text-[9px] font-bold text-white/80 bg-white/10 px-2 py-0.5 rounded-full">
+                          {serv.tag}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-base font-bold text-white mt-1 group-hover:text-[#E8D3A2] transition-colors">
+                      {serv.name}
+                    </h3>
+                  </div>
+                  <span className="text-base font-black text-[#E8D3A2] shrink-0 bg-black/50 px-2.5 py-1 rounded-xl border border-[#E8D3A2]/30">
+                    {serv.price}
+                  </span>
+                </div>
+
+                <p className="text-xs text-white/80 leading-relaxed font-normal">
+                  {serv.desc}
+                </p>
+
+                <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[11px] text-white/70">
+                  <span className="flex items-center gap-1.5"><Clock size={12} className="text-[#E8D3A2]" /> Durata indicativa: {serv.duration}</span>
+                  <span className="text-[#E8D3A2] font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                    Vedi Dettagli <ChevronRight size={13} />
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </main>
+      )}
+
+      {/* ========================================================================================= */}
+      {/* TAB 3: VETRINA PRODOTTI (IL PARRUCCHIERE PUÒ INSERIRLI CON FOTO, PREZZO E DESCRIZIONE) */}
       {/* ========================================================================================= */}
       {activeTab === "prodotti" && (
-        <div className="flex-1 px-5 pt-24 pb-28 space-y-5 animate-in fade-in duration-300">
-          <div className="flex justify-between items-start gap-2">
+        <main className="flex-1 px-5 pt-4 space-y-5 animate-in fade-in duration-300">
+          <div className="flex justify-between items-end">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full glass-pill text-[#FDA4AF] text-[9px] font-black uppercase tracking-wider mb-2">
-                <ShoppingBag size={11} className="text-[#FB7185]" />
-                <span>Boutique Cura Capelli</span>
-              </div>
-              <h2 className="text-2xl font-black font-serif text-white tracking-tight">I Prodotti del Salone</h2>
-              <p className="text-xs text-white/50">
-                {isStaffMode ? "Modalità Staff: scatta foto col telefono e aggiungi prodotti" : "Trattamenti professionali da portare a casa."}
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#E8D3A2]">Boutique Salone</span>
+              <h2 className="text-3xl font-normal font-script text-white drop-shadow">
+                I Prodotti del Salone
+              </h2>
+              <p className="text-xs text-white/80">
+                {isStaffMode 
+                  ? "Pannello Parrucchieri: carica foto, descrizione e prezzo" 
+                  : "Le linee professionali che puoi acquistare nei nostri saloni"}
               </p>
             </div>
 
-            {/* Tasto Staff "+ Nuovo Prodotto" */}
+            {/* PULSANTE AGGIUNGI PRODOTTO (Visibile solo in modalità Titolare) */}
             {isStaffMode && (
               <button
                 onClick={() => setIsNewProductModalOpen(true)}
-                className="py-2.5 px-3.5 rounded-2xl btn-glamour text-white text-xs font-black flex items-center gap-1.5 shadow-xl active:scale-95 transition-all shrink-0"
+                className="py-2.5 px-3.5 rounded-2xl bg-white text-[#D11936] text-xs font-black flex items-center gap-1.5 shadow-xl active:scale-95 transition-all shrink-0 hover:bg-[#E8D3A2]"
               >
-                <Plus size={15} />
+                <Plus size={16} />
                 <span>Nuovo Prodotto</span>
               </button>
             )}
           </div>
 
-          {/* Product Category Filter Pills */}
+          {/* Filtri Categoria Rapidi */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
             {[
-              { id: "tutti", label: "Tutti" },
+              { id: "tutti", label: "Tutti i Prodotti" },
               { id: "shampoo", label: "Shampoo" },
               { id: "maschere", label: "Maschere" },
               { id: "oli", label: "Oli Preziosi" },
@@ -790,10 +595,10 @@ export default function CambiaLookApp() {
               <button
                 key={cat.id}
                 onClick={() => setProductCategory(cat.id)}
-                className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
                   productCategory === cat.id 
-                    ? "btn-glamour text-white shadow-lg shadow-[#E11D48]/30 font-black scale-105" 
-                    : "glass-pill text-white/60 hover:text-white"
+                    ? "bg-white text-[#D11936] font-black shadow-lg" 
+                    : "bg-black/30 text-white/80 border border-white/15 hover:text-white"
                 }`}
               >
                 {cat.label}
@@ -801,621 +606,374 @@ export default function CambiaLookApp() {
             ))}
           </div>
 
-          {/* EDITORIAL PRODUCTS GRID */}
+          {/* GRIGLIA PRODOTTI IN VETRINA */}
           <div className="grid grid-cols-2 gap-3.5">
             {productsList
               .filter(p => productCategory === "tutti" || p.category === productCategory)
               .map(prod => (
                 <div 
                   key={prod.id}
-                  onClick={() => { setActiveProductSheet(prod); setReservedCount(1); }}
-                  className="rounded-3xl overflow-hidden glass-pill flex flex-col justify-between cursor-pointer group relative shadow-xl border border-white/10"
+                  onClick={() => setSelectedProduct(prod)}
+                  className="rounded-2xl overflow-hidden bg-black/40 backdrop-blur-md border border-white/20 hover:border-[#E8D3A2]/60 transition-all flex flex-col justify-between cursor-pointer group relative shadow-lg"
                 >
-                  {/* Delete button if in Staff Mode */}
+                  {/* Tasto elimina prodotto per lo Staff */}
                   {isStaffMode && (
                     <button
                       onClick={(e) => handleDeleteProduct(prod.id, e)}
-                      className="absolute top-2.5 right-2.5 z-20 w-8 h-8 rounded-full bg-black/80 hover:bg-rose-600 text-white flex items-center justify-center transition-colors shadow-lg border border-white/20"
+                      className="absolute top-2 right-2 z-20 w-8 h-8 rounded-full bg-black/80 hover:bg-rose-600 text-white flex items-center justify-center transition-colors shadow-lg border border-white/20"
                       title="Elimina prodotto"
                     >
                       <Trash2 size={13} />
                     </button>
                   )}
 
-                  {/* Image Aspect 4:5 Immersive */}
-                  <div className="relative aspect-[4/5] overflow-hidden bg-black/60">
+                  {/* Foto del Prodotto */}
+                  <div className="relative aspect-square overflow-hidden bg-black/60">
                     <Image 
                       src={prod.img} 
                       alt={prod.name} 
                       fill 
-                      className="object-cover group-hover:scale-105 transition-transform duration-700" 
+                      className="object-cover group-hover:scale-105 transition-transform duration-500" 
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#070305] via-transparent to-transparent opacity-80" />
-                    
-                    {prod.bestseller && (
-                      <span className="absolute top-2.5 left-2.5 text-[8px] font-black uppercase tracking-wider bg-[#E11D48] text-white px-2 py-0.5 rounded-full shadow-md">
-                        Bestseller
-                      </span>
-                    )}
-
-                    <div className="absolute bottom-2 left-2.5 right-2.5">
-                      <span className="text-[9px] font-black text-[#FB7185] uppercase tracking-wider block">{prod.brand}</span>
-                      <h4 className="text-xs font-bold text-white line-clamp-1 leading-tight">{prod.name}</h4>
-                    </div>
+                    <span className="absolute bottom-2 left-2 text-[8px] font-black uppercase tracking-wider bg-black/70 text-[#E8D3A2] px-2 py-0.5 rounded-md border border-white/10">
+                      Disponibile in Salone
+                    </span>
                   </div>
 
-                  <div className="p-3 pt-1 flex items-center justify-between">
-                    <div>
-                      <span className="text-sm font-black text-white">€ {Number(prod.price).toFixed(2)}</span>
-                      <span className="text-[9px] text-white/40 block">{prod.size}</span>
+                  {/* Info Prodotto */}
+                  <div className="p-3 space-y-1">
+                    <span className="text-[9px] font-bold text-[#E8D3A2] uppercase tracking-wider block">{prod.brand}</span>
+                    <h4 className="text-xs font-bold text-white line-clamp-2 leading-tight group-hover:text-[#E8D3A2] transition-colors">{prod.name}</h4>
+                    <p className="text-[10px] text-white/50">{prod.size}</p>
+                    
+                    <div className="pt-2 flex items-center justify-between border-t border-white/10 mt-1">
+                      <span className="text-sm font-black text-[#E8D3A2]">€ {Number(prod.price).toFixed(2)}</span>
+                      <span className="text-[10px] font-bold text-white/70 group-hover:text-white">Dettagli →</span>
                     </div>
-                    <button className="px-3 py-1.5 rounded-xl btn-glamour text-white text-[10px] font-bold uppercase transition-all shadow">
-                      {isStaffMode ? "Modifica" : "Scopri"}
-                    </button>
                   </div>
                 </div>
               ))}
           </div>
 
-          {/* Ritiro in salone pill */}
-          <div className="p-4 rounded-3xl glass-pill text-center space-y-1">
-            <Package size={20} className="mx-auto text-[#FB7185]" />
-            <h4 className="text-xs font-bold text-white">Riserva online, ritira in salone</h4>
-            <p className="text-[11px] text-white/50">
-              Le clienti possono bloccare il prodotto preferito e trovarlo pronto alla cassa dell'atelier.
+          <div className="p-4 rounded-2xl bg-black/30 border border-white/15 text-center space-y-1">
+            <ShoppingBag size={20} className="mx-auto text-[#E8D3A2]" />
+            <h4 className="text-xs font-bold text-white">Acquisto Diretto in Salone</h4>
+            <p className="text-[11px] text-white/75 leading-relaxed">
+              Tutti i prodotti del catalogo sono disponibili per l'acquisto nei saloni di Roma e Cisterna di Latina.
             </p>
           </div>
-        </div>
+        </main>
       )}
 
       {/* ========================================================================================= */}
-      {/* TAB 4: FIDELITY CLUB DONNA (METALLIC VIP CARD WITH STAMPS) */}
+      {/* TAB 4: CONTATTI E INFO SALONE */}
       {/* ========================================================================================= */}
-      {activeTab === "fidelity" && (
-        <div className="flex-1 px-5 pt-24 pb-28 space-y-6 animate-in fade-in duration-300">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full glass-pill text-[#FDA4AF] text-[9px] font-black uppercase tracking-wider mb-2">
-              <Crown size={11} className="text-[#F5D061]" />
-              <span>Privilege Club</span>
-            </div>
-            <h2 className="text-2xl font-black font-serif text-white tracking-tight">Tessera VIP Cambia Look</h2>
-            <p className="text-xs text-white/50">Accumula timbri e sblocca rituali luxury gratuiti.</p>
+      {activeTab === "info" && (
+        <main className="flex-1 px-5 pt-4 space-y-6 animate-in fade-in duration-300">
+          <div className="text-center space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#E8D3A2]">Contatti Salone</span>
+            <h2 className="text-3xl font-normal font-script text-white drop-shadow">
+              Vieni a Trovarci
+            </h2>
+            <p className="text-xs text-white/80">I recapiti diretti dei due saloni Cambia Look</p>
           </div>
 
-          {/* LUXURY METALLIC RUBY CARD */}
-          <div className="rounded-[32px] p-6 bg-gradient-to-br from-[#9F1239] via-[#4A0617] to-[#120409] border border-[#FB7185]/40 shadow-2xl relative overflow-hidden space-y-6">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-[#E11D48]/30 rounded-full blur-3xl pointer-events-none" />
-
-            <div className="flex justify-between items-start relative z-10">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-black/40 border border-white/20 flex items-center justify-center p-1.5 shadow-md">
-                  <Image src="/logo_transparent.png" alt="Logo" width={26} height={26} className="object-contain filter invert" />
-                </div>
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#FDA4AF] flex items-center gap-1">
-                    <Gem size={10} className="text-[#F5D061]" />
-                    VIP Diamond Member
+          <div className="space-y-4">
+            {SALONS.map((salon) => (
+              <div key={salon.id} className="p-5 rounded-2xl bg-black/40 border border-white/20 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-script text-white">{salon.name}</h3>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                    Aperto Mar - Sab
                   </span>
-                  <h3 className="text-base font-bold text-white tracking-wide">Giulia Bianchi</h3>
+                </div>
+
+                <div className="space-y-1.5 text-xs text-white/80">
+                  <div className="flex items-start gap-2">
+                    <MapPin size={14} className="text-[#E8D3A2] shrink-0 mt-0.5" />
+                    <span>{salon.address}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock size={14} className="text-[#E8D3A2] shrink-0" />
+                    <span>{salon.hours}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Phone size={14} className="text-[#E8D3A2] shrink-0" />
+                    <span>Tel: {salon.phone}</span>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex gap-2">
+                  <button 
+                    onClick={() => triggerPushDemo(`📞 Chiamata al salone di ${salon.name} (${salon.phone})`)}
+                    className="flex-1 py-2 px-3 rounded-xl bg-white text-[#D11936] font-bold text-xs flex items-center justify-center gap-1.5 shadow"
+                  >
+                    <Phone size={13} />
+                    <span>Chiama Ora</span>
+                  </button>
+                  <button 
+                    onClick={() => triggerPushDemo(`💬 Apertura chat WhatsApp con il salone di ${salon.name}`)}
+                    className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow"
+                  >
+                    <MessageCircle size={14} />
+                    <span>WhatsApp</span>
+                  </button>
                 </div>
               </div>
-              <div className="text-right">
-                <span className="text-[9px] text-white/50 uppercase tracking-wider block">Codice Tessera</span>
-                <span className="text-xs font-mono font-bold text-[#F5D061]">#CL-88421</span>
-              </div>
-            </div>
-
-            {/* STAMP GRID (10 TIMBRI) */}
-            <div className="space-y-2.5 relative z-10">
-              <div className="flex justify-between text-xs font-bold">
-                <span className="text-white/90">Progresso Trattamenti</span>
-                <span className="text-[#FDA4AF]">7 di 10 timbri completati</span>
-              </div>
-
-              <div className="grid grid-cols-5 gap-2.5">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(step => {
-                  const isDone = step <= 7;
-                  const isReward = step === 10;
-                  return (
-                    <div 
-                      key={step} 
-                      className={`aspect-square rounded-2xl flex flex-col items-center justify-center text-center p-1 border transition-all ${
-                        isDone 
-                          ? "bg-gradient-to-tr from-[#9F1239] to-[#E11D48] text-white border-[#FB7185] shadow-lg shadow-[#E11D48]/40 font-black scale-100" 
-                          : isReward
-                            ? "bg-gradient-to-tr from-[#F5D061]/20 to-[#E11D48]/20 border-[#F5D061]/60 text-[#F5D061] animate-pulse"
-                            : "bg-black/40 border-white/10 text-white/25"
-                      }`}
-                    >
-                      {isDone ? (
-                        <CheckCircle2 size={18} strokeWidth={2.5} />
-                      ) : isReward ? (
-                        <Gift size={18} className="text-[#F5D061]" />
-                      ) : (
-                        <span className="text-xs font-bold">{step}</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* BARCODE / QR SIMULATION */}
-            <div className="pt-3 border-t border-white/15 flex items-center justify-between relative z-10">
-              <div className="flex items-center gap-2.5">
-                <div className="p-1 rounded-xl bg-white/10 backdrop-blur-sm">
-                  <QrCode size={26} className="text-[#FDA4AF]" />
-                </div>
-                <div className="text-[10px] text-white/70 leading-tight">
-                  Mostra in cassa al salone<br />per accreditare il timbro
-                </div>
-              </div>
-              <button 
-                onClick={() => triggerPushDemo("🎁 Timbro aggiunto! Hai ora 8 timbri sulla tua tessera.")}
-                className="px-3.5 py-1.5 rounded-xl bg-black/40 hover:bg-[#E11D48] text-white border border-white/20 text-[10px] font-bold uppercase transition-all shadow"
-              >
-                Simula Timbro
-              </button>
-            </div>
+            ))}
           </div>
 
-          {/* PREMI DISPONIBILI */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Gift size={16} className="text-[#FB7185]" />
-              <span>I Tuoi Vantaggi Esclusivi</span>
-            </h3>
-
-            <div className="space-y-2.5">
-              <div className="p-4 rounded-3xl glass-pill flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <span className="text-[10px] text-[#FDA4AF] font-bold uppercase tracking-wider">Premio Traguardo 10° Timbro</span>
-                  <h4 className="text-xs font-bold text-white">Piega Glamour o Maschera Sublime Omaggio</h4>
-                  <p className="text-[10px] text-white/40">Valore € 25,00 in regalo</p>
-                </div>
-                <span className="text-xs font-black text-white/50 px-3 py-1.5 bg-white/5 rounded-xl border border-white/10">Mancano 3</span>
-              </div>
-
-              <div className="p-4 rounded-3xl glass-pill border-emerald-500/25 flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Regalo Compleanno 🎂</span>
-                  <h4 className="text-xs font-bold text-white">-20% su qualsiasi Servizio o Prodotto</h4>
-                  <p className="text-[10px] text-white/40">Valido per tutto il mese</p>
-                </div>
-                <span className="text-xs font-black text-emerald-400 px-3 py-1.5 bg-emerald-500/10 rounded-xl border border-emerald-500/30">Attivo</span>
-              </div>
+          {/* BOX ACCESSO TITOLARE SALONE */}
+          <div className="p-5 rounded-2xl bg-black/50 border border-[#E8D3A2]/40 space-y-3">
+            <div className="flex items-center gap-2">
+              <ShieldCheck size={18} className="text-[#E8D3A2]" />
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white">Area Parrucchieri (Titolare)</h4>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================================= */}
-      {/* TAB 5: PROFILO & SALONE */}
-      {/* ========================================================================================= */}
-      {activeTab === "profilo" && (
-        <div className="flex-1 px-5 pt-24 pb-28 space-y-6 animate-in fade-in duration-300">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full glass-pill text-[#FDA4AF] text-[9px] font-black uppercase tracking-wider mb-2">
-              <User size={11} className="text-[#FB7185]" />
-              <span>Account & Salone</span>
-            </div>
-            <h2 className="text-2xl font-black font-serif text-white tracking-tight">Profilo & Salone</h2>
-            <p className="text-xs text-white/50">Appuntamenti, contatti e modalità parrucchieri.</p>
-          </div>
-
-          {/* USER PROFILE */}
-          <div className="p-4 rounded-3xl glass-pill flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#9F1239] via-[#E11D48] to-[#FDA4AF] text-white font-black text-lg flex items-center justify-center shadow-lg shadow-[#E11D48]/30">
-              GB
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-bold text-white">Giulia Bianchi</h3>
-              <p className="text-xs text-white/50 truncate">giulia.bianchi@example.com</p>
-              <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-bold text-[#FDA4AF] bg-[#E11D48]/15 border border-[#FB7185]/30 px-2.5 py-0.5 rounded-full">
-                <Crown size={10} className="text-[#F5D061]" />
-                Cliente VIP Salone
-              </span>
-            </div>
-          </div>
-
-          {/* BOX TITOLARE PARRUCCHIERI */}
-          <div className="p-5 rounded-3xl glass-pill space-y-3.5 border border-[#FB7185]/40">
-            <div className="flex items-center gap-2 text-white font-bold text-xs">
-              <ShieldCheck size={18} className="text-[#FB7185]" />
-              <span className="text-sm">Area Riservata Parrucchieri (Titolare)</span>
-            </div>
-            <p className="text-xs text-white/65 leading-relaxed">
-              Le clienti possono solo consultare i prodotti. I parrucchieri possono sbloccare l'area titolare con il PIN demo <strong>1234</strong> per scattare foto e aggiungere prodotti in tempo reale.
+            <p className="text-xs text-white/70 leading-relaxed font-normal">
+              Attiva la modalità titolare per fotografare con lo smartphone i prodotti in salone, inserire il prezzo e la descrizione e pubblicarli nell'app per le clienti.
             </p>
             <button
               onClick={handleToggleStaffMode}
-              className="w-full py-3 px-4 rounded-2xl btn-glamour text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg"
+              className="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white text-white hover:text-[#D11936] text-xs font-bold transition-all border border-white/20"
             >
-              {isStaffMode ? <Eye size={15} /> : <Sliders size={15} />}
-              <span>{isStaffMode ? "Torna a Vista Cliente" : "Sblocca Modalità Gestione Salone (PIN)"}</span>
+              {isStaffMode ? "Passa a Vista Cliente" : "Sblocca Gestione Salone (PIN: 1234)"}
             </button>
           </div>
-
-          {/* PROSSIMO APPUNTAMENTO */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <CalendarCheck size={16} className="text-[#FB7185]" />
-              <span>Il Tuo Prossimo Appuntamento</span>
-            </h3>
-
-            <div className="p-4 rounded-3xl glass-pill space-y-3 border border-[#FB7185]/20">
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="text-[10px] font-bold text-[#FDA4AF] uppercase tracking-wider bg-[#E11D48]/20 px-2 py-0.5 rounded-md">Confermato</span>
-                  <h4 className="text-sm font-bold text-white mt-1">Taglio Sartoriale & Piega Glamour</h4>
-                  <p className="text-xs text-white/60">Stylist: Valentina</p>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs font-bold text-white">Domani</span>
-                  <span className="text-sm font-black text-[#FB7185] block">16:00</span>
-                </div>
-              </div>
-
-              <div className="pt-2.5 border-t border-white/5 flex justify-between gap-2.5">
-                <button 
-                  onClick={() => triggerPushDemo("📅 Appuntamento salvato sul calendario del tuo telefono!")}
-                  className="flex-1 py-2 px-3 rounded-xl bg-white/5 border border-white/10 text-[11px] font-bold hover:bg-white/10 transition-colors"
-                >
-                  Aggiungi al Calendario
-                </button>
-                <button 
-                  onClick={() => triggerPushDemo("💬 Messaggio inviato al salone")}
-                  className="py-2 px-4 rounded-xl bg-rose-500/10 text-rose-300 border border-rose-500/20 text-[11px] font-bold hover:bg-rose-500/20 transition-colors"
-                >
-                  Modifica
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* CONTATTO SALONE DIRETTO */}
-          <div className="p-4 rounded-3xl glass-pill space-y-2 text-xs text-white/70">
-            <div className="flex items-center gap-2 text-white font-bold">
-              <MapPin size={15} className="text-[#FB7185]" />
-              <span>Salone Cambia Look • Solo Donna</span>
-            </div>
-            <p className="text-[11px] text-white/50 pl-6">
-              Via Roma, 142 • Da Martedì a Sabato: 09:00 - 19:00
-            </p>
-            <div className="pt-2 flex gap-2 pl-6">
-              <button 
-                onClick={() => triggerPushDemo("📞 Chiamata diretta al salone...")}
-                className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-[#E11D48] text-white text-[11px] font-bold flex items-center gap-1.5 transition-colors"
-              >
-                <Phone size={12} className="text-[#FB7185]" />
-                <span>Chiama Salone</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        </main>
       )}
 
       {/* ========================================================================================= */}
-      {/* BOTTOM SHEET INTERATTIVO: DETTAGLIO SERVIZIO */}
+      {/* POPUP: DETTAGLIO SALONE SELEZIONATO */}
       {/* ========================================================================================= */}
-      {activeServiceSheet && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#13070C] border-t border-[#FB7185]/40 rounded-t-[36px] overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[88vh] flex flex-col">
-            
+      {selectedSalon && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[85vh] flex flex-col">
             <div className="relative h-56 w-full">
-              <Image src={activeServiceSheet.bg} alt={activeServiceSheet.name} fill className="object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#13070C] via-black/20 to-transparent" />
+              <Image src={selectedSalon.image} alt={selectedSalon.name} fill className="object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#9E0B22] via-transparent to-transparent" />
               <button 
-                onClick={() => setActiveServiceSheet(null)}
-                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center hover:bg-black"
+                onClick={() => setSelectedSalon(null)}
+                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black"
               >
                 <X size={18} />
               </button>
+              <div className="absolute bottom-3 left-5">
+                <span className="text-[10px] text-[#E8D3A2] uppercase tracking-wider font-bold block">Salone Cambia Look</span>
+                <h3 className="text-3xl font-script text-white drop-shadow-md">{selectedSalon.name}</h3>
+              </div>
             </div>
 
-            <div className="p-6 space-y-4 -mt-6 relative z-10 bg-[#13070C] rounded-t-[32px] flex-1 overflow-y-auto no-scrollbar">
-              <div className="flex justify-between items-start">
-                <div>
-                  {activeServiceSheet.badge && (
-                    <span className="text-[9px] px-2.5 py-0.5 bg-[#E11D48]/20 border border-[#FB7185]/30 text-[#FDA4AF] font-bold rounded-full mb-1 inline-block">
-                      {activeServiceSheet.badge}
-                    </span>
-                  )}
-                  <h3 className="text-xl font-black font-serif text-white">{activeServiceSheet.name}</h3>
-                  <div className="flex items-center gap-2 text-xs text-white/50 mt-1">
-                    <span className="flex items-center gap-1"><Clock size={12} className="text-[#FB7185]" /> {activeServiceSheet.duration}</span>
-                    <span>•</span>
-                    <span className="text-[#FDA4AF]">Consulenza personalizzata inclusa</span>
-                  </div>
-                </div>
-                <span className="text-2xl font-black text-[#FB7185]">€ {activeServiceSheet.price}</span>
-              </div>
-
-              <p className="text-xs text-white/70 leading-relaxed">
-                {activeServiceSheet.desc}
+            <div className="p-6 space-y-4 overflow-y-auto no-scrollbar">
+              <p className="text-xs text-white/90 leading-relaxed font-normal">
+                {selectedSalon.description}
               </p>
 
-              <button 
-                onClick={() => handleStartBooking(activeServiceSheet)}
-                className="w-full py-4 rounded-2xl btn-glamour text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-2xl active:scale-95"
-              >
-                <Calendar size={16} />
-                <span>Prenota Trattamento</span>
-              </button>
+              <div className="p-3.5 rounded-2xl bg-black/30 border border-white/10 space-y-2 text-xs">
+                <div className="flex items-start gap-2">
+                  <MapPin size={15} className="text-[#E8D3A2] shrink-0 mt-0.5" />
+                  <span>{selectedSalon.address}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock size={15} className="text-[#E8D3A2] shrink-0" />
+                  <span>{selectedSalon.hours}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone size={15} className="text-[#E8D3A2] shrink-0" />
+                  <span>{selectedSalon.phone}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5 pt-1">
+                <button 
+                  onClick={() => triggerPushDemo(`📞 Chiamata al salone di ${selectedSalon.name}`)}
+                  className="py-3 px-4 rounded-xl bg-white text-[#D11936] font-bold text-xs flex items-center justify-center gap-2 shadow"
+                >
+                  <Phone size={15} />
+                  <span>Chiama Salone</span>
+                </button>
+                <button 
+                  onClick={() => triggerPushDemo(`💬 Apertura chat WhatsApp (${selectedSalon.name})`)}
+                  className="py-3 px-4 rounded-xl bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-2 shadow"
+                >
+                  <MessageCircle size={16} />
+                  <span>Scrivi su WhatsApp</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {/* ========================================================================================= */}
-      {/* BOTTOM SHEET INTERATTIVO: DETTAGLIO & RISERVA PRODOTTO */}
+      {/* POPUP: DETTAGLIO SERVIZIO (SOLA CONSULTAZIONE) */}
       {/* ========================================================================================= */}
-      {activeProductSheet && (
+      {selectedService && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#13070C] border-t border-[#FB7185]/40 rounded-t-[36px] overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[88vh] flex flex-col">
-            
-            <div className="relative h-60 w-full">
-              <Image src={activeProductSheet.img} alt={activeProductSheet.name} fill className="object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#13070C] via-black/30 to-transparent" />
-              <button 
-                onClick={() => setActiveProductSheet(null)}
-                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center hover:bg-black"
-              >
-                <X size={18} />
+          <div className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto no-scrollbar">
+            <div className="flex justify-between items-start border-b border-white/10 pb-3">
+              <div>
+                <span className="text-[10px] text-[#E8D3A2] font-bold uppercase tracking-wider">{selectedService.category}</span>
+                <h3 className="text-lg font-bold text-white">{selectedService.name}</h3>
+                <span className="text-xs text-white/70">Durata indicativa: {selectedService.duration}</span>
+              </div>
+              <button onClick={() => setSelectedService(null)} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80">
+                <X size={16} />
               </button>
             </div>
 
-            <div className="p-6 space-y-4 -mt-6 relative z-10 bg-[#13070C] rounded-t-[32px] flex-1 overflow-y-auto no-scrollbar">
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="text-[10px] font-bold text-[#FDA4AF] uppercase tracking-wider">{activeProductSheet.brand}</span>
-                  <h3 className="text-xl font-black font-serif text-white">{activeProductSheet.name}</h3>
-                  <span className="text-xs text-white/50">{activeProductSheet.size}</span>
-                </div>
-                <span className="text-2xl font-black text-[#FB7185]">€ {Number(activeProductSheet.price).toFixed(2)}</span>
-              </div>
+            <p className="text-xs text-white/90 leading-relaxed font-normal">
+              {selectedService.desc}
+            </p>
 
-              <p className="text-xs text-white/70 leading-relaxed">
-                {activeProductSheet.desc}
+            <div className="p-3 rounded-2xl bg-black/30 border border-white/10 flex items-center justify-between">
+              <span className="text-xs text-white/70">Prezzo in salone:</span>
+              <span className="text-xl font-black text-[#E8D3A2]">{selectedService.price}</span>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-white/10 border border-white/15 text-center space-y-1">
+              <p className="text-xs text-white/80 font-normal">
+                Disponibile nei saloni Cambia Look di Roma e Cisterna di Latina.
               </p>
+            </div>
+          </div>
+        </div>
+      )}
 
-              {/* Benefits */}
-              <div className="space-y-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-white/50">Benefici Principali:</span>
+      {/* ========================================================================================= */}
+      {/* POPUP: DETTAGLIO PRODOTTO (SOLA CONSULTAZIONE / NO PRENOTAZIONI) */}
+      {/* ========================================================================================= */}
+      {selectedProduct && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[88vh] overflow-y-auto no-scrollbar">
+            
+            <div className="flex justify-between items-start border-b border-white/10 pb-3">
+              <div>
+                <span className="text-[10px] text-[#E8D3A2] font-bold uppercase tracking-wider">{selectedProduct.brand}</span>
+                <h3 className="text-base font-bold text-white">{selectedProduct.name}</h3>
+                <span className="text-xs text-white/70">{selectedProduct.size}</span>
+              </div>
+              <button onClick={() => setSelectedProduct(null)} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80">
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Foto grande del prodotto */}
+            <div className="relative aspect-video rounded-2xl overflow-hidden bg-black/40 border border-white/15">
+              <Image src={selectedProduct.img} alt={selectedProduct.name} fill className="object-cover" />
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs text-white/90 leading-relaxed font-normal">{selectedProduct.desc}</p>
+              
+              <div className="space-y-1.5 pt-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8D3A2]">Caratteristiche & Benefici:</span>
                 <div className="flex flex-wrap gap-1.5">
-                  {(activeProductSheet.benefits || []).map((b: string, i: number) => (
-                    <span key={i} className="inline-flex items-center gap-1 text-[10px] glass-pill text-white/90 px-3 py-1 rounded-xl">
-                      <Sparkle size={10} className="text-[#FDA4AF]" />
+                  {(selectedProduct.benefits || []).map((b: string, i: number) => (
+                    <span key={i} className="inline-flex items-center gap-1 text-[10px] bg-black/40 border border-white/15 text-white px-2.5 py-1 rounded-xl">
+                      <Sparkle size={10} className="text-[#E8D3A2]" />
                       <span>{b}</span>
                     </span>
                   ))}
                 </div>
               </div>
-
-              {/* Quantity Selector & Reserve */}
-              <div className="pt-3 border-t border-white/10 flex items-center justify-between">
-                <div className="flex items-center gap-3 glass-pill p-1 rounded-2xl border border-white/15">
-                  <button 
-                    onClick={() => setReservedCount(Math.max(1, reservedCount - 1))}
-                    className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-white/20 active:scale-95"
-                  >
-                    <Minus size={14} />
-                  </button>
-                  <span className="text-xs font-bold px-2">{reservedCount}</span>
-                  <button 
-                    onClick={() => setReservedCount(reservedCount + 1)}
-                    className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-white/20 active:scale-95"
-                  >
-                    <Plus size={14} />
-                  </button>
-                </div>
-
-                <div className="text-right">
-                  <span className="text-[10px] text-white/50 block">Totale al ritiro:</span>
-                  <span className="text-xl font-black text-[#FB7185]">€ {(activeProductSheet.price * reservedCount).toFixed(2)}</span>
-                </div>
-              </div>
-
-              <button 
-                onClick={handleReserveProduct}
-                disabled={productReserved}
-                className="w-full py-4 rounded-2xl btn-glamour text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-2xl active:scale-95"
-              >
-                {productReserved ? (
-                  <>
-                    <CheckCircle2 size={18} className="animate-spin" />
-                    <span>Conferma in corso...</span>
-                  </>
-                ) : (
-                  <>
-                    <Package size={16} />
-                    <span>Riserva per il Ritiro in Salone</span>
-                  </>
-                )}
-              </button>
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* ========================================================================================= */}
-      {/* MODAL PRENOTAZIONE SERVIZIO */}
-      {/* ========================================================================================= */}
-      {isBookingOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#13070C] border-t border-[#FB7185]/40 rounded-t-[36px] p-6 space-y-5 animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto no-scrollbar shadow-2xl">
-            <div className="flex justify-between items-center border-b border-white/10 pb-3.5">
+            {/* Prezzo e disponibilità */}
+            <div className="p-3.5 rounded-2xl bg-black/35 border border-white/15 flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-black text-[#FDA4AF] uppercase tracking-wider">Prenota Trattamento</span>
-                <h3 className="text-lg font-black text-white font-serif">{bookingService?.name}</h3>
+                <span className="text-[10px] text-white/60 block">Prezzo al pubblico:</span>
+                <span className="text-xl font-black text-[#E8D3A2]">€ {Number(selectedProduct.price).toFixed(2)}</span>
               </div>
-              <button onClick={() => setIsBookingOpen(false)} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70">
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* Step 1: Stylist */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-white/80 block">1. Scegli la tua Stylist</label>
-              <div className="grid grid-cols-2 gap-2">
-                {STYLISTS.map(stylist => (
-                  <button
-                    key={stylist.id}
-                    onClick={() => setBookingStylist(stylist.id)}
-                    className={`p-3 rounded-2xl border text-left flex items-center gap-2.5 transition-all ${
-                      bookingStylist === stylist.id 
-                        ? "bg-[#E11D48]/25 border-[#FB7185] text-white shadow-md shadow-[#E11D48]/30" 
-                        : "glass-pill text-white/60 hover:text-white"
-                    }`}
-                  >
-                    <span className="text-xl">{stylist.avatar}</span>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-bold truncate">{stylist.name}</div>
-                      <div className="text-[9px] text-white/45 truncate">{stylist.role}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Step 2: Date */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-white/80 block">2. Seleziona Data e Orario</label>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  "Oggi, 15:30",
-                  "Oggi, 16:30",
-                  "Domani, 10:00",
-                  "Domani, 11:30",
-                  "Domani, 15:00",
-                  "Sabato, 09:30"
-                ].map(slot => (
-                  <button
-                    key={slot}
-                    onClick={() => setBookingDate(slot)}
-                    className={`py-2.5 px-1 text-center rounded-2xl text-xs font-bold border transition-all ${
-                      bookingDate === slot 
-                        ? "btn-glamour text-white border-[#FB7185] font-black" 
-                        : "glass-pill text-white/70 hover:text-white"
-                    }`}
-                  >
-                    {slot}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Step 3: Conferma */}
-            <div className="pt-3 border-t border-white/10 space-y-3">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-white/60 font-medium">Prezzo in salone:</span>
-                <span className="text-xl font-black text-[#FB7185]">€ {bookingService?.price}</span>
-              </div>
-
-              <button
-                onClick={handleConfirmBooking}
-                disabled={bookingConfirmed}
-                className="w-full py-4 rounded-2xl btn-glamour text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-2xl active:scale-95"
-              >
-                {bookingConfirmed ? (
-                  <>
-                    <CheckCircle2 size={18} className="animate-spin" />
-                    <span>Conferma in corso...</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 size={16} />
-                    <span>Conferma Prenotazione</span>
-                  </>
-                )}
-              </button>
+              <span className="text-xs font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30">
+                In Vendita nei Saloni
+              </span>
             </div>
           </div>
         </div>
       )}
 
       {/* ========================================================================================= */}
-      {/* MODAL STAFF: AGGIUNGI NUOVO PRODOTTO DA SMARTPHONE CON FOTO */}
+      {/* MODAL TITOLARE: INSERIMENTO NUOVO PRODOTTO CON FOTO DA SMARTPHONE, PREZZO E DESCRIZIONE */}
       {/* ========================================================================================= */}
       {isNewProductModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#13070C] border-t-2 border-[#E11D48] rounded-t-[36px] p-6 space-y-4 animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto no-scrollbar shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[#80081B] border-t-2 border-[#E8D3A2] rounded-t-[32px] p-6 space-y-4 animate-in slide-in-from-bottom duration-300 max-h-[92vh] overflow-y-auto no-scrollbar shadow-2xl">
             <div className="flex justify-between items-center border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-[#E11D48]/20 text-[#FB7185] flex items-center justify-center border border-[#FB7185]/30">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-2xl bg-white text-[#D11936] flex items-center justify-center font-bold">
                   <Plus size={18} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white font-serif">Nuovo Prodotto Salone</h3>
-                  <span className="text-[10px] text-white/50">Carica foto dal telefono, prezzo e descrizione</span>
+                  <h3 className="text-base font-bold text-white">Aggiungi Prodotto in Vetrina</h3>
+                  <span className="text-[10px] text-white/70">Scatta foto, imposta prezzo e descrizione</span>
                 </div>
               </div>
-              <button onClick={() => setIsNewProductModalOpen(false)} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70">
+              <button onClick={() => setIsNewProductModalOpen(false)} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80">
                 <X size={16} />
               </button>
             </div>
 
             <form onSubmit={handleCreateProduct} className="space-y-3.5 text-xs">
-              {/* Photo Upload with live preview */}
+              {/* Caricamento Foto del Prodotto */}
               <div>
-                <label className="font-bold text-white/80 block mb-1.5">1. Foto del Prodotto</label>
+                <label className="font-bold text-white/90 block mb-1.5">1. Foto del Prodotto *</label>
                 <div className="flex items-center gap-3">
-                  <div className="w-20 h-20 rounded-2xl border-2 border-dashed border-[#FB7185]/40 bg-black/50 overflow-hidden relative flex items-center justify-center shrink-0">
+                  <div className="w-20 h-20 rounded-2xl border-2 border-dashed border-[#E8D3A2]/60 bg-black/50 overflow-hidden relative flex items-center justify-center shrink-0">
                     {newProdImage ? (
                       <Image src={newProdImage} alt="Preview" fill className="object-cover" />
                     ) : (
-                      <Camera size={24} className="text-[#FDA4AF]/60" />
+                      <Camera size={26} className="text-[#E8D3A2]/70" />
                     )}
                   </div>
                   <div className="space-y-1.5 flex-1">
-                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-[#E11D48] text-white font-bold text-[11px] transition-colors border border-white/15">
-                      <Upload size={13} />
-                      <span>{newProdImage ? "Cambia Foto" : "Scatta o Carica Foto"}</span>
+                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white text-[#D11936] font-bold text-[11px] transition-colors shadow">
+                      <Upload size={14} />
+                      <span>{newProdImage ? "Cambia Foto" : "Scatta o Scegli Foto"}</span>
                       <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                     </label>
-                    <p className="text-[10px] text-white/40">Usa la fotocamera del tuo telefono o la galleria</p>
+                    <p className="text-[10px] text-white/60">Usa la fotocamera del tuo telefono o la galleria</p>
                   </div>
                 </div>
               </div>
 
               {/* Nome */}
               <div>
-                <label className="font-bold text-white/80 block mb-1">Nome del Prodotto *</label>
+                <label className="font-bold text-white/90 block mb-1">Nome del Prodotto *</label>
                 <input
                   type="text"
                   required
-                  placeholder="Es. Shampoo Idratante Seta"
+                  placeholder="Es. Shampoo Riparatore Cheratina"
                   value={newProdName}
                   onChange={e => setNewProdName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-2xl glass-pill text-white placeholder-white/30 outline-none font-medium"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/20 text-white placeholder-white/40 outline-none font-medium"
                 />
               </div>
 
               {/* Categoria & Formato */}
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="font-bold text-white/80 block mb-1">Categoria</label>
+                  <label className="font-bold text-white/90 block mb-1">Categoria</label>
                   <select
                     value={newProdCategory}
                     onChange={e => setNewProdCategory(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-2xl bg-[#1C0A13] border border-[#FB7185]/30 text-white outline-none font-medium"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/20 text-white outline-none font-medium"
                   >
                     <option value="shampoo">Shampoo</option>
-                    <option value="maschere">Maschera</option>
+                    <option value="maschere">Maschera / Balsamo</option>
                     <option value="oli">Olio / Siero</option>
                     <option value="styling">Styling</option>
-                    <option value="kit">Kit Completo</option>
+                    <option value="kit">Kit Trattamento</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="font-bold text-white/80 block mb-1">Formato</label>
+                  <label className="font-bold text-white/90 block mb-1">Formato</label>
                   <input
                     type="text"
-                    placeholder="Es. 250 ml"
+                    placeholder="Es. 250 ml / 100 ml"
                     value={newProdSize}
                     onChange={e => setNewProdSize(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-2xl glass-pill text-white placeholder-white/30 outline-none font-medium"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/20 text-white placeholder-white/40 outline-none font-medium"
                   />
                 </div>
               </div>
@@ -1423,59 +981,59 @@ export default function CambiaLookApp() {
               {/* Prezzo & Linea */}
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="font-bold text-white/80 block mb-1">Prezzo (€) *</label>
+                  <label className="font-bold text-white/90 block mb-1">Prezzo (€) *</label>
                   <input
                     type="text"
                     required
                     placeholder="Es. 22.00"
                     value={newProdPrice}
                     onChange={e => setNewProdPrice(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-2xl glass-pill text-white placeholder-white/30 outline-none font-bold text-[#FB7185]"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-[#E8D3A2]/60 text-[#E8D3A2] font-black placeholder-white/40 outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-white/80 block mb-1">Linea / Brand</label>
+                  <label className="font-bold text-white/90 block mb-1">Linea / Brand</label>
                   <input
                     type="text"
                     placeholder="Es. Cambia Look Care"
                     value={newProdBrand}
                     onChange={e => setNewProdBrand(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-2xl glass-pill text-white placeholder-white/30 outline-none font-medium"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/20 text-white placeholder-white/40 outline-none font-medium"
                   />
                 </div>
               </div>
 
               {/* Descrizione */}
               <div>
-                <label className="font-bold text-white/80 block mb-1">Descrizione & Consigli d'Uso</label>
+                <label className="font-bold text-white/90 block mb-1">Descrizione & Consigli d'Uso</label>
                 <textarea
                   rows={2}
-                  placeholder="Spiega alle clienti a cosa serve e come si usa..."
+                  placeholder="Spiega alle clienti a cosa serve e come si applica..."
                   value={newProdDesc}
                   onChange={e => setNewProdDesc(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-2xl glass-pill text-white placeholder-white/30 outline-none font-medium resize-none"
+                  className="w-full px-3.5 py-2 rounded-xl bg-black/40 border border-white/20 text-white placeholder-white/40 outline-none font-medium resize-none"
                 />
               </div>
 
               {/* Benefici */}
               <div>
-                <label className="font-bold text-white/80 block mb-1">Benefici (separati da virgola)</label>
+                <label className="font-bold text-white/90 block mb-1">Benefici Principali (separati da virgola)</label>
                 <input
                   type="text"
-                  placeholder="Es. Anticrespo, Lucidante, Nutriente"
+                  placeholder="Es. Anticrespo, Lucidante, Ristrutturante"
                   value={newProdBenefits}
                   onChange={e => setNewProdBenefits(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-2xl glass-pill text-white placeholder-white/30 outline-none font-medium"
+                  className="w-full px-3.5 py-2 rounded-xl bg-black/40 border border-white/20 text-white placeholder-white/40 outline-none font-medium"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full py-4 rounded-2xl btn-glamour text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-2xl active:scale-95"
+                className="w-full py-3.5 rounded-2xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all"
               >
                 <Check size={16} />
-                <span>Pubblica Subito nel Catalogo</span>
+                <span>Pubblica in Vetrina</span>
               </button>
             </form>
           </div>
@@ -1486,16 +1044,16 @@ export default function CambiaLookApp() {
       {/* MODAL PIN TITOLARE */}
       {/* ========================================================================================= */}
       {isPinModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-xs glass-pill rounded-[32px] p-6 space-y-4 shadow-2xl text-center border border-[#FB7185]/40">
-            <div className="w-12 h-12 rounded-2xl bg-[#E11D48]/20 text-[#FB7185] mx-auto flex items-center justify-center border border-[#FB7185]/30">
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-xs bg-[#80081B] border-2 border-[#E8D3A2] rounded-3xl p-6 space-y-4 shadow-2xl text-center">
+            <div className="w-12 h-12 rounded-2xl bg-white/10 text-[#E8D3A2] mx-auto flex items-center justify-center border border-[#E8D3A2]/40">
               <Lock size={22} />
             </div>
 
             <div>
-              <h3 className="text-base font-bold text-white font-serif">Area Riservata Salone</h3>
-              <p className="text-[11px] text-white/50 mt-1">
-                Inserisci il PIN per scattare foto e aggiungere prodotti (PIN demo: <strong className="text-white">1234</strong> o premi Sblocca)
+              <h3 className="text-base font-bold text-white">Accesso Staff Salone</h3>
+              <p className="text-[11px] text-white/70 mt-1">
+                Inserisci il PIN per scattare foto e aggiungere prodotti (PIN demo: <strong className="text-white">1234</strong>)
               </p>
             </div>
 
@@ -1505,25 +1063,25 @@ export default function CambiaLookApp() {
               placeholder="••••"
               value={pinInput}
               onChange={e => setPinInput(e.target.value)}
-              className="w-32 mx-auto text-center text-xl tracking-widest px-3 py-2 rounded-2xl bg-black/50 border border-[#FB7185]/40 text-white outline-none focus:border-[#FB7185]"
+              className="w-32 mx-auto text-center text-xl tracking-widest px-3 py-2 rounded-2xl bg-black/50 border border-[#E8D3A2] text-white outline-none"
             />
 
             {pinError && (
-              <p className="text-[10px] text-rose-400 font-bold">PIN errato. Prova 1234</p>
+              <p className="text-[10px] text-amber-300 font-bold">PIN errato. Prova 1234</p>
             )}
 
             <div className="flex gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => setIsPinModalOpen(false)}
-                className="flex-1 py-2.5 rounded-2xl bg-white/10 text-white text-xs font-bold hover:bg-white/20 transition-colors"
+                className="flex-1 py-2.5 rounded-xl bg-white/10 text-white text-xs font-bold hover:bg-white/20 transition-colors"
               >
                 Annulla
               </button>
               <button
                 type="button"
                 onClick={handleVerifyPin}
-                className="flex-1 py-2.5 rounded-2xl btn-glamour text-white text-xs font-black shadow-lg"
+                className="flex-1 py-2.5 rounded-xl bg-white text-[#D11936] text-xs font-black shadow-lg hover:bg-[#E8D3A2]"
               >
                 Sblocca
               </button>
@@ -1533,16 +1091,15 @@ export default function CambiaLookApp() {
       )}
 
       {/* ========================================================================================= */}
-      {/* FLOATING GLASS BOTTOM NAVIGATION BAR (Non toglie spazio visivo) */}
+      {/* BOTTOM NAVIGATION BAR (VETRINA ROSSO CAMBIA LOOK) */}
       {/* ========================================================================================= */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#070305]/75 backdrop-blur-2xl border-t border-white/10 max-w-md mx-auto safe-pb shadow-[0_-10px_35px_rgba(0,0,0,0.8)]">
-        <div className="grid grid-cols-5 h-16 items-center px-2">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#A60F25]/95 backdrop-blur-xl border-t border-black/20 max-w-md mx-auto safe-pb shadow-[0_-5px_25px_rgba(0,0,0,0.4)]">
+        <div className="grid grid-cols-4 h-16 items-center px-2">
           {[
-            { id: "home", label: "Lookbook", icon: Home },
-            { id: "servizi", label: "Servizi", icon: Scissors },
-            { id: "prodotti", label: "Prodotti", icon: ShoppingBag },
-            { id: "fidelity", label: "VIP Club", icon: Award },
-            { id: "profilo", label: "Salone", icon: User },
+            { id: "saloni", label: "I Saloni", icon: Store },
+            { id: "servizi", label: "Trattamenti", icon: Scissors },
+            { id: "prodotti", label: "I Prodotti", icon: ShoppingBag },
+            { id: "info", label: "Contatti", icon: MapPin },
           ].map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1550,17 +1107,14 @@ export default function CambiaLookApp() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex flex-col items-center justify-center gap-1 transition-all py-1 relative ${
-                  isActive ? "text-white" : "text-white/40 hover:text-white/70"
+                className={`flex flex-col items-center justify-center gap-1 transition-all py-1 ${
+                  isActive ? "text-white" : "text-white/60 hover:text-white"
                 }`}
               >
-                {isActive && (
-                  <span className="absolute -top-1 w-6 h-1 rounded-full bg-gradient-to-r from-[#FB7185] to-[#E11D48] shadow-[0_0_12px_#E11D48]" />
-                )}
-                <div className={`p-1.5 rounded-2xl transition-all ${isActive ? "bg-gradient-to-tr from-[#9F1239] to-[#E11D48] text-white shadow-lg shadow-[#E11D48]/40 scale-110" : ""}`}>
+                <div className={`p-1 rounded-xl transition-all ${isActive ? "bg-white text-[#D11936] shadow-md scale-105" : ""}`}>
                   <Icon size={19} strokeWidth={isActive ? 2.5 : 2} />
                 </div>
-                <span className={`text-[10px] ${isActive ? "font-black tracking-tight text-[#FDA4AF]" : "font-medium"}`}>
+                <span className={`text-[10px] ${isActive ? "font-black text-white" : "font-medium"}`}>
                   {tab.label}
                 </span>
               </button>
