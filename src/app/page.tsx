@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { 
   Calendar, 
@@ -28,11 +28,19 @@ import {
   Plus,
   Minus,
   Check,
-  Sparkle
+  Sparkle,
+  Upload,
+  Camera,
+  Trash2,
+  Lock,
+  Unlock,
+  ShieldCheck,
+  Eye,
+  Sliders
 } from "lucide-react";
 
 // --- SERVIZI DONNA ---
-const SERVICES = [
+const INITIAL_SERVICES = [
   {
     id: "piega-glamour",
     category: "piega",
@@ -108,7 +116,7 @@ const SERVICES = [
 ];
 
 // --- PRODOTTI VENDUTI IN SALONE ---
-const PRODUCTS = [
+const INITIAL_PRODUCTS = [
   {
     id: "shampoo-cheratina",
     category: "shampoo",
@@ -201,6 +209,46 @@ export default function CambiaLookApp() {
   const [serviceCategory, setServiceCategory] = useState<string>("tutti");
   const [productCategory, setProductCategory] = useState<string>("tutti");
   
+  // Products Dynamic State (with localStorage persistence)
+  const [productsList, setProductsList] = useState<any[]>(INITIAL_PRODUCTS);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("cambia_look_products");
+      if (saved) {
+        setProductsList(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
+  const saveProducts = (newList: any[]) => {
+    setProductsList(newList);
+    try {
+      localStorage.setItem("cambia_look_products", JSON.stringify(newList));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Staff / Salon Mode State (The killer feature for demonstration!)
+  const [isStaffMode, setIsStaffMode] = useState<boolean>(false);
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState(false);
+
+  // New Product Modal Form State
+  const [isNewProductModalOpen, setIsNewProductModalOpen] = useState(false);
+  const [newProdName, setNewProdName] = useState("");
+  const [newProdCategory, setNewProdCategory] = useState("shampoo");
+  const [newProdBrand, setNewProdBrand] = useState("Cambia Look Care");
+  const [newProdPrice, setNewProdPrice] = useState("");
+  const [newProdSize, setNewProdSize] = useState("250 ml");
+  const [newProdDesc, setNewProdDesc] = useState("");
+  const [newProdBenefits, setNewProdBenefits] = useState("");
+  const [newProdImage, setNewProdImage] = useState<string>("");
+
   // Booking Modal State
   const [bookingService, setBookingService] = useState<any | null>(null);
   const [bookingStylist, setBookingStylist] = useState<string>("any");
@@ -208,7 +256,7 @@ export default function CambiaLookApp() {
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
 
-  // Product Reserve Modal State
+  // Product Reserve Modal State (Customer View)
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [reservedCount, setReservedCount] = useState<number>(1);
   const [productReserved, setProductReserved] = useState(false);
@@ -221,6 +269,90 @@ export default function CambiaLookApp() {
     setNotificationText(text);
     setShowNotification(true);
     setTimeout(() => setShowNotification(false), 5000);
+  };
+
+  const handleToggleStaffMode = () => {
+    if (isStaffMode) {
+      setIsStaffMode(false);
+      triggerPushDemo("👤 Modalità Cliente Attiva (I clienti vedono solo i prodotti e i servizi)");
+    } else {
+      setIsPinModalOpen(true);
+      setPinInput("");
+      setPinError(false);
+    }
+  };
+
+  const handleVerifyPin = () => {
+    // Demo PIN: 1234 or empty
+    if (pinInput === "1234" || pinInput === "") {
+      setIsStaffMode(true);
+      setIsPinModalOpen(false);
+      triggerPushDemo("👑 Accesso Titolare Salone Attivato! Ora puoi inserire e gestire i prodotti.");
+    } else {
+      setPinError(true);
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewProdImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCreateProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newProdName || !newProdPrice) return;
+
+    const parsedPrice = parseFloat(newProdPrice.replace(",", ".")) || 0;
+    const benefitsList = newProdBenefits
+      ? newProdBenefits.split(",").map(b => b.trim()).filter(Boolean)
+      : ["Idratazione professionale", "Formula salone esclusiva"];
+
+    const fallbackImg = newProdCategory === "shampoo" 
+      ? "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?q=80&w=700&auto=format&fit=crop"
+      : newProdCategory === "maschere"
+      ? "https://images.unsplash.com/photo-1608248597359-0a64980654bc?q=80&w=700&auto=format&fit=crop"
+      : "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?q=80&w=700&auto=format&fit=crop";
+
+    const newProduct = {
+      id: `prod-${Date.now()}`,
+      category: newProdCategory,
+      name: newProdName,
+      brand: newProdBrand || "Cambia Look Care",
+      price: parsedPrice,
+      size: newProdSize || "Formato Salone",
+      desc: newProdDesc || "Prodotto professionale testato e consigliato dalle stylist del salone Cambia Look.",
+      benefits: benefitsList,
+      img: newProdImage || fallbackImg,
+      inStock: true,
+      bestseller: false
+    };
+
+    saveProducts([newProduct, ...productsList]);
+    setIsNewProductModalOpen(false);
+
+    // Reset Form
+    setNewProdName("");
+    setNewProdPrice("");
+    setNewProdDesc("");
+    setNewProdBenefits("");
+    setNewProdImage("");
+
+    triggerPushDemo(`🎉 Prodotto "${newProduct.name}" aggiunto con successo al catalogo! Ora è visibile a tutte le clienti.`);
+  };
+
+  const handleDeleteProduct = (productId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm("Vuoi davvero rimuovere questo prodotto dal catalogo dell'app?")) {
+      const filtered = productsList.filter(p => p.id !== productId);
+      saveProducts(filtered);
+      triggerPushDemo("🗑️ Prodotto rimosso dal catalogo");
+    }
   };
 
   const handleStartBooking = (service: any) => {
@@ -270,8 +402,24 @@ export default function CambiaLookApp() {
         </div>
       )}
 
+      {/* STAFF MODE BANNER (When Active) */}
+      {isStaffMode && (
+        <div className="bg-gradient-to-r from-[#9F1239] via-[#D91B42] to-[#E11D48] text-white px-4 py-2 text-xs font-bold flex items-center justify-between shadow-lg sticky top-0 z-40">
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={16} />
+            <span>Modalità Gestione Titolare (Salone)</span>
+          </div>
+          <button 
+            onClick={handleToggleStaffMode}
+            className="px-2.5 py-1 bg-black/30 hover:bg-black/50 text-[10px] uppercase font-black rounded-lg transition-colors"
+          >
+            Vista Cliente
+          </button>
+        </div>
+      )}
+
       {/* TOP HEADER */}
-      <header className="px-5 pt-12 pb-4 bg-gradient-to-b from-[#1C0E13] via-[#1C0E13]/95 to-transparent sticky top-0 z-30 backdrop-blur-md flex items-center justify-between border-b border-[#421C28]/60">
+      <header className="px-5 pt-10 pb-4 bg-gradient-to-b from-[#1C0E13] via-[#1C0E13]/95 to-transparent sticky top-0 z-30 backdrop-blur-md flex items-center justify-between border-b border-[#421C28]/60">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#9F1239] to-[#E11D48] p-0.5 shadow-lg shadow-[#D91B42]/20 flex items-center justify-center overflow-hidden">
             <div className="w-full h-full bg-[#180C10] rounded-[14px] flex items-center justify-center p-1">
@@ -297,13 +445,26 @@ export default function CambiaLookApp() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Staff Switch Demo Button */}
+          <button 
+            onClick={handleToggleStaffMode}
+            className={`px-2.5 py-1.5 rounded-full border text-[10px] font-black uppercase flex items-center gap-1.5 transition-all ${
+              isStaffMode 
+                ? "bg-[#D91B42] text-white border-[#D91B42]" 
+                : "bg-white/5 border-white/10 text-white/70 hover:text-white"
+            }`}
+            title={isStaffMode ? "Torna a vista cliente" : "Accedi come Titolare Salone"}
+          >
+            {isStaffMode ? <Unlock size={12} /> : <Lock size={12} />}
+            <span>{isStaffMode ? "Staff" : "Titolare"}</span>
+          </button>
+
           <button 
             onClick={() => triggerPushDemo("🔔 Promemoria: Ciao Giulia! Ti ricordiamo il tuo appuntamento domani alle 15:30 da Cambia Look.")}
             className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/80 hover:text-[#E63956] hover:border-[#D91B42]/40 transition-colors relative"
             title="Simula Notifica Push"
           >
             <Bell size={17} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#D91B42] animate-ping" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#D91B42]" />
           </button>
         </div>
@@ -364,7 +525,7 @@ export default function CambiaLookApp() {
                 </div>
                 <div>
                   <h3 className="text-xs font-black text-white group-hover:text-[#FDA4AF] transition-colors">Trattamenti Salone</h3>
-                  <p className="text-[10px] text-white/50">{SERVICES.length} servizi esclusivi</p>
+                  <p className="text-[10px] text-white/50">{INITIAL_SERVICES.length} servizi esclusivi</p>
                 </div>
               </div>
 
@@ -378,8 +539,55 @@ export default function CambiaLookApp() {
                 </div>
                 <div>
                   <h3 className="text-xs font-black text-white group-hover:text-[#FDA4AF] transition-colors">Linee Prodotti</h3>
-                  <p className="text-[10px] text-white/50">{PRODUCTS.length} prodotti disponibili</p>
+                  <p className="text-[10px] text-white/50">{productsList.length} prodotti disponibili</p>
                 </div>
+              </div>
+            </div>
+
+            {/* SEZIONE: PRODOTTI DEL SALONE IN PRIMO PIANO */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-black font-serif tracking-tight text-white flex items-center gap-2">
+                  <ShoppingBag size={15} className="text-[#E63956]" />
+                  <span>I Prodotti del Salone</span>
+                </h3>
+                <button 
+                  onClick={() => setActiveTab("prodotti")}
+                  className="text-[11px] font-bold text-[#FDA4AF] hover:underline"
+                >
+                  Shop Completo ({productsList.length})
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {productsList.slice(0, 2).map((prod) => (
+                  <div 
+                    key={prod.id}
+                    onClick={() => { setSelectedProduct(prod); setReservedCount(1); }}
+                    className="p-3 rounded-2xl bg-[#1C0E13] border border-[#421C28]/60 hover:border-[#D91B42]/60 transition-all flex flex-col justify-between cursor-pointer group relative"
+                  >
+                    <div className="relative aspect-square rounded-xl overflow-hidden bg-black/40 mb-2.5">
+                      <Image 
+                        src={prod.img} 
+                        alt={prod.name} 
+                        fill 
+                        className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                      />
+                      <span className="absolute top-2 left-2 text-[8px] font-black uppercase tracking-wider bg-[#D91B42] text-white px-2 py-0.5 rounded-full shadow">
+                        Salone
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-bold text-white line-clamp-1 group-hover:text-[#FDA4AF] transition-colors">{prod.name}</h4>
+                      <p className="text-[10px] text-white/50">{prod.size}</p>
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-xs font-black text-[#E63956]">€ {Number(prod.price).toFixed(2)}</span>
+                        <span className="text-[10px] text-emerald-400 font-bold">Disponibile</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -394,12 +602,12 @@ export default function CambiaLookApp() {
                   onClick={() => setActiveTab("servizi")}
                   className="text-[11px] font-bold text-[#FDA4AF] hover:underline"
                 >
-                  Vedi Tutti ({SERVICES.length})
+                  Tutti ({INITIAL_SERVICES.length})
                 </button>
               </div>
 
               <div className="grid grid-cols-1 gap-2.5">
-                {SERVICES.slice(0, 3).map((serv) => (
+                {INITIAL_SERVICES.slice(0, 3).map((serv) => (
                   <div 
                     key={serv.id}
                     onClick={() => handleStartBooking(serv)}
@@ -425,53 +633,6 @@ export default function CambiaLookApp() {
                       <button className="mt-1 px-2.5 py-1 rounded-lg bg-[#D91B42]/20 text-[#FDA4AF] group-hover:bg-[#D91B42] group-hover:text-white text-[10px] font-black uppercase transition-all">
                         Prenota
                       </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* SEZIONE: PRODOTTI DEL SALONE IN PRIMO PIANO */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-black font-serif tracking-tight text-white flex items-center gap-2">
-                  <ShoppingBag size={15} className="text-[#E63956]" />
-                  <span>I Prodotti Consigliati per Te</span>
-                </h3>
-                <button 
-                  onClick={() => setActiveTab("prodotti")}
-                  className="text-[11px] font-bold text-[#FDA4AF] hover:underline"
-                >
-                  Shop Completo ({PRODUCTS.length})
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {PRODUCTS.slice(0, 2).map((prod) => (
-                  <div 
-                    key={prod.id}
-                    onClick={() => { setSelectedProduct(prod); setReservedCount(1); }}
-                    className="p-3 rounded-2xl bg-[#1C0E13] border border-[#421C28]/60 hover:border-[#D91B42]/60 transition-all flex flex-col justify-between cursor-pointer group"
-                  >
-                    <div className="relative aspect-square rounded-xl overflow-hidden bg-black/40 mb-2.5">
-                      <Image 
-                        src={prod.img} 
-                        alt={prod.name} 
-                        fill 
-                        className="object-cover group-hover:scale-105 transition-transform duration-500" 
-                      />
-                      <span className="absolute top-2 left-2 text-[8px] font-black uppercase tracking-wider bg-[#D91B42] text-white px-2 py-0.5 rounded-full shadow">
-                        Salone
-                      </span>
-                    </div>
-
-                    <div className="space-y-1">
-                      <h4 className="text-xs font-bold text-white line-clamp-1 group-hover:text-[#FDA4AF] transition-colors">{prod.name}</h4>
-                      <p className="text-[10px] text-white/50">{prod.size}</p>
-                      <div className="flex items-center justify-between pt-1">
-                        <span className="text-xs font-black text-[#E63956]">€ {prod.price.toFixed(2)}</span>
-                        <span className="text-[10px] text-emerald-400 font-bold">Disponibile</span>
-                      </div>
                     </div>
                   </div>
                 ))}
@@ -558,7 +719,7 @@ export default function CambiaLookApp() {
 
             {/* Services List */}
             <div className="space-y-3">
-              {SERVICES
+              {INITIAL_SERVICES
                 .filter(s => serviceCategory === "tutti" || s.category === serviceCategory)
                 .map(serv => (
                   <div 
@@ -602,12 +763,27 @@ export default function CambiaLookApp() {
         {/* TAB 3: PRODOTTI DEL SALONE (VETRINA & SHOP) */}
         {activeTab === "prodotti" && (
           <div className="space-y-5 animate-in fade-in duration-300">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#D91B42]/20 border border-[#D91B42]/30 text-[#FDA4AF] text-[9px] font-black uppercase tracking-wider mb-1">
-                Shop Salone
+            <div className="flex justify-between items-start">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#D91B42]/20 border border-[#D91B42]/30 text-[#FDA4AF] text-[9px] font-black uppercase tracking-wider mb-1">
+                  Shop Salone
+                </div>
+                <h2 className="text-xl font-black font-serif text-white">Linee Prodotti Salone</h2>
+                <p className="text-xs text-white/50">
+                  {isStaffMode ? "Pannello Titolare: aggiungi e modifica i prodotti" : "Trattamenti professionali da portare a casa"}
+                </p>
               </div>
-              <h2 className="text-xl font-black font-serif text-white">Linee Prodotti Professionali</h2>
-              <p className="text-xs text-white/50">I trattamenti di bellezza per continuare la cura dei tuoi capelli a casa.</p>
+
+              {/* STAFF BUTTON: "+ AGGIUNGI PRODOTTO" */}
+              {isStaffMode && (
+                <button
+                  onClick={() => setIsNewProductModalOpen(true)}
+                  className="py-2 px-3 rounded-xl bg-gradient-to-r from-[#D91B42] to-[#E11D48] text-white text-xs font-black flex items-center gap-1.5 shadow-lg shadow-[#D91B42]/30 active:scale-95 transition-all"
+                >
+                  <Plus size={15} />
+                  <span>Nuovo Prodotto</span>
+                </button>
+              )}
             </div>
 
             {/* Product Category Filter Pills */}
@@ -636,14 +812,25 @@ export default function CambiaLookApp() {
 
             {/* Products Grid */}
             <div className="grid grid-cols-2 gap-3.5">
-              {PRODUCTS
+              {productsList
                 .filter(p => productCategory === "tutti" || p.category === productCategory)
                 .map(prod => (
                   <div 
                     key={prod.id}
                     onClick={() => { setSelectedProduct(prod); setReservedCount(1); }}
-                    className="p-3 rounded-2xl bg-[#1C0E13] border border-[#421C28]/60 hover:border-[#D91B42]/60 transition-all flex flex-col justify-between cursor-pointer group"
+                    className="p-3 rounded-2xl bg-[#1C0E13] border border-[#421C28]/60 hover:border-[#D91B42]/60 transition-all flex flex-col justify-between cursor-pointer group relative"
                   >
+                    {/* Delete button if in Staff Mode */}
+                    {isStaffMode && (
+                      <button
+                        onClick={(e) => handleDeleteProduct(prod.id, e)}
+                        className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-black/70 hover:bg-rose-600 text-white flex items-center justify-center transition-colors shadow-md"
+                        title="Elimina prodotto"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+
                     <div>
                       <div className="relative aspect-square rounded-xl overflow-hidden bg-black/40 mb-2.5">
                         <Image 
@@ -667,9 +854,9 @@ export default function CambiaLookApp() {
                     </div>
 
                     <div className="pt-3 border-t border-white/5 mt-2 flex items-center justify-between">
-                      <span className="text-xs font-black text-[#E63956]">€ {prod.price.toFixed(2)}</span>
+                      <span className="text-xs font-black text-[#E63956]">€ {Number(prod.price).toFixed(2)}</span>
                       <button className="px-2 py-1 rounded-lg bg-[#D91B42]/20 text-[#FDA4AF] group-hover:bg-[#D91B42] group-hover:text-white text-[10px] font-bold uppercase transition-all">
-                        Dettagli
+                        {isStaffMode ? "Modifica" : "Dettagli"}
                       </button>
                     </div>
                   </div>
@@ -681,7 +868,7 @@ export default function CambiaLookApp() {
               <Package size={20} className="mx-auto text-[#E63956]" />
               <h4 className="text-xs font-bold text-white">Ritiro Comodo in Salone</h4>
               <p className="text-[11px] text-white/50 leading-relaxed">
-                Riserva i tuoi prodotti preferiti dall'app: li prepariamo e li trovi pronti al tuo prossimo appuntamento o quando passi a trovarci!
+                Le tue clienti possono visionare e riservare i prodotti direttamente dall'app, per trovarli pronti al salone o richiederli durante l'appuntamento.
               </p>
             </div>
           </div>
@@ -800,12 +987,12 @@ export default function CambiaLookApp() {
           </div>
         )}
 
-        {/* TAB 5: PROFILO & SALONE */}
+        {/* TAB 5: PROFILO & AREA SALONE */}
         {activeTab === "profilo" && (
           <div className="space-y-6 animate-in fade-in duration-300">
             <div>
-              <h2 className="text-xl font-black font-serif text-white">Il Tuo Profilo</h2>
-              <p className="text-xs text-white/50">Appuntamenti, prodotti riservati e contatti salone.</p>
+              <h2 className="text-xl font-black font-serif text-white">Profilo & Salone</h2>
+              <p className="text-xs text-white/50">Appuntamenti, tessere e gestione salone.</p>
             </div>
 
             {/* USER CARD */}
@@ -820,6 +1007,24 @@ export default function CambiaLookApp() {
                   Cliente VIP Salone
                 </span>
               </div>
+            </div>
+
+            {/* SEZIONE SPECIALE: ACCESSO TITOLARE SALONE (Per far capire la differenza clienti/parrucchiere) */}
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-[#2D121C] to-[#1C0E13] border border-[#D91B42]/50 space-y-3">
+              <div className="flex items-center gap-2 text-white font-bold text-xs">
+                <ShieldCheck size={16} className="text-[#E63956]" />
+                <span>Area Riservata Parrucchieri (Titolare)</span>
+              </div>
+              <p className="text-[11px] text-white/60 leading-relaxed">
+                Le clienti vedono solo i prodotti e i servizi. I parrucchieri possono attivare la modalità titolare per inserire nuove foto di prodotti, descrizioni e prezzi direttamente dall'app.
+              </p>
+              <button
+                onClick={handleToggleStaffMode}
+                className="w-full py-2.5 px-3 rounded-xl bg-[#D91B42]/20 hover:bg-[#D91B42] text-[#FDA4AF] hover:text-white border border-[#D91B42]/40 text-xs font-bold transition-all flex items-center justify-center gap-2"
+              >
+                {isStaffMode ? <Eye size={14} /> : <Sliders size={14} />}
+                <span>{isStaffMode ? "Passa a Vista Cliente" : "Sblocca Modalità Gestione Salone (PIN)"}</span>
+              </button>
             </div>
 
             {/* PROSSIMO APPUNTAMENTO */}
@@ -880,14 +1085,6 @@ export default function CambiaLookApp() {
                   <div className="w-4 h-4 bg-white rounded-full shadow-md" />
                 </div>
               </div>
-            </div>
-
-            {/* DEMO NOTE */}
-            <div className="p-3.5 rounded-2xl bg-[#D91B42]/10 border border-[#D91B42]/20 text-center">
-              <p className="text-[11px] text-[#FDA4AF] font-medium">
-                ❤️ <strong>Bozza Ufficiale Cambia Look • Salone Donna</strong><br />
-                Aggiungila alla schermata Home del tuo smartphone per mostrarla a schermo intero alla cliente.
-              </p>
             </div>
           </div>
         )}
@@ -991,8 +1188,8 @@ export default function CambiaLookApp() {
         </div>
       )}
 
-      {/* MODAL 2: DETTAGLIO & RISERVA PRODOTTO */}
-      {selectedProduct && (
+      {/* MODAL 2: DETTAGLIO & RISERVA PRODOTTO (VISTA CLIENTE) */}
+      {selectedProduct && !isStaffMode && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-200">
           <div className="w-full max-w-md bg-[#1C0E13] border-t border-[#D91B42]/50 rounded-t-3xl p-6 space-y-5 animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto no-scrollbar shadow-2xl">
             
@@ -1027,7 +1224,7 @@ export default function CambiaLookApp() {
               <div className="space-y-1.5 pt-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-white/50">Benefici per i tuoi capelli:</span>
                 <div className="flex flex-wrap gap-1.5">
-                  {selectedProduct.benefits.map((b: string, i: number) => (
+                  {(selectedProduct.benefits || []).map((b: string, i: number) => (
                     <span key={i} className="inline-flex items-center gap-1 text-[10px] bg-white/5 border border-white/10 text-white/80 px-2.5 py-1 rounded-lg">
                       <Sparkle size={10} className="text-[#FDA4AF]" />
                       <span>{b}</span>
@@ -1083,6 +1280,212 @@ export default function CambiaLookApp() {
         </div>
       )}
 
+      {/* MODAL 3: INSERIMENTO NUOVO PRODOTTO (VISTA TITOLARE / PARRUCCHIERE) */}
+      {isNewProductModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[#1C0E13] border-t-2 border-[#D91B42] rounded-t-3xl p-6 space-y-4 animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto no-scrollbar shadow-2xl">
+            
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#D91B42]/20 text-[#E63956] flex items-center justify-center">
+                  <Plus size={16} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white font-serif">Aggiungi Prodotto al Salone</h3>
+                  <span className="text-[10px] text-white/50">Carica foto, descrizione e prezzo per le clienti</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsNewProductModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:text-white"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateProduct} className="space-y-3.5 text-xs">
+              
+              {/* Photo Upload with live preview */}
+              <div>
+                <label className="font-bold text-white/80 block mb-1.5">1. Foto del Prodotto</label>
+                <div className="flex items-center gap-3">
+                  <div className="w-20 h-20 rounded-2xl border-2 border-dashed border-[#D91B42]/40 bg-black/40 overflow-hidden relative flex items-center justify-center shrink-0">
+                    {newProdImage ? (
+                      <Image src={newProdImage} alt="Preview" fill className="object-cover" />
+                    ) : (
+                      <Camera size={24} className="text-[#FDA4AF]/60" />
+                    )}
+                  </div>
+                  <div className="space-y-1.5 flex-1">
+                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-[#D91B42] text-white font-bold text-[11px] transition-colors">
+                      <Upload size={13} />
+                      <span>{newProdImage ? "Cambia Foto" : "Carica o Scatta Foto"}</span>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={handleImageUpload} 
+                      />
+                    </label>
+                    <p className="text-[10px] text-white/40">Scatta con la fotocamera o scegli dalla galleria</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="font-bold text-white/80 block mb-1">Nome del Prodotto *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Es. Shampoo Riparatore Nutritivo"
+                  value={newProdName}
+                  onChange={e => setNewProdName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#28141C] border border-[#421C28] text-white placeholder-white/30 focus:border-[#D91B42] outline-none font-medium"
+                />
+              </div>
+
+              {/* Category & Format */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="font-bold text-white/80 block mb-1">Categoria</label>
+                  <select
+                    value={newProdCategory}
+                    onChange={e => setNewProdCategory(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl bg-[#28141C] border border-[#421C28] text-white focus:border-[#D91B42] outline-none font-medium"
+                  >
+                    <option value="shampoo">Shampoo</option>
+                    <option value="maschere">Maschera / Balsamo</option>
+                    <option value="oli">Olio / Siero</option>
+                    <option value="styling">Styling & Finish</option>
+                    <option value="kit">Kit Trattamento</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-white/80 block mb-1">Formato</label>
+                  <input
+                    type="text"
+                    placeholder="Es. 250 ml / 100 ml"
+                    value={newProdSize}
+                    onChange={e => setNewProdSize(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#28141C] border border-[#421C28] text-white placeholder-white/30 focus:border-[#D91B42] outline-none font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Price & Brand */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="font-bold text-white/80 block mb-1">Prezzo (€) *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Es. 24.50"
+                    value={newProdPrice}
+                    onChange={e => setNewProdPrice(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#28141C] border border-[#421C28] text-white placeholder-white/30 focus:border-[#D91B42] outline-none font-bold text-[#E63956]"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-white/80 block mb-1">Marchio / Linea</label>
+                  <input
+                    type="text"
+                    placeholder="Es. Cambia Look Care"
+                    value={newProdBrand}
+                    onChange={e => setNewProdBrand(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#28141C] border border-[#421C28] text-white placeholder-white/30 focus:border-[#D91B42] outline-none font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="font-bold text-white/80 block mb-1">Descrizione & Consigli d'Uso</label>
+                <textarea
+                  rows={2}
+                  placeholder="Spiega alle clienti a cosa serve e come applicarlo..."
+                  value={newProdDesc}
+                  onChange={e => setNewProdDesc(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#28141C] border border-[#421C28] text-white placeholder-white/30 focus:border-[#D91B42] outline-none font-medium resize-none"
+                />
+              </div>
+
+              {/* Benefits tag */}
+              <div>
+                <label className="font-bold text-white/80 block mb-1">Benefici Principali (separati da virgola)</label>
+                <input
+                  type="text"
+                  placeholder="Es. Anticrespo, Lucidante, Termoprotettore"
+                  value={newProdBenefits}
+                  onChange={e => setNewProdBenefits(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#28141C] border border-[#421C28] text-white placeholder-white/30 focus:border-[#D91B42] outline-none font-medium"
+                />
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#D91B42] to-[#A80F30] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-[#D91B42]/30 flex items-center justify-center gap-2 active:scale-95 transition-all"
+                >
+                  <Check size={16} />
+                  <span>Pubblica Prodotto nell'App</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4: PIN ACCESS (PER PROTEGGERE L'AREA TITOLARE) */}
+      {isPinModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-xs bg-[#1C0E13] border border-[#D91B42]/50 rounded-3xl p-6 space-y-4 shadow-2xl text-center">
+            <div className="w-12 h-12 rounded-2xl bg-[#D91B42]/20 text-[#E63956] mx-auto flex items-center justify-center">
+              <Lock size={22} />
+            </div>
+
+            <div>
+              <h3 className="text-base font-bold text-white font-serif">Accesso Titolare Salone</h3>
+              <p className="text-[11px] text-white/50 mt-1">
+                Inserisci il PIN per gestire foto, prodotti e prezzi (PIN demo: <strong className="text-white">1234</strong> o premi Sblocca)
+              </p>
+            </div>
+
+            <input
+              type="password"
+              maxLength={4}
+              placeholder="••••"
+              value={pinInput}
+              onChange={e => setPinInput(e.target.value)}
+              className="w-32 mx-auto text-center text-xl tracking-widest px-3 py-2 rounded-xl bg-[#28141C] border border-[#421C28] text-white outline-none focus:border-[#D91B42]"
+            />
+
+            {pinError && (
+              <p className="text-[10px] text-rose-400 font-bold">PIN non valido. Usa 1234</p>
+            )}
+
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setIsPinModalOpen(false)}
+                className="flex-1 py-2 rounded-xl bg-white/10 text-white text-xs font-bold hover:bg-white/20"
+              >
+                Annulla
+              </button>
+              <button
+                type="button"
+                onClick={handleVerifyPin}
+                className="flex-1 py-2 rounded-xl bg-[#D91B42] text-white text-xs font-black shadow-lg shadow-[#D91B42]/30"
+              >
+                Sblocca
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* BOTTOM NAVIGATION BAR (Red Glamour Luxury Theme) */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#160A0F]/95 backdrop-blur-xl border-t border-[#421C28]/80 max-w-md mx-auto safe-pb">
         <div className="grid grid-cols-5 h-16 items-center px-1">
@@ -1091,7 +1494,7 @@ export default function CambiaLookApp() {
             { id: "servizi", label: "Servizi", icon: Scissors },
             { id: "prodotti", label: "Prodotti", icon: ShoppingBag },
             { id: "fidelity", label: "Fidelity", icon: Award },
-            { id: "profilo", label: "Profilo", icon: User },
+            { id: "profilo", label: "Salone", icon: User },
           ].map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
