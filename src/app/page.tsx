@@ -25,7 +25,6 @@ import {
   Eye, 
   Sliders, 
   Sparkle,
-  MessageCircle,
   Clock,
   Compass,
   Store,
@@ -47,7 +46,6 @@ const SALONS = [
     name: "Cisterna di Latina",
     address: "Corso della Repubblica, 184 • Cisterna di Latina (LT)",
     phone: "06 969 9412",
-    whatsapp: "39069699412",
     hours: "Mar - Sab: 08:30 - 19:30 • Lun e Dom Chiuso",
     image: "/salone_cisterna.jpg",
     description: "Atelier spazioso ed elegante con lampadario barocco fucsia, postazioni specchio luminose e consulenza personalizzata.",
@@ -57,14 +55,13 @@ const SALONS = [
     name: "Roma",
     address: "Via delle Cave, 72 • Roma (Zona Colli Albani / Appia)",
     phone: "06 780 4521",
-    whatsapp: "39067804521",
     hours: "Mar - Sab: 09:00 - 19:30 • Lun e Dom Chiuso",
     image: "/salone_roma.jpg",
     description: "Salone moderno nel cuore di Roma con specchiere barocche nere, team specializzato in biondi, balayage e cambi look donna.",
   }
 ];
 
-// --- LISTINO SERVIZI VETRINA (SOLA CONSULTAZIONE) ---
+// --- LISTINO SERVIZI VETRINA (CON FOTO DEDICATA PER OGNI SERVIZIO) ---
 const SERVICES_SHOWCASE = [
   {
     id: "balayage-soleil",
@@ -119,11 +116,31 @@ const SERVICES_SHOWCASE = [
   {
     id: "piega-finish",
     category: "Piega & Styling",
-    name: "Piega Glamour & Maschera Idratante",
+    name: "Piega Glamour & Finish Onde Morbide",
     price: "€ 25",
     desc: "Bagno capillare nutriente, massaggio cutaneo distensivo, maschera intensiva e styling finale a scelta.",
     duration: "40 min",
     tag: "Sempre Perfetta",
+    image: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?q=80&w=900&auto=format&fit=crop"
+  },
+  {
+    id: "gloss-specchio",
+    category: "Colore & Effetti Luce",
+    name: "Gloss Luce Specchio & Tonalizzante",
+    price: "€ 35",
+    desc: "Bagno di pura luce a pH acido che sigilla le cuticole ed esalta la brillantezza del colore o delle schiariture.",
+    duration: "35 min",
+    tag: "Lucentezza",
+    image: "https://images.unsplash.com/photo-1519699047748-de8e457a634e?q=80&w=900&auto=format&fit=crop"
+  },
+  {
+    id: "trattamento-ricostruzione",
+    category: "Trattamenti Benessere",
+    name: "Ricostruzione Profonda Effetto Seta",
+    price: "€ 40",
+    desc: "Protocollo intensivo aminoacidico che ricostruisce i legami interni del capello danneggiato da calore e tinte.",
+    duration: "50 min",
+    tag: "Intensivo",
     image: "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?q=80&w=900&auto=format&fit=crop"
   }
 ];
@@ -860,44 +877,81 @@ export default function CambiaLookApp() {
             <p className="text-xs text-white/80">Listino prezzi e trattamenti per sole donne</p>
           </div>
 
-          {/* Services Cards (Vetrina Chiara con Foto e Prezzo) */}
-          <div className="space-y-3.5">
+          {/* Services Cards (Vetrina con Foto per ogni Servizio) */}
+          <div className="space-y-4">
             {SERVICES_SHOWCASE.map((serv) => (
               <div 
                 key={serv.id}
                 onClick={() => setSelectedService(serv)}
-                className="p-4 rounded-2xl bg-black/35 backdrop-blur-md border border-white/20 hover:border-[#E8D3A2]/60 transition-all cursor-pointer group active:scale-[0.99] space-y-2.5"
+                className="rounded-3xl overflow-hidden bg-black/45 backdrop-blur-md border-2 border-white/90 hover:border-[#E8D3A2] transition-all cursor-pointer group active:scale-[0.99] shadow-xl relative"
               >
-                <div className="flex justify-between items-start gap-2">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[9px] font-black uppercase tracking-wider text-[#E8D3A2] bg-black/40 px-2 py-0.5 rounded-full">
-                        {serv.category}
+                {/* Cornicette dorate ornamentali */}
+                <div className="absolute top-2 left-2 z-20 text-[#E8D3A2] text-xs pointer-events-none">✦</div>
+                <div className="absolute top-2 right-2 z-20 text-[#E8D3A2] text-xs pointer-events-none">✦</div>
+
+                {/* Foto del Servizio */}
+                <div className="relative h-44 w-full overflow-hidden bg-black/60">
+                  <Image 
+                    src={serv.image} 
+                    alt={serv.name} 
+                    fill 
+                    className="object-cover group-hover:scale-105 transition-transform duration-700" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+
+                  {/* Badge Categoria e Tag */}
+                  <div className="absolute top-3.5 left-3.5 flex items-center gap-1.5 z-10">
+                    <span className="text-[9px] font-black uppercase tracking-wider text-[#E8D3A2] bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 shadow">
+                      {serv.category}
+                    </span>
+                    {serv.tag && (
+                      <span className="text-[9px] font-bold text-white bg-[#D11936]/85 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/15 shadow">
+                        {serv.tag}
                       </span>
-                      {serv.tag && (
-                        <span className="text-[9px] font-bold text-white/80 bg-white/10 px-2 py-0.5 rounded-full">
-                          {serv.tag}
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-base font-bold text-white mt-1 group-hover:text-[#E8D3A2] transition-colors">
+                    )}
+                  </div>
+
+                  {/* Prezzo in evidenza dorato sulla foto */}
+                  <div className="absolute top-3.5 right-3.5 bg-black/80 backdrop-blur-md px-3 py-1 rounded-xl border border-[#E8D3A2]/60 z-10 shadow">
+                    <span className="text-sm font-black text-[#E8D3A2]">{serv.price}</span>
+                  </div>
+
+                  {/* Nome del Servizio sovrapposto sulla foto */}
+                  <div className="absolute bottom-3 left-3.5 right-3.5 z-10">
+                    <h3 className="text-base font-bold text-white leading-tight drop-shadow group-hover:text-[#E8D3A2] transition-colors">
                       {serv.name}
                     </h3>
                   </div>
-                  <span className="text-base font-black text-[#E8D3A2] shrink-0 bg-black/50 px-2.5 py-1 rounded-xl border border-[#E8D3A2]/30">
-                    {serv.price}
-                  </span>
                 </div>
 
-                <p className="text-xs text-white/80 leading-relaxed font-normal">
-                  {serv.desc}
-                </p>
+                {/* Descrizione & Azioni */}
+                <div className="p-4 space-y-3">
+                  <p className="text-xs text-white/80 leading-relaxed font-normal">
+                    {serv.desc}
+                  </p>
 
-                <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[11px] text-white/70">
-                  <span className="flex items-center gap-1.5"><Clock size={12} className="text-[#E8D3A2]" /> Durata indicativa: {serv.duration}</span>
-                  <span className="text-[#E8D3A2] font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                    Vedi Dettagli <ChevronRight size={13} />
-                  </span>
+                  <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[11px] text-white/70">
+                    <span className="flex items-center gap-1.5">
+                      <Clock size={12} className="text-[#E8D3A2]" />
+                      <span>Durata indicativa: <strong className="text-white">{serv.duration}</strong></span>
+                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <a
+                        href="tel:069699412"
+                        onClick={e => e.stopPropagation()}
+                        className="py-1.5 px-2.5 rounded-xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-bold text-[10px] flex items-center gap-1 shadow transition-colors"
+                        title="Telefona al salone"
+                      >
+                        <Phone size={11} />
+                        <span>Telefona</span>
+                      </a>
+
+                      <span className="text-[#E8D3A2] font-bold flex items-center gap-0.5 group-hover:translate-x-1 transition-transform">
+                        Info <ChevronRight size={13} />
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -1092,34 +1146,24 @@ export default function CambiaLookApp() {
                         </button>
                       </div>
 
-                      {/* CONTATTI DIRETTI AL SALONE */}
-                      <div className="grid grid-cols-3 gap-2 pt-1 border-t border-white/10">
+                      {/* CONTATTI DIRETTI AL SALONE (SOLO TELEFONATA E MAPPE) */}
+                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/10">
                         <a
                           href={`tel:${salon.phone.replace(/\s+/g, '')}`}
-                          className="py-2 rounded-xl bg-black/40 hover:bg-black/60 text-white font-bold text-[10px] flex items-center justify-center gap-1 border border-white/15"
+                          className="py-2.5 rounded-xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-black text-xs flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
                         >
-                          <Phone size={11} className="text-[#E8D3A2]" />
-                          <span>Chiama</span>
-                        </a>
-
-                        <a
-                          href={`https://wa.me/${salon.whatsapp}?text=${encodeURIComponent(`Ciao Cambia Look, ho l'appuntamento il ${formatDateDisplay(appt.date)} alle ${appt.time} a ${salon.name}.`)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="py-2 rounded-xl bg-emerald-600/80 hover:bg-emerald-600 text-white font-bold text-[10px] flex items-center justify-center gap-1"
-                        >
-                          <MessageCircle size={11} />
-                          <span>WhatsApp</span>
+                          <Phone size={13} />
+                          <span>Chiama ({salon.phone})</span>
                         </a>
 
                         <a
                           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(salon.address)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="py-2 rounded-xl bg-black/40 hover:bg-black/60 text-white font-bold text-[10px] flex items-center justify-center gap-1 border border-white/15"
+                          className="py-2.5 rounded-xl bg-black/40 hover:bg-black/60 text-white font-bold text-xs flex items-center justify-center gap-1.5 border border-white/15"
                         >
-                          <MapPin size={11} className="text-[#E8D3A2]" />
-                          <span>Mappa</span>
+                          <MapPin size={13} className="text-[#E8D3A2]" />
+                          <span>Indicazioni Mappa</span>
                         </a>
                       </div>
 
@@ -1319,21 +1363,14 @@ export default function CambiaLookApp() {
                   </div>
                 </div>
 
-                <div className="pt-2 flex gap-2">
-                  <button 
-                    onClick={() => triggerPushDemo(`📞 Chiamata al salone di ${salon.name} (${salon.phone})`)}
-                    className="flex-1 py-2 px-3 rounded-xl bg-white text-[#D11936] font-bold text-xs flex items-center justify-center gap-1.5 shadow"
+                <div className="pt-2">
+                  <a 
+                    href={`tel:${salon.phone.replace(/\s+/g, '')}`}
+                    className="w-full py-3 px-4 rounded-xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-black text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
                   >
-                    <Phone size={13} />
-                    <span>Chiama Ora</span>
-                  </button>
-                  <button 
-                    onClick={() => triggerPushDemo(`💬 Apertura chat WhatsApp con il salone di ${salon.name}`)}
-                    className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow"
-                  >
-                    <MessageCircle size={14} />
-                    <span>WhatsApp</span>
-                  </button>
+                    <Phone size={15} />
+                    <span>Telefona a {salon.name} ({salon.phone})</span>
+                  </a>
                 </div>
               </div>
             ))}
@@ -1399,21 +1436,14 @@ export default function CambiaLookApp() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5 pt-1">
-                <button 
-                  onClick={() => triggerPushDemo(`📞 Chiamata al salone di ${selectedSalon.name}`)}
-                  className="py-3 px-4 rounded-xl bg-white text-[#D11936] font-bold text-xs flex items-center justify-center gap-2 shadow"
+              <div className="pt-2">
+                <a 
+                  href={`tel:${selectedSalon.phone.replace(/\s+/g, '')}`}
+                  className="w-full py-3.5 px-4 rounded-xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-black text-xs flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all"
                 >
-                  <Phone size={15} />
-                  <span>Chiama Salone</span>
-                </button>
-                <button 
-                  onClick={() => triggerPushDemo(`💬 Apertura chat WhatsApp (${selectedSalon.name})`)}
-                  className="py-3 px-4 rounded-xl bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-2 shadow"
-                >
-                  <MessageCircle size={16} />
-                  <span>Scrivi su WhatsApp</span>
-                </button>
+                  <Phone size={16} />
+                  <span>Telefona al Salone ({selectedSalon.phone})</span>
+                </a>
               </div>
             </div>
           </div>
@@ -1421,11 +1451,12 @@ export default function CambiaLookApp() {
       )}
 
       {/* ========================================================================================= */}
-      {/* POPUP: DETTAGLIO SERVIZIO (SOLA CONSULTAZIONE) */}
+      {/* POPUP: DETTAGLIO SERVIZIO (SOLA CONSULTAZIONE CON FOTO DEL SERVIZIO) */}
       {/* ========================================================================================= */}
       {selectedService && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto no-scrollbar">
+          <div className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[88vh] overflow-y-auto no-scrollbar">
+            
             <div className="flex justify-between items-start border-b border-white/10 pb-3">
               <div>
                 <span className="text-[10px] text-[#E8D3A2] font-bold uppercase tracking-wider">{selectedService.category}</span>
@@ -1437,20 +1468,54 @@ export default function CambiaLookApp() {
               </button>
             </div>
 
+            {/* Foto del Servizio nel Popup */}
+            <div className="relative aspect-video rounded-2xl overflow-hidden bg-black/50 border border-white/20 shadow-lg">
+              <Image 
+                src={selectedService.image} 
+                alt={selectedService.name} 
+                fill 
+                className="object-cover" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              <div className="absolute bottom-2.5 left-3">
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#E8D3A2] bg-black/80 px-2.5 py-0.5 rounded-full border border-white/10">
+                  Trattamento Salone
+                </span>
+              </div>
+            </div>
+
             <p className="text-xs text-white/90 leading-relaxed font-normal">
               {selectedService.desc}
             </p>
 
-            <div className="p-3 rounded-2xl bg-black/30 border border-white/10 flex items-center justify-between">
-              <span className="text-xs text-white/70">Prezzo in salone:</span>
+            <div className="p-3.5 rounded-2xl bg-black/35 border border-white/15 flex items-center justify-between">
+              <span className="text-xs text-white/70">Prezzo di listino:</span>
               <span className="text-xl font-black text-[#E8D3A2]">{selectedService.price}</span>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-white/10 border border-white/15 text-center space-y-1">
-              <p className="text-xs text-white/80 font-normal">
-                Disponibile nei saloni Cambia Look di Roma e Cisterna di Latina.
-              </p>
+            {/* Chiamata telefonica diretta per info */}
+            <div className="space-y-2 pt-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-white/70 block text-center">
+                Telefona per richiedere informazioni o concordare la data:
+              </span>
+              <div className="grid grid-cols-2 gap-2">
+                <a
+                  href="tel:069699412"
+                  className="py-2.5 px-3 rounded-xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-bold text-xs flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
+                >
+                  <Phone size={13} />
+                  <span>Cisterna: 06 969 9412</span>
+                </a>
+                <a
+                  href="tel:067804521"
+                  className="py-2.5 px-3 rounded-xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-bold text-xs flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
+                >
+                  <Phone size={13} />
+                  <span>Roma: 06 780 4521</span>
+                </a>
+              </div>
             </div>
+
           </div>
         </div>
       )}
