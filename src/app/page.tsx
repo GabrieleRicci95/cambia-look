@@ -1199,34 +1199,27 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       style={{
-        transform: pullDistance > 0 ? `translateY(${pullDistance * 0.45}px)` : undefined,
+        transform: pullDistance > 0 ? `translate3d(0, ${pullDistance * 0.35}px, 0)` : undefined,
         transition: isPulling.current ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)"
       }}
       className="max-w-md mx-auto min-h-screen bg-[#D11936] text-white flex flex-col relative select-none font-sans overflow-x-hidden pb-24 shadow-2xl"
     >
       
-      {/* PULL TO REFRESH INDICATOR */}
+      {/* PULL TO REFRESH CIRCULAR ICON (NO TEXT, PURE NATIVE BADGE) */}
       <div 
         className="fixed left-0 right-0 z-50 flex items-center justify-center pointer-events-none transition-all duration-150"
         style={{ 
           top: "max(calc(env(safe-area-inset-top, 0px) + 12px), 1.25rem)",
-          transform: `translateY(${pullDistance > 0 ? pullDistance * 0.7 : isRefreshing ? 30 : -70}px)`,
-          opacity: pullDistance > 12 || isRefreshing ? 1 : 0
+          transform: `translate3d(0, ${pullDistance > 0 ? pullDistance * 0.75 : isRefreshing ? 35 : -60}px, 0)`,
+          opacity: pullDistance > 8 || isRefreshing ? 1 : 0
         }}
       >
-        <div className="bg-black/90 backdrop-blur-xl text-[#E8D3A2] px-4 py-2 rounded-full border border-[#E8D3A2]/40 shadow-2xl flex items-center gap-2.5 text-xs font-bold">
+        <div className="w-11 h-11 rounded-full bg-black/90 backdrop-blur-xl border border-[#E8D3A2]/60 shadow-[0_6px_20px_rgba(0,0,0,0.45)] flex items-center justify-center">
           <RotateCw 
-            size={15} 
+            size={20} 
             className={`text-[#E8D3A2] ${isRefreshing ? "animate-spin" : ""}`}
-            style={!isRefreshing ? { transform: `rotate(${pullDistance * 5}deg)` } : undefined}
+            style={!isRefreshing ? { transform: `rotate(${pullDistance * 4.5}deg)` } : undefined}
           />
-          <span>
-            {isRefreshing 
-              ? "Aggiornamento in corso..." 
-              : pullDistance >= 50 
-              ? "Rilascia per ricaricare" 
-              : "Trascina per aggiornare"}
-          </span>
         </div>
       </div>
 
