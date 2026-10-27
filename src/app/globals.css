@@ -84,3 +84,17 @@
 .safe-pt {
   padding-top: max(calc(env(safe-area-inset-top, 0px) + 12px), 3rem);
 }
+
+/* Blocca completamente lo scroll della pagina di sfondo quando un modal è aperto */
+body:has(.fixed.inset-0),
+html:has(.fixed.inset-0) {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  touch-action: none !important;
+}
+
+/* Consenti solo lo scorrimento verticale pulito all'interno della scheda del modal */
+.fixed.inset-0 > div {
+  touch-action: pan-y !important;
+  overscroll-behavior-y: contain !important;
+}

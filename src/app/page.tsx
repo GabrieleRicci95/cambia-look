@@ -558,6 +558,34 @@ export default function CambiaLookApp() {
     return () => clearInterval(interval);
   }, [myAppointments]);
 
+  // Blocco rigoroso dello scroll della pagina di sfondo quando un modal è aperto
+  const isAnyModalOpen = Boolean(
+    isAppointmentModalOpen ||
+    selectedSalon ||
+    selectedService ||
+    selectedProduct ||
+    isCartOpen ||
+    isChangePinModalOpen ||
+    isPinModalOpen ||
+    isEditSalonModalOpen ||
+    isServiceModalOpen ||
+    isNewProductModalOpen
+  );
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (isAnyModalOpen) {
+      const prevBodyOverflow = document.body.style.overflow;
+      const prevHtmlOverflow = document.documentElement.style.overflow;
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prevBodyOverflow;
+        document.documentElement.style.overflow = prevHtmlOverflow;
+      };
+    }
+  }, [isAnyModalOpen]);
+
   const saveAppointments = (newAppts: ClientAppointment[]) => {
     setMyAppointments(newAppts);
     try {
@@ -3092,8 +3120,18 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
       {/* MODAL: SEGNA / MODIFICA APPUNTAMENTO CLIENTE (AGENDA & PROMEMORIA TELEFONO) */}
       {/* ========================================================================================= */}
       {isAppointmentModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-end sm:items-center justify-center p-3 animate-in fade-in duration-200 overflow-hidden touch-none select-none">
-          <div className="w-full max-w-sm bg-[#80081B] border-2 border-[#E8D3A2] rounded-3xl p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden touch-pan-y overscroll-contain">
+        <div 
+          onClick={() => setIsAppointmentModalOpen(false)}
+          onTouchMove={(e) => {
+            if (e.target === e.currentTarget) e.preventDefault();
+          }}
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-end sm:items-center justify-center p-3 animate-in fade-in duration-200 overflow-hidden touch-none select-none"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            className="w-full max-w-sm bg-[#80081B] border-2 border-[#E8D3A2] rounded-3xl p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden touch-pan-y overscroll-contain"
+          >
             
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div className="flex items-center gap-2.5">
