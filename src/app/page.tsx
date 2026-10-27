@@ -292,8 +292,9 @@ export default function CambiaLookApp() {
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
 
-  // New Product Modal Form State
+  // New / Edit Product Modal Form State
   const [isNewProductModalOpen, setIsNewProductModalOpen] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [newProdName, setNewProdName] = useState("");
   const [newProdCategory, setNewProdCategory] = useState("shampoo");
   const [newProdBrand, setNewProdBrand] = useState("Cambia Look Care");
@@ -613,7 +614,43 @@ export default function CambiaLookApp() {
     }
   };
 
-  const handleCreateProduct = (e: React.FormEvent) => {
+  const handleOpenNewProduct = () => {
+    setEditingProductId(null);
+    setNewProdName("");
+    setNewProdCategory("shampoo");
+    setNewProdBrand("Cambia Look Care");
+    setNewProdPrice("");
+    setNewProdSize("250 ml");
+    setNewProdDesc("");
+    setNewProdBenefits("");
+    setNewProdImage("");
+    setIsNewProductModalOpen(true);
+  };
+
+  const handleOpenEditProduct = (prod: any) => {
+    setEditingProductId(prod.id);
+    setNewProdName(prod.name || "");
+    setNewProdCategory(prod.category || "shampoo");
+    setNewProdBrand(prod.brand || "Cambia Look Care");
+    setNewProdPrice(prod.price !== undefined ? String(prod.price) : "");
+    setNewProdSize(prod.size || "250 ml");
+    setNewProdDesc(prod.desc || "");
+    setNewProdBenefits(Array.isArray(prod.benefits) ? prod.benefits.join(", ") : (prod.benefits || ""));
+    setNewProdImage(prod.img || "");
+    setIsNewProductModalOpen(true);
+  };
+
+  const handleCloseProductModal = () => {
+    setIsNewProductModalOpen(false);
+    setEditingProductId(null);
+    setNewProdName("");
+    setNewProdPrice("");
+    setNewProdDesc("");
+    setNewProdBenefits("");
+    setNewProdImage("");
+  };
+
+  const handleSaveProduct = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProdName || !newProdPrice) return;
 
@@ -628,28 +665,47 @@ export default function CambiaLookApp() {
       ? "https://images.unsplash.com/photo-1608248597359-0a64980654bc?q=80&w=900&auto=format&fit=crop"
       : "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?q=80&w=900&auto=format&fit=crop";
 
-    const newProduct = {
-      id: `prod-${Date.now()}`,
-      category: newProdCategory,
-      name: newProdName,
-      brand: newProdBrand || "Cambia Look Care",
-      price: parsedPrice,
-      size: newProdSize || "Formato Salone",
-      desc: newProdDesc || "Prodotto esclusivo disponibile nei saloni Cambia Look di Roma e Cisterna di Latina.",
-      benefits: benefitsList,
-      img: newProdImage || fallbackImg,
-    };
+    if (editingProductId) {
+      const updatedList = productsList.map(p => {
+        if (p.id === editingProductId) {
+          return {
+            ...p,
+            category: newProdCategory,
+            name: newProdName,
+            brand: newProdBrand || "Cambia Look Care",
+            price: parsedPrice,
+            size: newProdSize || "Formato Salone",
+            desc: newProdDesc || "Prodotto esclusivo disponibile nei saloni Cambia Look di Roma e Cisterna di Latina.",
+            benefits: benefitsList,
+            img: newProdImage || p.img || fallbackImg,
+          };
+        }
+        return p;
+      });
 
-    saveProducts([newProduct, ...productsList]);
-    setIsNewProductModalOpen(false);
+      saveProducts(updatedList);
+      if (selectedProduct && selectedProduct.id === editingProductId) {
+        setSelectedProduct(updatedList.find(p => p.id === editingProductId));
+      }
+      triggerPushDemo(`✨ Prodotto "${newProdName}" aggiornato con successo!`);
+    } else {
+      const newProduct = {
+        id: `prod-${Date.now()}`,
+        category: newProdCategory,
+        name: newProdName,
+        brand: newProdBrand || "Cambia Look Care",
+        price: parsedPrice,
+        size: newProdSize || "Formato Salone",
+        desc: newProdDesc || "Prodotto esclusivo disponibile nei saloni Cambia Look di Roma e Cisterna di Latina.",
+        benefits: benefitsList,
+        img: newProdImage || fallbackImg,
+      };
 
-    setNewProdName("");
-    setNewProdPrice("");
-    setNewProdDesc("");
-    setNewProdBenefits("");
-    setNewProdImage("");
+      saveProducts([newProduct, ...productsList]);
+      triggerPushDemo(`🎉 Prodotto "${newProduct.name}" pubblicato in vetrina!`);
+    }
 
-    triggerPushDemo(`🎉 Prodotto "${newProduct.name}" pubblicato in vetrina!`);
+    handleCloseProductModal();
   };
 
   const handleDeleteProduct = (productId: string, e: React.MouseEvent) => {
@@ -1233,7 +1289,7 @@ export default function CambiaLookApp() {
             {/* PULSANTE AGGIUNGI PRODOTTO (Visibile solo in modalità Titolare) */}
             {isStaffMode && (
               <button
-                onClick={() => setIsNewProductModalOpen(true)}
+                onClick={handleOpenNewProduct}
                 className="py-2.5 px-3.5 rounded-2xl bg-white text-[#D11936] text-xs font-black flex items-center gap-1.5 shadow-xl active:scale-95 transition-all shrink-0 hover:bg-[#E8D3A2]"
               >
                 <Plus size={16} />
@@ -1276,15 +1332,27 @@ export default function CambiaLookApp() {
                   onClick={() => setSelectedProduct(prod)}
                   className="rounded-2xl overflow-hidden bg-black/40 backdrop-blur-md border border-white/20 hover:border-[#E8D3A2]/60 transition-all flex flex-col justify-between cursor-pointer group relative shadow-lg"
                 >
-                  {/* Tasto elimina prodotto per lo Staff */}
+                  {/* Tasti gestione prodotto per lo Staff */}
                   {isStaffMode && (
-                    <button
-                      onClick={(e) => handleDeleteProduct(prod.id, e)}
-                      className="absolute top-2 right-2 z-20 w-8 h-8 rounded-full bg-black/80 hover:bg-rose-600 text-white flex items-center justify-center transition-colors shadow-lg border border-white/20"
-                      title="Elimina prodotto"
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                    <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenEditProduct(prod);
+                        }}
+                        className="w-8 h-8 rounded-full bg-black/85 hover:bg-[#E8D3A2] hover:text-[#D11936] text-white flex items-center justify-center transition-colors shadow-lg border border-white/20"
+                        title="Modifica prodotto"
+                      >
+                        <Edit3 size={13} />
+                      </button>
+                      <button
+                        onClick={(e) => handleDeleteProduct(prod.id, e)}
+                        className="w-8 h-8 rounded-full bg-black/85 hover:bg-rose-600 text-white flex items-center justify-center transition-colors shadow-lg border border-white/20"
+                        title="Elimina prodotto"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   )}
 
                   {/* Foto del Prodotto */}
@@ -1569,6 +1637,34 @@ export default function CambiaLookApp() {
                 In Vendita nei Saloni
               </span>
             </div>
+
+            {/* Azioni Staff Mode nel dettaglio prodotto */}
+            {isStaffMode && (
+              <div className="pt-2 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleOpenEditProduct(selectedProduct);
+                    setSelectedProduct(null);
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-[#E8D3A2] hover:bg-[#d8c392] text-[#D11936] font-black text-xs flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
+                >
+                  <Edit3 size={14} />
+                  <span>Modifica Questo Prodotto</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    handleDeleteProduct(selectedProduct.id, e);
+                    setSelectedProduct(null);
+                  }}
+                  className="px-3.5 py-2.5 rounded-xl bg-black/50 text-rose-300 hover:text-white hover:bg-rose-600 font-bold text-xs flex items-center justify-center gap-1.5 border border-rose-500/30 transition-colors"
+                >
+                  <Trash2 size={14} />
+                  <span>Elimina</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1582,19 +1678,23 @@ export default function CambiaLookApp() {
             <div className="flex justify-between items-center border-b border-white/10 pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-9 h-9 rounded-2xl bg-white text-[#D11936] flex items-center justify-center font-bold">
-                  <Plus size={18} />
+                  {editingProductId ? <Edit3 size={18} /> : <Plus size={18} />}
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Aggiungi Prodotto in Vetrina</h3>
-                  <span className="text-[10px] text-white/70">Scatta foto, imposta prezzo e descrizione</span>
+                  <h3 className="text-base font-bold text-white">
+                    {editingProductId ? "Modifica Prodotto" : "Aggiungi Prodotto in Vetrina"}
+                  </h3>
+                  <span className="text-[10px] text-white/70">
+                    {editingProductId ? "Aggiorna foto, dettagli o prezzo del prodotto" : "Scatta foto, imposta prezzo e descrizione"}
+                  </span>
                 </div>
               </div>
-              <button onClick={() => setIsNewProductModalOpen(false)} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80">
+              <button onClick={handleCloseProductModal} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 transition-colors">
                 <X size={16} />
               </button>
             </div>
 
-            <form onSubmit={handleCreateProduct} className="space-y-3.5 text-xs">
+            <form onSubmit={handleSaveProduct} className="space-y-3.5 text-xs">
               {/* Caricamento Foto del Prodotto */}
               <div>
                 <label className="font-bold text-white/90 block mb-1.5">1. Foto del Prodotto *</label>
@@ -1714,7 +1814,7 @@ export default function CambiaLookApp() {
                 className="w-full py-3.5 rounded-2xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all"
               >
                 <Check size={16} />
-                <span>Pubblica in Vetrina</span>
+                <span>{editingProductId ? "Salva Modifiche" : "Pubblica in Vetrina"}</span>
               </button>
             </form>
           </div>
