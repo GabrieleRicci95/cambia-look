@@ -504,6 +504,60 @@ export default function CambiaLookApp() {
     }
   }, []);
 
+  // Notifiche reali promemoria appuntamenti (controllo scadenze 24h e 2h)
+  useEffect(() => {
+    const checkReminders = () => {
+      try {
+        const now = new Date();
+        const notifiedKey = "cambia_look_notified_reminders";
+        const notifiedList: string[] = JSON.parse(localStorage.getItem(notifiedKey) || "[]");
+
+        myAppointments.forEach(appt => {
+          if (!appt.date || !appt.time) return;
+          const [year, month, day] = appt.date.split("-").map(Number);
+          const [hour, min] = appt.time.split(":").map(Number);
+          const apptDate = new Date(year, month - 1, day, hour, min);
+          const diffMs = apptDate.getTime() - now.getTime();
+          const diffHours = diffMs / (1000 * 60 * 60);
+
+          // Promemoria 24 ore prima (tra 0 e 24 ore prima)
+          if (appt.reminder24h && diffHours > 0 && diffHours <= 24) {
+            const reminderId = `${appt.id}-24h`;
+            if (!notifiedList.includes(reminderId)) {
+              notifiedList.push(reminderId);
+              localStorage.setItem(notifiedKey, JSON.stringify(notifiedList));
+              const text = `🔔 Promemoria Cambia Look: Domani alle ${appt.time} hai l'appuntamento per ${appt.service}!`;
+              triggerPushDemo(text);
+              if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+                new Notification("👑 Promemoria Cambia Look", { body: text, icon: "/app_icon_192.png" });
+              }
+            }
+          }
+
+          // Promemoria 2 ore prima (tra 0 e 2 ore prima)
+          if (appt.reminder2h && diffHours > 0 && diffHours <= 2) {
+            const reminderId = `${appt.id}-2h`;
+            if (!notifiedList.includes(reminderId)) {
+              notifiedList.push(reminderId);
+              localStorage.setItem(notifiedKey, JSON.stringify(notifiedList));
+              const text = `⏰ Promemoria Cambia Look: Tra 2 ore (alle ${appt.time}) hai l'appuntamento per ${appt.service}!`;
+              triggerPushDemo(text);
+              if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+                new Notification("👑 Promemoria Cambia Look", { body: text, icon: "/app_icon_192.png" });
+              }
+            }
+          }
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    checkReminders();
+    const interval = setInterval(checkReminders, 60000);
+    return () => clearInterval(interval);
+  }, [myAppointments]);
+
   const saveAppointments = (newAppts: ClientAppointment[]) => {
     setMyAppointments(newAppts);
     try {
@@ -703,6 +757,17 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
     e.preventDefault();
     if (!formDate || !formTime || !formService) return;
 
+    // Richiesta permessi notifiche smartphone se spuntato
+    if (formReminder24h || formReminder2h) {
+      if (typeof window !== "undefined" && "Notification" in window) {
+        if (Notification.permission === "default") {
+          Notification.requestPermission().catch(() => {});
+        }
+      }
+    }
+
+    const salonName = formSalonId === "roma" ? "Roma" : "Cisterna di Latina";
+
     if (editingAppointmentId) {
       // Update
       const updated = myAppointments.map(a => 
@@ -721,7 +786,7 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
           : a
       );
       saveAppointments(updated);
-      triggerPushDemo("✨ Appuntamento aggiornato con successo!");
+      triggerPushDemo(`✨ Appuntamento aggiornato per il ${formDate} alle ore ${formTime}!`);
     } else {
       // Create new
       const newAppt: ClientAppointment = {
@@ -737,7 +802,20 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
         createdAt: new Date().toISOString()
       };
       saveAppointments([...myAppointments, newAppt]);
-      triggerPushDemo("🎉 Appuntamento salvato nella tua agenda! Ora puoi salvarlo nel calendario del telefono.");
+
+      if (formReminder24h || formReminder2h) {
+        triggerPushDemo(`🔔 Promemoria attivo: Riceverai un avviso prima del tuo appuntamento del ${formDate} alle ore ${formTime}!`);
+        try {
+          if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+            new Notification("👑 Cambia Look • Promemoria Attivo", {
+              body: `Promemoria impostato per il tuo appuntamento del ${formDate} alle ore ${formTime} (${salonName}).`,
+              icon: "/app_icon_192.png"
+            });
+          }
+        } catch {}
+      } else {
+        triggerPushDemo("🎉 Appuntamento salvato nella tua agenda!");
+      }
     }
 
     setIsAppointmentModalOpen(false);
@@ -3073,94 +3151,38 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
                 </div>
               </div>
 
-              {/* Data dell'appuntamento */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
-                  <label className="font-bold text-white/90">Data dell'Appuntamento *</label>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const d = new Date();
-                        const pad = (n: number) => n.toString().padStart(2, "0");
-                        setFormDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
-                      }}
-                      className="text-[10px] px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white/80 font-medium"
-                    >
-                      Oggi
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const d = new Date();
-                        d.setDate(d.getDate() + 1);
-                        const pad = (n: number) => n.toString().padStart(2, "0");
-                        setFormDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
-                      }}
-                      className="text-[10px] px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white/80 font-medium"
-                    >
-                      Domani
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const d = new Date();
-                        const diff = (6 - d.getDay() + 7) % 7 || 7;
-                        d.setDate(d.getDate() + diff);
-                        const pad = (n: number) => n.toString().padStart(2, "0");
-                        setFormDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
-                      }}
-                      className="text-[10px] px-2 py-0.5 rounded bg-[#E8D3A2]/20 hover:bg-[#E8D3A2]/30 text-[#E8D3A2] font-bold"
-                    >
-                      Sabato
-                    </button>
-                  </div>
+              {/* Data & Orario affiancati, puliti e perfettamente allineati nei margini */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="font-bold text-white/90 block mb-1.5 text-xs">Data Appuntamento *</label>
+                  <input
+                    type="date"
+                    required
+                    value={formDate}
+                    onChange={e => setFormDate(e.target.value)}
+                    className="w-full box-border px-3 py-2.5 rounded-xl bg-black/50 border border-white/20 text-white outline-none font-bold text-xs"
+                  />
                 </div>
-                <input
-                  type="date"
-                  required
-                  value={formDate}
-                  onChange={e => setFormDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/20 text-white outline-none font-bold"
-                />
-              </div>
 
-              {/* Orario */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="font-bold text-white/90">Orario *</label>
-                  <span className="text-[10px] text-white/60">Scelta rapida:</span>
+                <div>
+                  <label className="font-bold text-white/90 block mb-1.5 text-xs">Orario *</label>
+                  <input
+                    type="time"
+                    required
+                    value={formTime}
+                    onChange={e => setFormTime(e.target.value)}
+                    className="w-full box-border px-3 py-2.5 rounded-xl bg-black/50 border border-[#E8D3A2]/60 text-[#E8D3A2] font-black outline-none text-xs tracking-wider"
+                  />
                 </div>
-                <div className="grid grid-cols-5 gap-1.5">
-                  {["09:30", "11:00", "15:00", "16:30", "18:00"].map(t => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setFormTime(t)}
-                      className={`text-[10px] py-1 rounded-lg transition-colors text-center font-bold ${
-                        formTime === t ? "bg-white text-[#D11936] shadow-sm font-black" : "bg-white/10 text-white/70 hover:bg-white/20"
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-                <input
-                  type="time"
-                  required
-                  value={formTime}
-                  onChange={e => setFormTime(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-[#E8D3A2]/60 text-[#E8D3A2] font-black outline-none text-base tracking-wider"
-                />
               </div>
 
               {/* Trattamento / Servizio */}
               <div>
-                <label className="font-bold text-white/90 block mb-1">Trattamento Richiesto *</label>
+                <label className="font-bold text-white/90 block mb-1 text-xs">Trattamento Richiesto *</label>
                 <select
                   value={formService}
                   onChange={e => setFormService(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl bg-black/60 border border-white/20 text-white outline-none font-medium"
+                  className="w-full box-border px-3 py-2.5 rounded-xl bg-black/60 border border-white/20 text-white outline-none font-medium text-xs"
                 >
                   {servicesList.map(s => (
                     <option key={s.id} value={s.name}>{s.name} ({s.price})</option>
@@ -3170,54 +3192,70 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
               </div>
 
               {/* Stylist & Note */}
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="font-bold text-white/90 block mb-1">Stylist (Opzionale)</label>
+                  <label className="font-bold text-white/90 block mb-1 text-xs">Stylist (Opzionale)</label>
                   <input
                     type="text"
                     placeholder="Es. Simona / Giorgia"
                     value={formStylist}
                     onChange={e => setFormStylist(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/20 text-white placeholder-white/40 outline-none text-xs"
+                    className="w-full box-border px-3 py-2 rounded-xl bg-black/40 border border-white/20 text-white placeholder-white/40 outline-none text-xs"
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-white/90 block mb-1">Note (Opzionale)</label>
+                  <label className="font-bold text-white/90 block mb-1 text-xs">Note (Opzionale)</label>
                   <input
                     type="text"
                     placeholder="Es. Onde finish"
                     value={formNotes}
                     onChange={e => setFormNotes(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/20 text-white placeholder-white/40 outline-none text-xs"
+                    className="w-full box-border px-3 py-2 rounded-xl bg-black/40 border border-white/20 text-white placeholder-white/40 outline-none text-xs"
                   />
                 </div>
               </div>
 
-              {/* Opzioni Promemoria Telefono */}
-              <div className="p-3 rounded-2xl bg-black/40 border border-[#E8D3A2]/40 space-y-2">
-                <span className="text-[10px] font-black uppercase text-[#E8D3A2] tracking-wider block">
-                  🔔 Promemoria Notifica Telefono
-                </span>
+              {/* Opzioni Promemoria Telefono (Più grandi, chiare e con notifiche reali) */}
+              <div className="p-3.5 rounded-2xl bg-black/55 border-2 border-[#E8D3A2]/60 space-y-2.5 shadow-md">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🔔</span>
+                  <div>
+                    <span className="text-xs font-black uppercase text-[#E8D3A2] tracking-wider block">
+                      Promemoria Notifica Telefono
+                    </span>
+                    <span className="text-[10px] text-white/70 block">
+                      Ricevi l'avviso di promemoria sul tuo smartphone
+                    </span>
+                  </div>
+                </div>
                 
-                <label className="flex items-center gap-2 cursor-pointer text-[11px] text-white/90">
-                  <input
-                    type="checkbox"
-                    checked={formReminder24h}
-                    onChange={e => setFormReminder24h(e.target.checked)}
-                    className="w-4 h-4 rounded text-[#D11936] accent-[#D11936]"
-                  />
-                  <span>Avvisami 24 ore prima (il giorno prima)</span>
-                </label>
+                <div className="space-y-2 pt-0.5">
+                  <label className="flex items-center gap-3 p-2.5 rounded-xl bg-white/10 border border-white/15 hover:border-[#E8D3A2]/50 cursor-pointer active:scale-[0.99] transition-all">
+                    <input
+                      type="checkbox"
+                      checked={formReminder24h}
+                      onChange={e => setFormReminder24h(e.target.checked)}
+                      className="w-5 h-5 rounded text-[#D11936] accent-[#E8D3A2] shrink-0 cursor-pointer"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-bold text-white block">Avvisami 24 ore prima</span>
+                      <span className="text-[10px] text-white/60 block">Notifica promemoria il giorno prima</span>
+                    </div>
+                  </label>
 
-                <label className="flex items-center gap-2 cursor-pointer text-[11px] text-white/90">
-                  <input
-                    type="checkbox"
-                    checked={formReminder2h}
-                    onChange={e => setFormReminder2h(e.target.checked)}
-                    className="w-4 h-4 rounded text-[#D11936] accent-[#D11936]"
-                  />
-                  <span>Avvisami 2 ore prima dell'appuntamento</span>
-                </label>
+                  <label className="flex items-center gap-3 p-2.5 rounded-xl bg-white/10 border border-white/15 hover:border-[#E8D3A2]/50 cursor-pointer active:scale-[0.99] transition-all">
+                    <input
+                      type="checkbox"
+                      checked={formReminder2h}
+                      onChange={e => setFormReminder2h(e.target.checked)}
+                      className="w-5 h-5 rounded text-[#D11936] accent-[#E8D3A2] shrink-0 cursor-pointer"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-bold text-white block">Avvisami 2 ore prima</span>
+                      <span className="text-[10px] text-white/60 block">Notifica promemoria 2 ore prima dell'appuntamento</span>
+                    </div>
+                  </label>
+                </div>
               </div>
 
               <div className="flex gap-2 pt-2">
