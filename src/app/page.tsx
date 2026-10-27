@@ -1983,7 +1983,7 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
               </div>
             </div>
           ) : (
-            <div className="text-center pt-2 pb-4">
+            <div className="text-center pt-2 pb-2">
               <button
                 onClick={handleToggleStaffMode}
                 className="text-[10px] text-white/35 hover:text-white/70 transition-colors"
@@ -1992,6 +1992,20 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
               </button>
             </div>
           )}
+
+          {/* FOOTER LEGALE E PRIVACY (RICHIESTO PER GLI STORE) */}
+          <div className="pt-4 pb-8 text-center space-y-2 border-t border-white/10">
+            <div className="flex items-center justify-center gap-3 text-xs text-white/75">
+              <a href="/privacy" className="hover:text-white underline text-[11px]">
+                Informativa sulla Privacy (GDPR)
+              </a>
+              <span>•</span>
+              <span className="text-[11px]">© Cambia Look</span>
+            </div>
+            <p className="text-[10px] text-white/50">
+              Salone Donna • Cisterna di Latina (LT) & Roma (RM)
+            </p>
+          </div>
         </main>
       )}
 
@@ -3358,6 +3372,10 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
                       💬 Risposta rapida dallo staff Cambia Look
                     </span>
                   </div>
+
+                  <p className="text-[10px] text-center text-white/50 pt-1">
+                    Inviando l'ordine accetti l'<a href="/privacy" target="_blank" className="underline text-[#E8D3A2]">Informativa sulla Privacy</a>
+                  </p>
                 </div>
 
               </form>

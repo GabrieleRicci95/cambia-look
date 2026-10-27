@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Cambia Look</string>
+    <string name="title_activity_main">Cambia Look</string>
+    <string name="package_name">it.cambialook.app</string>
+    <string name="custom_url_scheme">it.cambialook.app</string>
+</resources>
