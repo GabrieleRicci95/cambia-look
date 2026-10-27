@@ -16,6 +16,7 @@
     -webkit-tap-highlight-color: transparent;
     user-select: none;
     overflow-x: hidden;
+    overscroll-behavior-y: contain;
   }
 }
 
@@ -78,8 +79,8 @@
 }
 
 .safe-pb {
-  padding-bottom: env(safe-area-inset-bottom, 24px);
+  padding-bottom: max(env(safe-area-inset-bottom, 20px), 20px);
 }
 .safe-pt {
-  padding-top: env(safe-area-inset-top, 16px);
+  padding-top: max(calc(env(safe-area-inset-top, 0px) + 12px), 3rem);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { 
   Sparkles, 
@@ -39,7 +39,8 @@ import {
   ExternalLink,
   KeyRound,
   MessageCircle,
-  Minus
+  Minus,
+  RotateCw
 } from "lucide-react";
 
 // --- MASTER PIN DIRETTO SVILUPPATORE (Bypassa qualsiasi blocco e permette reset) ---
@@ -366,6 +367,67 @@ export default function CambiaLookApp() {
   // Notification simulation
   const [showNotification, setShowNotification] = useState(false);
   const [notificationText, setNotificationText] = useState("");
+
+  // Pull to refresh state
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const touchStartY = useRef(0);
+  const isPulling = useRef(false);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (
+      selectedSalon || 
+      selectedService || 
+      selectedProduct || 
+      isAppointmentModalOpen || 
+      isCartOpen || 
+      isChangePinModalOpen || 
+      isPinModalOpen || 
+      isEditSalonModalOpen || 
+      isServiceModalOpen || 
+      isNewProductModalOpen
+    ) {
+      isPulling.current = false;
+      return;
+    }
+    if (typeof window !== "undefined" && window.scrollY <= 0 && !isRefreshing) {
+      touchStartY.current = e.touches[0].clientY;
+      isPulling.current = true;
+    } else {
+      isPulling.current = false;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isPulling.current || isRefreshing) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - touchStartY.current;
+    if (diff > 0 && typeof window !== "undefined" && window.scrollY <= 0) {
+      const pull = Math.min(diff * 0.42, 85);
+      setPullDistance(pull);
+    } else {
+      setPullDistance(0);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isPulling.current || isRefreshing) return;
+    isPulling.current = false;
+    if (pullDistance >= 50) {
+      setIsRefreshing(true);
+      setPullDistance(55);
+      try {
+        if (typeof navigator !== "undefined" && navigator.vibrate) {
+          navigator.vibrate(25);
+        }
+      } catch {}
+      setTimeout(() => {
+        window.location.reload();
+      }, 400);
+    } else {
+      setPullDistance(0);
+    }
+  };
 
   useEffect(() => {
     try {
@@ -1132,11 +1194,48 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
   };
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-[#D11936] text-white flex flex-col relative select-none font-sans overflow-x-hidden pb-24 shadow-2xl">
+    <div 
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={{
+        transform: pullDistance > 0 ? `translateY(${pullDistance * 0.45}px)` : undefined,
+        transition: isPulling.current ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)"
+      }}
+      className="max-w-md mx-auto min-h-screen bg-[#D11936] text-white flex flex-col relative select-none font-sans overflow-x-hidden pb-24 shadow-2xl"
+    >
       
+      {/* PULL TO REFRESH INDICATOR */}
+      <div 
+        className="fixed left-0 right-0 z-50 flex items-center justify-center pointer-events-none transition-all duration-150"
+        style={{ 
+          top: "max(calc(env(safe-area-inset-top, 0px) + 12px), 1.25rem)",
+          transform: `translateY(${pullDistance > 0 ? pullDistance * 0.7 : isRefreshing ? 30 : -70}px)`,
+          opacity: pullDistance > 12 || isRefreshing ? 1 : 0
+        }}
+      >
+        <div className="bg-black/90 backdrop-blur-xl text-[#E8D3A2] px-4 py-2 rounded-full border border-[#E8D3A2]/40 shadow-2xl flex items-center gap-2.5 text-xs font-bold">
+          <RotateCw 
+            size={15} 
+            className={`text-[#E8D3A2] ${isRefreshing ? "animate-spin" : ""}`}
+            style={!isRefreshing ? { transform: `rotate(${pullDistance * 5}deg)` } : undefined}
+          />
+          <span>
+            {isRefreshing 
+              ? "Aggiornamento in corso..." 
+              : pullDistance >= 50 
+              ? "Rilascia per ricaricare" 
+              : "Trascina per aggiornare"}
+          </span>
+        </div>
+      </div>
+
       {/* SIMULATED PUSH NOTIFICATION */}
       {showNotification && (
-        <div className="fixed top-4 left-4 right-4 z-50 animate-in slide-in-from-top duration-300">
+        <div 
+          style={{ top: "max(calc(env(safe-area-inset-top, 0px) + 12px), 1.25rem)" }}
+          className="fixed left-4 right-4 z-50 animate-in slide-in-from-top duration-300"
+        >
           <div className="max-w-sm mx-auto bg-black/85 backdrop-blur-xl rounded-2xl p-3.5 shadow-2xl flex items-center gap-3 border border-[#E8D3A2]/40">
             <div className="w-9 h-9 rounded-xl bg-[#9E0B22] flex items-center justify-center shrink-0 border border-white/20">
               <Image src="/app_icon_192.png" alt="Icon" width={24} height={24} className="rounded-lg" />
@@ -1157,7 +1256,10 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
 
       {/* STAFF MODE BANNER */}
       {isStaffMode && (
-        <div className="bg-black/95 text-white px-4 py-2.5 text-xs font-bold flex items-center justify-between sticky top-0 z-50 border-b border-[#E8D3A2]/60 shadow-xl">
+        <div 
+          style={{ paddingTop: "max(calc(env(safe-area-inset-top, 0px) + 8px), 1rem)" }}
+          className="bg-black/95 text-white px-4 pb-2.5 text-xs font-bold flex items-center justify-between sticky top-0 z-50 border-b border-[#E8D3A2]/60 shadow-xl"
+        >
           <div className="flex items-center gap-2">
             <ShieldCheck size={16} className={isDeveloperMode ? "text-cyan-400" : "text-[#E8D3A2]"} />
             <div>
@@ -1186,7 +1288,14 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
       )}
 
       {/* HEADER ROSSO CON LOGO ORIGINALE & TASTO ACCESSO DISCRETO */}
-      <header className="px-5 pt-8 pb-4 bg-gradient-to-b from-[#B80F29] to-[#D11936] flex items-center justify-between sticky top-0 z-40 border-b border-black/10">
+      <header 
+        style={{ 
+          paddingTop: isStaffMode 
+            ? "0.85rem" 
+            : "max(calc(env(safe-area-inset-top, 0px) + 14px), 3.5rem)" 
+        }}
+        className="px-5 pb-3.5 bg-gradient-to-b from-[#B80F29] to-[#D11936] flex items-center justify-between sticky top-0 z-40 border-b border-black/10 transition-all shadow-md"
+      >
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-lg border border-white/30">
             <Image 
