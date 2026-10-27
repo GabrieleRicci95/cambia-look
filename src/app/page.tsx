@@ -37,7 +37,9 @@ import {
   Edit3,
   Share2,
   ExternalLink,
-  KeyRound
+  KeyRound,
+  MessageCircle,
+  Minus
 } from "lucide-react";
 
 // --- MASTER PIN DIRETTO SVILUPPATORE (Bypassa qualsiasi blocco e permette reset) ---
@@ -50,6 +52,7 @@ const INITIAL_SALONS = [
     name: "Cisterna di Latina",
     address: "Corso della Repubblica, 184 • Cisterna di Latina (LT)",
     phone: "06 969 9412",
+    whatsapp: "069699412",
     hours: "Mar - Sab: 08:30 - 19:30 • Lun e Dom Chiuso",
     image: "/salone_cisterna.jpg",
     description: "Atelier spazioso ed elegante con lampadario barocco fucsia, postazioni specchio luminose e consulenza personalizzata.",
@@ -59,11 +62,17 @@ const INITIAL_SALONS = [
     name: "Roma",
     address: "Via delle Cave, 72 • Roma (Zona Colli Albani / Appia)",
     phone: "06 780 4521",
+    whatsapp: "067804521",
     hours: "Mar - Sab: 09:00 - 19:30 • Lun e Dom Chiuso",
     image: "/salone_roma.jpg",
     description: "Salone moderno nel cuore di Roma con specchiere barocche nere, team specializzato in biondi, balayage e cambi look donna.",
   }
 ];
+
+export interface CartItem {
+  product: any;
+  quantity: number;
+}
 
 // --- LISTINO SERVIZI VETRINA (CON FOTO DEDICATA PER OGNI SERVIZIO) ---
 const INITIAL_SERVICES = [
@@ -317,9 +326,19 @@ export default function CambiaLookApp() {
   const [salonFormName, setSalonFormName] = useState("");
   const [salonFormAddress, setSalonFormAddress] = useState("");
   const [salonFormPhone, setSalonFormPhone] = useState("");
+  const [salonFormWhatsapp, setSalonFormWhatsapp] = useState("");
   const [salonFormHours, setSalonFormHours] = useState("");
   const [salonFormDescription, setSalonFormDescription] = useState("");
   const [salonFormImage, setSalonFormImage] = useState("");
+
+  // Cart / Shopping Bag State (Ordina & Ritira in Salone via WhatsApp)
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [cartPickupSalon, setCartPickupSalon] = useState<"cisterna" | "roma">("cisterna");
+  const [cartClientName, setCartClientName] = useState("");
+  const [cartPickupTime, setCartPickupTime] = useState("Oggi / Domani");
+  const [cartNotes, setCartNotes] = useState("");
+  const [prodDetailQty, setProdDetailQty] = useState<number>(1);
 
   // New / Edit Service Modal State
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
@@ -362,6 +381,11 @@ export default function CambiaLookApp() {
       const savedProducts = localStorage.getItem("cambia_look_products");
       if (savedProducts) {
         setProductsList(JSON.parse(savedProducts));
+      }
+
+      const savedCart = localStorage.getItem("cambia_look_cart");
+      if (savedCart) {
+        setCart(JSON.parse(savedCart));
       }
 
       const savedAppts = localStorage.getItem("cambia_look_appointments");
@@ -411,6 +435,92 @@ export default function CambiaLookApp() {
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const saveCart = (newCart: CartItem[]) => {
+    setCart(newCart);
+    try {
+      localStorage.setItem("cambia_look_cart", JSON.stringify(newCart));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const addToCart = (product: any, qty: number = 1) => {
+    const existingIndex = cart.findIndex(item => item.product.id === product.id);
+    let newCart: CartItem[];
+    if (existingIndex >= 0) {
+      newCart = cart.map((item, idx) => 
+        idx === existingIndex ? { ...item, quantity: item.quantity + qty } : item
+      );
+    } else {
+      newCart = [...cart, { product, quantity: qty }];
+    }
+    saveCart(newCart);
+    triggerPushDemo(`🛍️ Aggiunto alla Busta: ${product.name} (x${qty})`);
+  };
+
+  const updateCartQuantity = (productId: string, delta: number) => {
+    const updated = cart.map(item => {
+      if (item.product.id === productId) {
+        return { ...item, quantity: item.quantity + delta };
+      }
+      return item;
+    }).filter(item => item.quantity > 0);
+    saveCart(updated);
+  };
+
+  const removeFromCart = (productId: string) => {
+    const updated = cart.filter(item => item.product.id !== productId);
+    saveCart(updated);
+    triggerPushDemo("🗑️ Prodotto rimosso dalla busta");
+  };
+
+  const clearCart = () => {
+    saveCart([]);
+    triggerPushDemo("Busta salone svuotata");
+  };
+
+  const cartTotalCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const cartTotalPrice = cart.reduce((acc, item) => acc + (Number(item.product.price) || 0) * item.quantity, 0);
+
+  const handleSendWhatsAppOrder = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (cart.length === 0) return;
+    if (!cartClientName.trim()) {
+      alert("Inserisci il tuo nome e cognome per intestare l'ordine.");
+      return;
+    }
+
+    const selectedSalonData = salonsList.find(s => s.id === cartPickupSalon) || salonsList[0];
+    const rawWa = (selectedSalonData.whatsapp || selectedSalonData.phone || "").replace(/\D/g, "");
+    const waPhone = rawWa.startsWith("39") ? rawWa : `39${rawWa}`;
+
+    const itemsText = cart.map((item, i) => 
+      `${i + 1}) *${item.product.name}* (${item.product.size || "Standard"})\n   Quantità: ${item.quantity} pz • Prezzo: € ${(Number(item.product.price) * item.quantity).toFixed(2)}`
+    ).join("\n\n");
+
+    const message = 
+`👋 *CIAO CAMBIA LOOK!*
+Vorrei ordinare i seguenti prodotti tramite l'app per il *Ritiro in Salone*:
+
+🛍️ *PRODOTTI RICHIESTI:*
+${itemsText}
+
+━━━━━━━━━━━━━━━━━━━━
+💰 *TOTALE ORDINE:* € ${cartTotalPrice.toFixed(2)}
+📍 *RITIRO IN SALONE:* ${selectedSalonData.name} (${selectedSalonData.address})
+👤 *CLIENTE:* ${cartClientName.trim()}
+🕒 *QUANDO PASSO:* ${cartPickupTime || "Da concordare"}
+${cartNotes.trim() ? `📝 *NOTE CLIENTE:* ${cartNotes.trim()}\n` : ""}━━━━━━━━━━━━━━━━━━━━
+
+Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in salone. Grazie mille ✨`;
+
+    const waUrl = `https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(message)}`;
+    window.open(waUrl, "_blank");
+
+    triggerPushDemo("💬 Apertura WhatsApp! Tocca invia per confermare l'ordine al salone.");
+    setIsCartOpen(false);
   };
 
   const triggerPushDemo = (text: string) => {
@@ -757,6 +867,7 @@ export default function CambiaLookApp() {
     setSalonFormName(salon.name || "");
     setSalonFormAddress(salon.address || "");
     setSalonFormPhone(salon.phone || "");
+    setSalonFormWhatsapp(salon.whatsapp || salon.phone || "");
     setSalonFormHours(salon.hours || "");
     setSalonFormDescription(salon.description || "");
     setSalonFormImage(salon.image || "");
@@ -785,6 +896,7 @@ export default function CambiaLookApp() {
           name: salonFormName,
           address: salonFormAddress,
           phone: salonFormPhone,
+          whatsapp: salonFormWhatsapp,
           hours: salonFormHours,
           description: salonFormDescription,
           image: salonFormImage || s.image,
@@ -1087,6 +1199,20 @@ export default function CambiaLookApp() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Tasto Busta Salone (Ordina & Ritira) */}
+          <button 
+            onClick={() => setIsCartOpen(true)}
+            className="relative w-9 h-9 rounded-full bg-black/25 flex items-center justify-center text-white/90 hover:text-white border border-white/15 shadow transition-all active:scale-95"
+            title="Busta Salone (Ordina & Ritira)"
+          >
+            <ShoppingBag size={16} />
+            {cartTotalCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#E8D3A2] text-[#D11936] text-[10px] font-black rounded-full flex items-center justify-center shadow animate-pulse">
+                {cartTotalCount}
+              </span>
+            )}
+          </button>
+
           {/* Tasto discreto per lo staff (anonimo e protetto per le clienti) */}
           <button 
             onClick={handleToggleStaffMode}
@@ -1729,19 +1855,36 @@ export default function CambiaLookApp() {
                     
                     <div className="pt-2 flex items-center justify-between border-t border-white/10 mt-1">
                       <span className="text-sm font-black text-[#E8D3A2]">€ {Number(prod.price).toFixed(2)}</span>
-                      <span className="text-[10px] font-bold text-white/70 group-hover:text-white">Dettagli →</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToCart(prod, 1);
+                        }}
+                        className="px-2.5 py-1 rounded-xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-black text-[10px] flex items-center gap-1 shadow active:scale-95 transition-all"
+                        title="Aggiungi alla busta salone"
+                      >
+                        <Plus size={11} strokeWidth={3} />
+                        <span>Busta</span>
+                      </button>
                     </div>
                   </div>
                 </div>
               ))}
           </div>
 
-          <div className="p-4 rounded-2xl bg-black/30 border border-white/15 text-center space-y-1">
-            <ShoppingBag size={20} className="mx-auto text-[#E8D3A2]" />
-            <h4 className="text-xs font-bold text-white">Acquisto Diretto in Salone</h4>
+          <div 
+            onClick={() => setIsCartOpen(true)}
+            className="p-4 rounded-2xl bg-black/40 border border-[#E8D3A2]/40 text-center space-y-1.5 cursor-pointer hover:bg-black/50 transition-all shadow-lg group"
+          >
+            <div className="w-8 h-8 rounded-full bg-emerald-600/30 text-emerald-300 mx-auto flex items-center justify-center border border-emerald-500/30 group-hover:scale-110 transition-transform">
+              <MessageCircle size={16} />
+            </div>
+            <h4 className="text-xs font-bold text-white">Ordina su WhatsApp & Ritira in Salone</h4>
             <p className="text-[11px] text-white/75 leading-relaxed">
-              Tutti i prodotti del catalogo sono disponibili per l'acquisto nei saloni di Roma e Cisterna di Latina.
+              Aggiungi i prodotti alla Busta Salone e invia l'ordine via WhatsApp. Prepariamo la tua busta e paghi direttamente in cassa al ritiro senza costi extra!
             </p>
+            <span className="inline-block text-[10px] font-bold text-[#E8D3A2] underline">Apri la Busta Salone ({cartTotalCount}) →</span>
           </div>
         </main>
       )}
@@ -2062,6 +2205,48 @@ export default function CambiaLookApp() {
               <span className="text-xs font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30">
                 In Vendita nei Saloni
               </span>
+            </div>
+
+            {/* Selettore Quantità e Aggiunta alla Busta Salone */}
+            <div className="space-y-2 pt-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-white/70 block">
+                Quantità da Ordinare per il Ritiro in Salone:
+              </span>
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center bg-black/60 border border-white/20 rounded-2xl p-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setProdDetailQty(Math.max(1, prodDetailQty - 1))}
+                    className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white active:scale-95 transition-all"
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <span className="w-9 text-center font-black text-sm text-[#E8D3A2]">
+                    {prodDetailQty}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setProdDetailQty(prodDetailQty + 1)}
+                    className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white active:scale-95 transition-all"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    addToCart(selectedProduct, prodDetailQty);
+                    setProdDetailQty(1);
+                    setSelectedProduct(null);
+                    setIsCartOpen(true);
+                  }}
+                  className="flex-1 py-3 px-3 rounded-2xl bg-gradient-to-r from-white via-[#FFF8E7] to-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-xl hover:brightness-105 active:scale-95 transition-all"
+                >
+                  <ShoppingBag size={15} />
+                  <span>Aggiungi alla Busta • € {(Number(selectedProduct.price) * prodDetailQty).toFixed(2)}</span>
+                </button>
+              </div>
             </div>
 
             {/* Azioni Staff Mode nel dettaglio prodotto */}
@@ -2482,7 +2667,7 @@ export default function CambiaLookApp() {
 
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="font-bold text-white/90 block mb-1">Numero di Telefono *</label>
+                  <label className="font-bold text-white/90 block mb-1">Telefono Chiamate *</label>
                   <input
                     type="text"
                     required
@@ -2492,15 +2677,26 @@ export default function CambiaLookApp() {
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-white/90 block mb-1">Orari di Apertura *</label>
+                  <label className="font-bold text-white/90 block mb-1">WhatsApp per Ordini</label>
                   <input
                     type="text"
-                    required
-                    value={salonFormHours}
-                    onChange={e => setSalonFormHours(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/20 text-white outline-none"
+                    placeholder="Es. 069699412 o 340..."
+                    value={salonFormWhatsapp}
+                    onChange={e => setSalonFormWhatsapp(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-[#E8D3A2]/60 text-[#E8D3A2] font-bold outline-none"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-white/90 block mb-1">Orari di Apertura *</label>
+                <input
+                  type="text"
+                  required
+                  value={salonFormHours}
+                  onChange={e => setSalonFormHours(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/20 text-white outline-none"
+                />
               </div>
 
               <div>
@@ -2886,6 +3082,280 @@ export default function CambiaLookApp() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* FLOATING CART BAR (Visibile quando ci sono prodotti nella busta) */}
+      {cartTotalCount > 0 && !isCartOpen && (
+        <div className="fixed bottom-20 left-4 right-4 max-w-[416px] mx-auto z-30 animate-in slide-in-from-bottom duration-300">
+          <button
+            onClick={() => setIsCartOpen(true)}
+            className="w-full py-3 px-4 rounded-2xl bg-black/90 backdrop-blur-xl border border-[#E8D3A2] shadow-2xl flex items-center justify-between group active:scale-[0.98] transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#E8D3A2] to-[#B38F46] text-[#D11936] flex items-center justify-center font-black shadow relative">
+                <ShoppingBag size={20} />
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#D11936] text-white border-2 border-[#E8D3A2] rounded-full text-[10px] font-black flex items-center justify-center">
+                  {cartTotalCount}
+                </span>
+              </div>
+              <div className="text-left">
+                <span className="text-[10px] uppercase font-bold text-[#E8D3A2] tracking-wider block">
+                  Busta Salone Attiva
+                </span>
+                <span className="text-sm font-black text-white">
+                  € {cartTotalPrice.toFixed(2)} • {cartTotalCount} {cartTotalCount === 1 ? "prodotto" : "prodotti"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs font-black text-[#E8D3A2] bg-white/10 px-3 py-1.5 rounded-xl border border-white/10 group-hover:bg-[#E8D3A2] group-hover:text-[#D11936] transition-all">
+              <span>Ordina & Ritira</span>
+              <ChevronRight size={14} />
+            </div>
+          </button>
+        </div>
+      )}
+
+      {/* ========================================================================================= */}
+      {/* MODAL BUSTA SALONE: ORDINA SU WHATSAPP & RITIRA IN SALONE */}
+      {/* ========================================================================================= */}
+      {isCartOpen && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[#80081B] border-t-2 border-[#E8D3A2] rounded-t-[32px] p-6 space-y-4 animate-in slide-in-from-bottom duration-300 max-h-[92vh] overflow-y-auto no-scrollbar shadow-2xl">
+            
+            {/* Header del carrello */}
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#E8D3A2] to-[#B38F46] text-[#D11936] flex items-center justify-center font-bold shadow">
+                  <ShoppingBag size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white leading-tight">La Tua Busta Salone</h3>
+                  <span className="text-[10px] text-white/70">Ordina su WhatsApp e ritira in salone</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsCartOpen(false)} 
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {cart.length === 0 ? (
+              <div className="py-12 text-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-black/40 text-white/40 mx-auto flex items-center justify-center border border-white/10">
+                  <ShoppingBag size={28} />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-bold text-white">La tua busta è vuota</h4>
+                  <p className="text-xs text-white/70 max-w-xs mx-auto">
+                    Esplora la nostra Boutique e aggiungi i prodotti professionali consigliati per la cura dei tuoi capelli.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCartOpen(false);
+                    setActiveTab("prodotti");
+                  }}
+                  className="py-3 px-6 rounded-2xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all"
+                >
+                  Sfoglia i Prodotti
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSendWhatsAppOrder} className="space-y-4 text-xs">
+                
+                {/* LISTA DEI PRODOTTI NELLA BUSTA */}
+                <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+                  {cart.map((item) => (
+                    <div 
+                      key={item.product.id}
+                      className="p-3 rounded-2xl bg-black/40 border border-white/15 flex items-center gap-3"
+                    >
+                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-black/60 relative shrink-0 border border-white/10">
+                        <Image 
+                          src={item.product.img} 
+                          alt={item.product.name} 
+                          fill 
+                          className="object-cover" 
+                        />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[9px] uppercase font-bold text-[#E8D3A2] block truncate">
+                          {item.product.brand}
+                        </span>
+                        <h5 className="font-bold text-white text-xs truncate">
+                          {item.product.name}
+                        </h5>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs font-black text-[#E8D3A2]">
+                            € {(Number(item.product.price) * item.quantity).toFixed(2)}
+                          </span>
+                          <span className="text-[10px] text-white/50">
+                            (€ {Number(item.product.price).toFixed(2)} cad.)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Quantità & Rimuovi */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => updateCartQuantity(item.product.id, -1)}
+                          className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white active:scale-95 transition-all"
+                        >
+                          <Minus size={12} />
+                        </button>
+                        <span className="w-6 text-center font-black text-xs text-white">
+                          {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateCartQuantity(item.product.id, 1)}
+                          className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white active:scale-95 transition-all"
+                        >
+                          <Plus size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeFromCart(item.product.id)}
+                          className="w-7 h-7 ml-1 rounded-lg bg-black/60 hover:bg-rose-600/80 text-rose-300 hover:text-white flex items-center justify-center transition-colors"
+                          title="Rimuovi"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* SCELTA SALONE DI RITIRO */}
+                <div className="space-y-1.5 pt-1">
+                  <label className="font-bold text-white/90 block">
+                    1. Salone per il Ritiro Gratuito *
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCartPickupSalon("cisterna")}
+                      className={`p-3 rounded-2xl border text-left transition-all ${
+                        cartPickupSalon === "cisterna"
+                          ? "bg-white text-[#D11936] font-black border-white shadow-md scale-[1.02]"
+                          : "bg-black/40 text-white/80 border-white/20 hover:text-white"
+                      }`}
+                    >
+                      <span className="block font-bold text-xs">Cisterna di Latina</span>
+                      <span className="text-[10px] opacity-80 block truncate">Corso della Repubblica, 184</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setCartPickupSalon("roma")}
+                      className={`p-3 rounded-2xl border text-left transition-all ${
+                        cartPickupSalon === "roma"
+                          ? "bg-white text-[#D11936] font-black border-white shadow-md scale-[1.02]"
+                          : "bg-black/40 text-white/80 border-white/20 hover:text-white"
+                      }`}
+                    >
+                      <span className="block font-bold text-xs">Roma</span>
+                      <span className="text-[10px] opacity-80 block truncate">Via delle Cave, 72</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* DATI CLIENTE */}
+                <div className="space-y-2 pt-1">
+                  <label className="font-bold text-white/90 block">
+                    2. I Tuoi Dati per la Busta Salone *
+                  </label>
+                  
+                  <div>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Nome e Cognome della cliente *"
+                      value={cartClientName}
+                      onChange={e => setCartClientName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/20 text-white placeholder-white/40 outline-none font-medium"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <select
+                        value={cartPickupTime}
+                        onChange={e => setCartPickupTime(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl bg-black/60 border border-white/20 text-white outline-none font-medium text-xs"
+                      >
+                        <option value="Oggi pomeriggio">Ritiro: Oggi pomeriggio</option>
+                        <option value="Domani mattina">Ritiro: Domani mattina</option>
+                        <option value="Domani pomeriggio">Ritiro: Domani pomeriggio</option>
+                        <option value="Entro Sabato">Ritiro: Entro Sabato</option>
+                        <option value="Alla mia prossima seduta">Alla prossima seduta</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Note o richieste..."
+                        value={cartNotes}
+                        onChange={e => setCartNotes(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl bg-black/40 border border-white/20 text-white placeholder-white/40 outline-none text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* TOTALE E VANTAGGIO RITIRO */}
+                <div className="p-3.5 rounded-2xl bg-black/50 border border-[#E8D3A2]/50 space-y-2">
+                  <div className="flex items-center justify-between text-xs text-white/80">
+                    <span>Spedizione & Preparazione:</span>
+                    <span className="font-bold text-emerald-300 uppercase text-[11px]">Gratis in Salone</span>
+                  </div>
+                  <div className="flex items-center justify-between border-t border-white/10 pt-2">
+                    <span className="text-xs font-bold text-white">Totale da pagare al ritiro:</span>
+                    <span className="text-xl font-black text-[#E8D3A2]">
+                      € {cartTotalPrice.toFixed(2)}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-white/60 leading-tight">
+                    ✦ Nessun pagamento anticipato: pagherai comodamente in salone al momento del ritiro (in contanti o con carta).
+                  </p>
+                </div>
+
+                {/* PULSANTE INVIA ORDINE VIA WHATSAPP */}
+                <div className="space-y-2 pt-1">
+                  <button
+                    type="submit"
+                    className="w-full py-4 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-2xl active:scale-95 transition-all border border-emerald-400/30"
+                  >
+                    <MessageCircle size={18} />
+                    <span>Invia Ordine su WhatsApp ({cartPickupSalon === "cisterna" ? "Cisterna" : "Roma"})</span>
+                  </button>
+
+                  <div className="flex justify-between items-center px-1">
+                    <button
+                      type="button"
+                      onClick={clearCart}
+                      className="text-[10px] text-white/50 hover:text-rose-300 underline"
+                    >
+                      Svuota busta
+                    </button>
+                    <span className="text-[10px] text-[#E8D3A2]">
+                      💬 Risposta rapida dallo staff Cambia Look
+                    </span>
+                  </div>
+                </div>
+
+              </form>
+            )}
+
           </div>
         </div>
       )}
