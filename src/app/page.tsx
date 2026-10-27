@@ -52,7 +52,7 @@ const INITIAL_SALONS = [
     name: "Cisterna di Latina",
     address: "Corso della Repubblica, 184 • Cisterna di Latina (LT)",
     phone: "06 969 9412",
-    whatsapp: "069699412",
+    whatsapp: "3807544502",
     hours: "Mar - Sab: 08:30 - 19:30 • Lun e Dom Chiuso",
     image: "/salone_cisterna.jpg",
     description: "Atelier spazioso ed elegante con lampadario barocco fucsia, postazioni specchio luminose e consulenza personalizzata.",
@@ -62,7 +62,7 @@ const INITIAL_SALONS = [
     name: "Roma",
     address: "Via delle Cave, 72 • Roma (Zona Colli Albani / Appia)",
     phone: "06 780 4521",
-    whatsapp: "067804521",
+    whatsapp: "3807544502",
     hours: "Mar - Sab: 09:00 - 19:30 • Lun e Dom Chiuso",
     image: "/salone_roma.jpg",
     description: "Salone moderno nel cuore di Roma con specchiere barocche nere, team specializzato in biondi, balayage e cambi look donna.",
@@ -373,7 +373,14 @@ export default function CambiaLookApp() {
       if (savedPin) setSalonPin(savedPin);
 
       const savedSalons = localStorage.getItem("cambia_look_salons");
-      if (savedSalons) setSalonsList(JSON.parse(savedSalons));
+      if (savedSalons) {
+        const parsed = JSON.parse(savedSalons);
+        const updated = parsed.map((s: any) => ({
+          ...s,
+          whatsapp: s.whatsapp === "069699412" || s.whatsapp === "067804521" || !s.whatsapp ? "3807544502" : s.whatsapp
+        }));
+        setSalonsList(updated);
+      }
 
       const savedServices = localStorage.getItem("cambia_look_services");
       if (savedServices) setServicesList(JSON.parse(savedServices));
