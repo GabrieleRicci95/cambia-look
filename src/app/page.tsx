@@ -1484,7 +1484,6 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
           
           {/* INTRO TITLE WITH GOLD FLOURISH */}
           <div className="text-center space-y-1 py-1">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#E8D3A2]">Atelier Donna</span>
             <h2 className="text-3xl font-normal font-script text-white drop-shadow">
               I Nostri Saloni
             </h2>
