@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "it.cambialook.app"
+    namespace = "com.gardigital.cambialook"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "it.cambialook.app"
+        applicationId "com.gardigital.cambialook"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
