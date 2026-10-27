@@ -3151,29 +3151,28 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
                 </div>
               </div>
 
-              {/* Data & Orario affiancati, puliti e perfettamente allineati nei margini */}
-              <div className="grid grid-cols-2 gap-2.5">
-                <div>
-                  <label className="font-bold text-white/90 block mb-1.5 text-xs">Data Appuntamento *</label>
-                  <input
-                    type="date"
-                    required
-                    value={formDate}
-                    onChange={e => setFormDate(e.target.value)}
-                    className="w-full box-border px-3 py-2.5 rounded-xl bg-black/50 border border-white/20 text-white outline-none font-bold text-xs"
-                  />
-                </div>
+              {/* Data dell'Appuntamento (Riga intera, zero sovrapposizioni) */}
+              <div>
+                <label className="font-bold text-white/90 block mb-1.5 text-xs">Data Appuntamento *</label>
+                <input
+                  type="date"
+                  required
+                  value={formDate}
+                  onChange={e => setFormDate(e.target.value)}
+                  className="w-full block box-border px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/20 text-white outline-none font-bold text-sm text-center"
+                />
+              </div>
 
-                <div>
-                  <label className="font-bold text-white/90 block mb-1.5 text-xs">Orario *</label>
-                  <input
-                    type="time"
-                    required
-                    value={formTime}
-                    onChange={e => setFormTime(e.target.value)}
-                    className="w-full box-border px-3 py-2.5 rounded-xl bg-black/50 border border-[#E8D3A2]/60 text-[#E8D3A2] font-black outline-none text-xs tracking-wider"
-                  />
-                </div>
+              {/* Orario dell'Appuntamento (Riga intera, zero sovrapposizioni) */}
+              <div>
+                <label className="font-bold text-white/90 block mb-1.5 text-xs">Orario *</label>
+                <input
+                  type="time"
+                  required
+                  value={formTime}
+                  onChange={e => setFormTime(e.target.value)}
+                  className="w-full block box-border px-3.5 py-2.5 rounded-xl bg-black/50 border border-[#E8D3A2]/60 text-[#E8D3A2] font-black outline-none text-base tracking-widest text-center"
+                />
               </div>
 
               {/* Trattamento / Servizio */}
