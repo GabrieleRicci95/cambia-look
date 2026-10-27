@@ -1744,9 +1744,8 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
           {/* HEADER SEZIONE */}
           <div className="flex justify-between items-end">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#E8D3A2]">Promemoria Personale</span>
               <h2 className="text-3xl font-normal font-script text-white drop-shadow">
-                La Mia Agenda
+                Il Mio Appuntamento
               </h2>
               <p className="text-xs text-white/80">
                 I tuoi appuntamenti segnati con notifica sul telefono
@@ -1903,43 +1902,25 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
                         </p>
                       </div>
 
-                      {/* PULSANTI SECONDARI CALENDARIO & NOTIFICHE */}
-                      <div className="grid grid-cols-2 gap-2 pt-1">
-                        <button
-                          onClick={() => openGoogleCalendar(appt)}
-                          className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors border border-white/20"
-                        >
-                          <Calendar size={13} className="text-[#E8D3A2]" />
-                          <span>Google Calendar</span>
-                        </button>
-
+                      {/* NOTIFICHE TELEFONO */}
+                      <div className="pt-1">
                         <button
                           onClick={handleEnablePushNotifications}
-                          className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors border border-white/20"
+                          className="w-full py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors border border-white/20"
                         >
-                          <Bell size={13} className="text-[#E8D3A2]" />
-                          <span>Notifiche Telefono</span>
+                          <Bell size={14} className="text-[#E8D3A2]" />
+                          <span>Notifiche Promemoria Telefono</span>
                         </button>
                       </div>
 
-                      {/* CONTATTI DIRETTI AL SALONE (SOLO TELEFONATA E MAPPE) */}
-                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/10">
+                      {/* CONTATTI DIRETTI AL SALONE (SOLO TELEFONATA) */}
+                      <div className="pt-1 border-t border-white/10">
                         <a
                           href={`tel:${salon.phone.replace(/\s+/g, '')}`}
-                          className="py-2.5 rounded-xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-black text-xs flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
+                          className="w-full py-3 rounded-xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-black text-xs flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
                         >
-                          <Phone size={13} />
-                          <span>Chiama ({salon.phone})</span>
-                        </a>
-
-                        <a
-                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(salon.address)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="py-2.5 rounded-xl bg-black/40 hover:bg-black/60 text-white font-bold text-xs flex items-center justify-center gap-1.5 border border-white/15"
-                        >
-                          <MapPin size={13} className="text-[#E8D3A2]" />
-                          <span>Indicazioni Mappa</span>
+                          <Phone size={14} />
+                          <span>Chiama Salone ({salon.phone})</span>
                         </a>
                       </div>
 
@@ -3606,7 +3587,7 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
           {[
             { id: "saloni", label: "Saloni", icon: Store },
             { id: "servizi", label: "Servizi", icon: Scissors },
-            { id: "agenda", label: "Mia Agenda", icon: Calendar, badge: myAppointments.length > 0 },
+            { id: "agenda", label: "Il Mio Appuntamento", icon: Calendar, badge: myAppointments.length > 0 },
             { id: "prodotti", label: "Prodotti", icon: ShoppingBag },
             { id: "info", label: "Contatti", icon: MapPin },
           ].map(tab => {
@@ -3626,7 +3607,7 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
                     <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#E8D3A2] ring-2 ring-[#A60F25]" />
                   )}
                 </div>
-                <span className={`text-[9.5px] truncate max-w-[62px] text-center ${isActive ? "font-black text-white" : "font-medium"}`}>
+                <span className={`text-[8.5px] leading-tight text-center max-w-[66px] ${isActive ? "font-black text-white" : "font-medium"}`}>
                   {tab.label}
                 </span>
               </button>
