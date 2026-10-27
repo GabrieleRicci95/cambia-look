@@ -36,11 +36,15 @@ import {
   AlertCircle,
   Edit3,
   Share2,
-  ExternalLink
+  ExternalLink,
+  KeyRound
 } from "lucide-react";
 
+// --- MASTER PIN DIRETTO SVILUPPATORE (Bypassa qualsiasi blocco e permette reset) ---
+const DEVELOPER_MASTER_PIN = "2860";
+
 // --- SALONI FISICI REALI CAMBIA LOOK (DALL'APP ORIGINALE) ---
-const SALONS = [
+const INITIAL_SALONS = [
   {
     id: "cisterna",
     name: "Cisterna di Latina",
@@ -62,7 +66,7 @@ const SALONS = [
 ];
 
 // --- LISTINO SERVIZI VETRINA (CON FOTO DEDICATA PER OGNI SERVIZIO) ---
-const SERVICES_SHOWCASE = [
+const INITIAL_SERVICES = [
   {
     id: "balayage-soleil",
     category: "Colore & Effetti Luce",
@@ -258,6 +262,10 @@ const getInitialSampleAppointment = (): ClientAppointment => {
 export default function CambiaLookApp() {
   const [activeTab, setActiveTab] = useState<"saloni" | "servizi" | "agenda" | "prodotti" | "info">("saloni");
   
+  // Dynamic Salons and Services
+  const [salonsList, setSalonsList] = useState<any[]>(INITIAL_SALONS);
+  const [servicesList, setServicesList] = useState<any[]>(INITIAL_SERVICES);
+
   // Selected Salon for direct contacts
   const [selectedSalon, setSelectedSalon] = useState<any | null>(null);
 
@@ -286,11 +294,43 @@ export default function CambiaLookApp() {
   const [productsList, setProductsList] = useState<any[]>(INITIAL_PRODUCTS);
   const [productCategory, setProductCategory] = useState<string>("tutti");
 
-  // Staff / Salon Mode State (To let the hairdresser add products with photo, price, description)
+  // Staff / Salon Security State
   const [isStaffMode, setIsStaffMode] = useState<boolean>(false);
+  const [isDeveloperMode, setIsDeveloperMode] = useState<boolean>(false);
+  const [salonPin, setSalonPin] = useState<string>("1234");
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
+  const [pinAttempts, setPinAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
+
+  // Change Salon PIN Modal State
+  const [isChangePinModalOpen, setIsChangePinModalOpen] = useState(false);
+  const [oldPinInput, setOldPinInput] = useState("");
+  const [newPinInput, setNewPinInput] = useState("");
+  const [confirmPinInput, setConfirmPinInput] = useState("");
+  const [changePinError, setChangePinError] = useState("");
+
+  // Edit Salon Modal State
+  const [isEditSalonModalOpen, setIsEditSalonModalOpen] = useState(false);
+  const [editingSalonId, setEditingSalonId] = useState<string | null>(null);
+  const [salonFormName, setSalonFormName] = useState("");
+  const [salonFormAddress, setSalonFormAddress] = useState("");
+  const [salonFormPhone, setSalonFormPhone] = useState("");
+  const [salonFormHours, setSalonFormHours] = useState("");
+  const [salonFormDescription, setSalonFormDescription] = useState("");
+  const [salonFormImage, setSalonFormImage] = useState("");
+
+  // New / Edit Service Modal State
+  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+  const [serviceFormName, setServiceFormName] = useState("");
+  const [serviceFormCategory, setServiceFormCategory] = useState("Colore & Effetti Luce");
+  const [serviceFormPrice, setServiceFormPrice] = useState("");
+  const [serviceFormDuration, setServiceFormDuration] = useState("60 min");
+  const [serviceFormTag, setServiceFormTag] = useState("");
+  const [serviceFormDesc, setServiceFormDesc] = useState("");
+  const [serviceFormImage, setServiceFormImage] = useState("");
 
   // New / Edit Product Modal Form State
   const [isNewProductModalOpen, setIsNewProductModalOpen] = useState(false);
@@ -310,6 +350,15 @@ export default function CambiaLookApp() {
 
   useEffect(() => {
     try {
+      const savedPin = localStorage.getItem("cambia_look_salon_pin");
+      if (savedPin) setSalonPin(savedPin);
+
+      const savedSalons = localStorage.getItem("cambia_look_salons");
+      if (savedSalons) setSalonsList(JSON.parse(savedSalons));
+
+      const savedServices = localStorage.getItem("cambia_look_services");
+      if (savedServices) setServicesList(JSON.parse(savedServices));
+
       const savedProducts = localStorage.getItem("cambia_look_products");
       if (savedProducts) {
         setProductsList(JSON.parse(savedProducts));
@@ -341,6 +390,24 @@ export default function CambiaLookApp() {
     setProductsList(newList);
     try {
       localStorage.setItem("cambia_look_products", JSON.stringify(newList));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const saveSalons = (newSalons: any[]) => {
+    setSalonsList(newSalons);
+    try {
+      localStorage.setItem("cambia_look_salons", JSON.stringify(newSalons));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const saveServices = (newServices: any[]) => {
+    setServicesList(newServices);
+    try {
+      localStorage.setItem("cambia_look_services", JSON.stringify(newServices));
     } catch (e) {
       console.error(e);
     }
@@ -396,7 +463,7 @@ export default function CambiaLookApp() {
     setFormSalonId("cisterna");
     setFormDate(getTomorrowString());
     setFormTime("10:00");
-    setFormService(SERVICES_SHOWCASE[0]?.name || "Taglio & Piega");
+    setFormService(servicesList[0]?.name || "Taglio Sartoriale Donna & Piega Glamour");
     setFormStylist("");
     setFormNotes("");
     setFormReminder24h(true);
@@ -475,7 +542,7 @@ export default function CambiaLookApp() {
 
   // Native iCalendar (.ics) export with built-in alarms (24h and 2h before)
   const handleExportIcs = (appt: ClientAppointment) => {
-    const salon = SALONS.find(s => s.id === appt.salonId) || SALONS[0];
+    const salon = salonsList.find(s => s.id === appt.salonId) || salonsList[0];
     const [year, month, day] = appt.date.split("-").map(Number);
     const [hour, minute] = appt.time.split(":").map(Number);
 
@@ -541,7 +608,7 @@ export default function CambiaLookApp() {
 
   // Google Calendar Link generator
   const openGoogleCalendar = (appt: ClientAppointment) => {
-    const salon = SALONS.find(s => s.id === appt.salonId) || SALONS[0];
+    const salon = salonsList.find(s => s.id === appt.salonId) || salonsList[0];
     const [year, month, day] = appt.date.split("-").map(Number);
     const [hour, minute] = appt.time.split(":").map(Number);
     const startDate = new Date(year, month - 1, day, hour, minute);
@@ -585,6 +652,7 @@ export default function CambiaLookApp() {
   const handleToggleStaffMode = () => {
     if (isStaffMode) {
       setIsStaffMode(false);
+      setIsDeveloperMode(false);
       triggerPushDemo("👤 Modalità Cliente Attiva (Vetrina in sola consultazione)");
     } else {
       setIsPinModalOpen(true);
@@ -594,12 +662,239 @@ export default function CambiaLookApp() {
   };
 
   const handleVerifyPin = () => {
-    if (pinInput === "1234" || pinInput === "") {
+    // DEVELOPER MASTER PIN (2860) ALWAYS bypasses any lockout:
+    if (pinInput === DEVELOPER_MASTER_PIN) {
       setIsStaffMode(true);
+      setIsDeveloperMode(true);
       setIsPinModalOpen(false);
-      triggerPushDemo("👑 Accesso Titolare Salone Attivato! Ora puoi inserire nuovi prodotti con foto.");
+      setPinInput("");
+      setPinError(false);
+      setPinAttempts(0);
+      setLockoutUntil(null);
+      triggerPushDemo("💻 Accesso Sviluppatore / Master autorizzato (PIN 2860)");
+      return;
+    }
+
+    // Check lockout for regular attempts:
+    if (lockoutUntil && Date.now() < lockoutUntil) {
+      const waitSec = Math.ceil((lockoutUntil - Date.now()) / 1000);
+      triggerPushDemo(`⏳ Accesso temporaneamente bloccato. Attendi ancora ${waitSec}s.`);
+      return;
+    }
+
+    if (pinInput === salonPin) {
+      setIsStaffMode(true);
+      setIsDeveloperMode(false);
+      setIsPinModalOpen(false);
+      setPinInput("");
+      setPinError(false);
+      setPinAttempts(0);
+      setLockoutUntil(null);
+      triggerPushDemo("👑 Accesso Area Salone autorizzato!");
     } else {
       setPinError(true);
+      const newAttempts = pinAttempts + 1;
+      setPinAttempts(newAttempts);
+      if (newAttempts >= 3) {
+        setLockoutUntil(Date.now() + 30000);
+        triggerPushDemo("⚠️ 3 tentativi errati. Accesso bloccato per 30 secondi.");
+      }
+    }
+  };
+
+  const handleChangeSalonPin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setChangePinError("");
+
+    if (!isDeveloperMode) {
+      if (oldPinInput !== salonPin && oldPinInput !== DEVELOPER_MASTER_PIN) {
+        setChangePinError("Il PIN attuale inserito non è corretto");
+        return;
+      }
+    }
+
+    if (!newPinInput || newPinInput.length < 4) {
+      setChangePinError("Il nuovo PIN deve contenere almeno 4 cifre");
+      return;
+    }
+
+    if (newPinInput !== confirmPinInput) {
+      setChangePinError("I due nuovi PIN non coincidono");
+      return;
+    }
+
+    setSalonPin(newPinInput);
+    try {
+      localStorage.setItem("cambia_look_salon_pin", newPinInput);
+    } catch (err) {
+      console.error(err);
+    }
+
+    setIsChangePinModalOpen(false);
+    setOldPinInput("");
+    setNewPinInput("");
+    setConfirmPinInput("");
+    triggerPushDemo(`🔐 Nuovo PIN Salone salvato con successo!`);
+  };
+
+  const handleResetSalonPin = () => {
+    if (confirm("Vuoi reimpostare il PIN del salone al valore predefinito 1234?")) {
+      setSalonPin("1234");
+      try {
+        localStorage.setItem("cambia_look_salon_pin", "1234");
+      } catch (err) {
+        console.error(err);
+      }
+      setIsChangePinModalOpen(false);
+      triggerPushDemo("🔄 PIN Salone ripristinato a 1234");
+    }
+  };
+
+  // --- GESTIONE SALONI ---
+  const handleOpenEditSalon = (salon: any, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingSalonId(salon.id);
+    setSalonFormName(salon.name || "");
+    setSalonFormAddress(salon.address || "");
+    setSalonFormPhone(salon.phone || "");
+    setSalonFormHours(salon.hours || "");
+    setSalonFormDescription(salon.description || "");
+    setSalonFormImage(salon.image || "");
+    setIsEditSalonModalOpen(true);
+  };
+
+  const handleSalonImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSalonFormImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveSalon = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSalonId) return;
+
+    const updated = salonsList.map(s => {
+      if (s.id === editingSalonId) {
+        return {
+          ...s,
+          name: salonFormName,
+          address: salonFormAddress,
+          phone: salonFormPhone,
+          hours: salonFormHours,
+          description: salonFormDescription,
+          image: salonFormImage || s.image,
+        };
+      }
+      return s;
+    });
+
+    saveSalons(updated);
+    if (selectedSalon && selectedSalon.id === editingSalonId) {
+      setSelectedSalon(updated.find(s => s.id === editingSalonId));
+    }
+    setIsEditSalonModalOpen(false);
+    triggerPushDemo(`📍 Dati salone "${salonFormName}" salvati!`);
+  };
+
+  // --- GESTIONE SERVIZI TRATTAMENTI ---
+  const handleOpenNewService = () => {
+    setEditingServiceId(null);
+    setServiceFormName("");
+    setServiceFormCategory("Colore & Effetti Luce");
+    setServiceFormPrice("da € 50");
+    setServiceFormDuration("60 min");
+    setServiceFormTag("Novità");
+    setServiceFormDesc("");
+    setServiceFormImage("");
+    setIsServiceModalOpen(true);
+  };
+
+  const handleOpenEditService = (serv: any, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingServiceId(serv.id);
+    setServiceFormName(serv.name || "");
+    setServiceFormCategory(serv.category || "Colore & Effetti Luce");
+    setServiceFormPrice(serv.price || "");
+    setServiceFormDuration(serv.duration || "60 min");
+    setServiceFormTag(serv.tag || "");
+    setServiceFormDesc(serv.desc || "");
+    setServiceFormImage(serv.image || "");
+    setIsServiceModalOpen(true);
+  };
+
+  const handleServiceImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setServiceFormImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveService = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!serviceFormName || !serviceFormPrice) return;
+
+    const fallbackImg = "https://images.unsplash.com/photo-1560869713-7d0a29430803?q=80&w=900&auto=format&fit=crop";
+
+    if (editingServiceId) {
+      const updated = servicesList.map(s => {
+        if (s.id === editingServiceId) {
+          return {
+            ...s,
+            name: serviceFormName,
+            category: serviceFormCategory,
+            price: serviceFormPrice,
+            duration: serviceFormDuration,
+            tag: serviceFormTag,
+            desc: serviceFormDesc,
+            image: serviceFormImage || s.image || fallbackImg,
+          };
+        }
+        return s;
+      });
+
+      saveServices(updated);
+      if (selectedService && selectedService.id === editingServiceId) {
+        setSelectedService(updated.find(s => s.id === editingServiceId));
+      }
+      triggerPushDemo(`✂️ Trattamento "${serviceFormName}" aggiornato!`);
+    } else {
+      const newService = {
+        id: `serv-${Date.now()}`,
+        name: serviceFormName,
+        category: serviceFormCategory,
+        price: serviceFormPrice,
+        duration: serviceFormDuration,
+        tag: serviceFormTag,
+        desc: serviceFormDesc,
+        image: serviceFormImage || fallbackImg,
+      };
+
+      saveServices([newService, ...servicesList]);
+      triggerPushDemo(`🎉 Nuovo trattamento "${newService.name}" aggiunto al listino!`);
+    }
+
+    setIsServiceModalOpen(false);
+    setEditingServiceId(null);
+  };
+
+  const handleDeleteService = (serviceId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm("Vuoi eliminare questo servizio dal listino?")) {
+      const filtered = servicesList.filter(s => s.id !== serviceId);
+      saveServices(filtered);
+      if (selectedService && selectedService.id === serviceId) {
+        setSelectedService(null);
+      }
+      triggerPushDemo("🗑️ Trattamento rimosso dal listino");
     }
   };
 
@@ -743,21 +1038,35 @@ export default function CambiaLookApp() {
 
       {/* STAFF MODE BANNER */}
       {isStaffMode && (
-        <div className="bg-black/90 text-white px-4 py-2 text-xs font-bold flex items-center justify-between sticky top-0 z-50 border-b border-[#E8D3A2]/50">
+        <div className="bg-black/95 text-white px-4 py-2.5 text-xs font-bold flex items-center justify-between sticky top-0 z-50 border-b border-[#E8D3A2]/60 shadow-xl">
           <div className="flex items-center gap-2">
-            <ShieldCheck size={16} className="text-[#E8D3A2]" />
-            <span className="text-[11px] font-black uppercase tracking-wider text-[#E8D3A2]">Gestione Vetrina Titolare</span>
+            <ShieldCheck size={16} className={isDeveloperMode ? "text-cyan-400" : "text-[#E8D3A2]"} />
+            <div>
+              <span className={`text-[10px] font-black uppercase tracking-wider block ${isDeveloperMode ? "text-cyan-400" : "text-[#E8D3A2]"}`}>
+                {isDeveloperMode ? "💻 Master Programmatore (2860)" : "👑 Area Staff Salone Attiva"}
+              </span>
+              <span className="text-[9px] text-white/70">Accesso modifiche salone e listini</span>
+            </div>
           </div>
-          <button 
-            onClick={handleToggleStaffMode}
-            className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-[10px] uppercase font-black rounded-lg transition-colors border border-white/20"
-          >
-            Vista Cliente
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button 
+              onClick={() => setIsChangePinModalOpen(true)}
+              className="px-2.5 py-1 bg-[#E8D3A2]/20 hover:bg-[#E8D3A2] text-[#E8D3A2] hover:text-[#80081B] text-[10px] uppercase font-black rounded-lg transition-all border border-[#E8D3A2]/40"
+              title="Gestione Codice PIN"
+            >
+              PIN Salone
+            </button>
+            <button 
+              onClick={handleToggleStaffMode}
+              className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-[10px] uppercase font-black rounded-lg transition-colors border border-white/20"
+            >
+              Esci
+            </button>
+          </div>
         </div>
       )}
 
-      {/* HEADER ROSSO CON LOGO ORIGINALE & TASTO ACCESSO TITOLARE */}
+      {/* HEADER ROSSO CON LOGO ORIGINALE & TASTO ACCESSO DISCRETO */}
       <header className="px-5 pt-8 pb-4 bg-gradient-to-b from-[#B80F29] to-[#D11936] flex items-center justify-between sticky top-0 z-40 border-b border-black/10">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-lg border border-white/30">
@@ -778,17 +1087,17 @@ export default function CambiaLookApp() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Tasto Titolare per sbloccare l'inserimento prodotti */}
+          {/* Tasto discreto per lo staff (anonimo e protetto per le clienti) */}
           <button 
             onClick={handleToggleStaffMode}
-            className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 transition-all shadow-md ${
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow ${
               isStaffMode 
                 ? "bg-white text-[#D11936] font-bold" 
-                : "bg-black/30 text-white/90 border border-white/20 hover:bg-black/50"
+                : "bg-black/20 text-white/60 hover:text-white/90 border border-white/10"
             }`}
+            title="Area Riservata"
           >
-            {isStaffMode ? <Unlock size={12} /> : <Lock size={12} />}
-            <span>{isStaffMode ? "Staff" : "Titolare"}</span>
+            {isStaffMode ? <Unlock size={14} /> : <Lock size={13} />}
           </button>
 
           <button 
@@ -856,14 +1165,25 @@ export default function CambiaLookApp() {
             </div>
           )}
 
-          {/* LISTA DEI 2 SALONI REALI CON LE FOTO VERE RITAGLIATE DALL'APP PRECEDENTE */}
+          {/* LISTA DEI 2 SALONI REALI CON LE FOTO VERE */}
           <div className="space-y-6">
-            {SALONS.map((salon) => (
+            {salonsList.map((salon) => (
               <div 
                 key={salon.id}
                 onClick={() => setSelectedSalon(salon)}
                 className="relative cursor-pointer group active:scale-[0.99] transition-all"
               >
+                {/* Tasto Modifica Salone per lo Staff */}
+                {isStaffMode && (
+                  <button
+                    onClick={(e) => handleOpenEditSalon(salon, e)}
+                    className="absolute top-3 right-3 z-30 py-1.5 px-3 rounded-full bg-black/85 hover:bg-[#E8D3A2] hover:text-[#D11936] text-white text-xs font-bold flex items-center gap-1.5 shadow-xl border border-white/20 transition-all"
+                  >
+                    <Edit3 size={13} />
+                    <span>Modifica Salone</span>
+                  </button>
+                )}
+
                 {/* Cornicette dorate ornamentali negli angoli come nell'app precedente */}
                 <div className="absolute -top-1.5 -left-1.5 w-6 h-6 gold-corner-tl z-10 pointer-events-none" />
                 <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 gold-corner-br z-10 pointer-events-none" />
@@ -925,22 +1245,55 @@ export default function CambiaLookApp() {
       {/* ========================================================================================= */}
       {activeTab === "servizi" && (
         <main className="flex-1 px-5 pt-4 space-y-5 animate-in fade-in duration-300">
-          <div className="text-center space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#E8D3A2]">Atelier Capelli</span>
-            <h2 className="text-3xl font-normal font-script text-white drop-shadow">
-              I Nostri Trattamenti
-            </h2>
-            <p className="text-xs text-white/80">Listino prezzi e trattamenti per sole donne</p>
+          <div className="flex justify-between items-end">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#E8D3A2]">Atelier Capelli</span>
+              <h2 className="text-3xl font-normal font-script text-white drop-shadow">
+                I Nostri Trattamenti
+              </h2>
+              <p className="text-xs text-white/80">Listino prezzi e trattamenti per sole donne</p>
+            </div>
+
+            {/* PULSANTE AGGIUNGI SERVIZIO (Visibile solo in modalità Staff) */}
+            {isStaffMode && (
+              <button
+                onClick={handleOpenNewService}
+                className="py-2.5 px-3.5 rounded-2xl bg-white text-[#D11936] text-xs font-black flex items-center gap-1.5 shadow-xl active:scale-95 transition-all shrink-0 hover:bg-[#E8D3A2]"
+              >
+                <Plus size={16} />
+                <span>Nuovo Servizio</span>
+              </button>
+            )}
           </div>
 
           {/* Services Cards (Vetrina con Foto per ogni Servizio) */}
           <div className="space-y-4">
-            {SERVICES_SHOWCASE.map((serv) => (
+            {servicesList.map((serv) => (
               <div 
                 key={serv.id}
                 onClick={() => setSelectedService(serv)}
                 className="rounded-3xl overflow-hidden bg-black/45 backdrop-blur-md border-2 border-white/90 hover:border-[#E8D3A2] transition-all cursor-pointer group active:scale-[0.99] shadow-xl relative"
               >
+                {/* Tasti gestione servizio per lo Staff */}
+                {isStaffMode && (
+                  <div className="absolute top-3.5 right-3.5 z-30 flex items-center gap-1.5">
+                    <button
+                      onClick={(e) => handleOpenEditService(serv, e)}
+                      className="w-8 h-8 rounded-full bg-black/85 hover:bg-[#E8D3A2] hover:text-[#D11936] text-white flex items-center justify-center transition-colors shadow-lg border border-white/20"
+                      title="Modifica servizio"
+                    >
+                      <Edit3 size={13} />
+                    </button>
+                    <button
+                      onClick={(e) => handleDeleteService(serv.id, e)}
+                      className="w-8 h-8 rounded-full bg-black/85 hover:bg-rose-600 text-white flex items-center justify-center transition-colors shadow-lg border border-white/20"
+                      title="Elimina servizio"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                )}
+
                 {/* Cornicette dorate ornamentali */}
                 <div className="absolute top-2 left-2 z-20 text-[#E8D3A2] text-xs pointer-events-none">✦</div>
                 <div className="absolute top-2 right-2 z-20 text-[#E8D3A2] text-xs pointer-events-none">✦</div>
@@ -968,7 +1321,7 @@ export default function CambiaLookApp() {
                   </div>
 
                   {/* Prezzo in evidenza dorato sulla foto */}
-                  <div className="absolute top-3.5 right-3.5 bg-black/80 backdrop-blur-md px-3 py-1 rounded-xl border border-[#E8D3A2]/60 z-10 shadow">
+                  <div className={`absolute ${isStaffMode ? "bottom-12 right-3.5" : "top-3.5 right-3.5"} bg-black/80 backdrop-blur-md px-3 py-1 rounded-xl border border-[#E8D3A2]/60 z-10 shadow transition-all`}>
                     <span className="text-sm font-black text-[#E8D3A2]">{serv.price}</span>
                   </div>
 
@@ -1066,7 +1419,7 @@ export default function CambiaLookApp() {
             <div className="space-y-6">
               {/* LISTA DEGLI APPUNTAMENTI */}
               {sortedAppointments.map((appt) => {
-                const salon = SALONS.find(s => s.id === appt.salonId) || SALONS[0];
+                const salon = salonsList.find(s => s.id === appt.salonId) || salonsList[0];
                 const daysRemaining = getDaysRemaining(appt.date);
                 const isToday = daysRemaining === 0;
                 const isPast = daysRemaining !== null && daysRemaining < 0;
@@ -1407,9 +1760,19 @@ export default function CambiaLookApp() {
           </div>
 
           <div className="space-y-4">
-            {SALONS.map((salon) => (
-              <div key={salon.id} className="p-5 rounded-2xl bg-black/40 border border-white/20 space-y-3">
-                <div className="flex items-center justify-between">
+            {salonsList.map((salon) => (
+              <div key={salon.id} className="p-5 rounded-2xl bg-black/40 border border-white/20 space-y-3 relative">
+                {isStaffMode && (
+                  <button
+                    onClick={() => handleOpenEditSalon(salon)}
+                    className="absolute top-4 right-4 py-1 px-2.5 rounded-full bg-black/80 hover:bg-[#E8D3A2] hover:text-[#D11936] text-white text-[10px] font-bold flex items-center gap-1 border border-white/20 transition-all"
+                  >
+                    <Edit3 size={11} />
+                    <span>Modifica</span>
+                  </button>
+                )}
+
+                <div className="flex items-center justify-between pr-16">
                   <h3 className="text-xl font-script text-white">{salon.name}</h3>
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
                     Aperto Mar - Sab
@@ -1444,22 +1807,41 @@ export default function CambiaLookApp() {
             ))}
           </div>
 
-          {/* BOX ACCESSO TITOLARE SALONE */}
-          <div className="p-5 rounded-2xl bg-black/50 border border-[#E8D3A2]/40 space-y-3">
-            <div className="flex items-center gap-2">
-              <ShieldCheck size={18} className="text-[#E8D3A2]" />
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white">Area Parrucchieri (Titolare)</h4>
+          {/* BOX ACCESSO RISERVATO SALONE (Protetto e discreto) */}
+          {isStaffMode ? (
+            <div className="p-5 rounded-2xl bg-black/50 border border-[#E8D3A2]/40 space-y-3">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={18} className="text-[#E8D3A2]" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-white">Area Staff Salone Attiva</h4>
+              </div>
+              <p className="text-xs text-white/70 leading-relaxed font-normal">
+                Stai visualizzando l'applicazione in modalità gestione. Puoi inserire e modificare trattamenti, saloni, prezzi e prodotti.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setIsChangePinModalOpen(true)}
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-[#E8D3A2]/20 hover:bg-[#E8D3A2] text-[#E8D3A2] hover:text-[#80081B] text-xs font-bold transition-all border border-[#E8D3A2]/40"
+                >
+                  Cambia PIN Salone
+                </button>
+                <button
+                  onClick={handleToggleStaffMode}
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white text-white hover:text-[#D11936] text-xs font-bold transition-all border border-white/20"
+                >
+                  Torna a Vista Cliente
+                </button>
+              </div>
             </div>
-            <p className="text-xs text-white/70 leading-relaxed font-normal">
-              Attiva la modalità titolare per fotografare con lo smartphone i prodotti in salone, inserire il prezzo e la descrizione e pubblicarli nell'app per le clienti.
-            </p>
-            <button
-              onClick={handleToggleStaffMode}
-              className="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white text-white hover:text-[#D11936] text-xs font-bold transition-all border border-white/20"
-            >
-              {isStaffMode ? "Passa a Vista Cliente" : "Sblocca Gestione Salone (PIN: 1234)"}
-            </button>
-          </div>
+          ) : (
+            <div className="text-center pt-2 pb-4">
+              <button
+                onClick={handleToggleStaffMode}
+                className="text-[10px] text-white/35 hover:text-white/70 transition-colors"
+              >
+                Accesso Riservato Personale
+              </button>
+            </div>
+          )}
         </main>
       )}
 
@@ -1513,6 +1895,23 @@ export default function CambiaLookApp() {
                   <span>Telefona al Salone ({selectedSalon.phone})</span>
                 </a>
               </div>
+
+              {/* Azioni Staff Mode nel dettaglio salone */}
+              {isStaffMode && (
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleOpenEditSalon(selectedSalon);
+                      setSelectedSalon(null);
+                    }}
+                    className="w-full py-2.5 px-4 rounded-xl bg-[#E8D3A2] hover:bg-[#d8c392] text-[#D11936] font-black text-xs flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
+                  >
+                    <Edit3 size={14} />
+                    <span>Modifica Dati & Orari Salone</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1560,6 +1959,33 @@ export default function CambiaLookApp() {
               <span className="text-xs text-white/70">Prezzo di listino:</span>
               <span className="text-xl font-black text-[#E8D3A2]">{selectedService.price}</span>
             </div>
+
+            {/* Azioni Staff Mode nel dettaglio servizio */}
+            {isStaffMode && (
+              <div className="pt-1 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleOpenEditService(selectedService);
+                    setSelectedService(null);
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-[#E8D3A2] hover:bg-[#d8c392] text-[#D11936] font-black text-xs flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
+                >
+                  <Edit3 size={14} />
+                  <span>Modifica Questo Trattamento</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    handleDeleteService(selectedService.id, e);
+                  }}
+                  className="px-3.5 py-2.5 rounded-xl bg-black/50 text-rose-300 hover:text-white hover:bg-rose-600 font-bold text-xs flex items-center justify-center gap-1.5 border border-rose-500/30 transition-colors"
+                >
+                  <Trash2 size={14} />
+                  <span>Elimina</span>
+                </button>
+              </div>
+            )}
 
             {/* Chiamata telefonica diretta per info */}
             <div className="space-y-2 pt-1">
@@ -1822,7 +2248,7 @@ export default function CambiaLookApp() {
       )}
 
       {/* ========================================================================================= */}
-      {/* MODAL PIN TITOLARE */}
+      {/* MODAL PIN RISERVATO SALONE (PROTETTO, ANONIMO E CON ANTI-INTRUSIONE) */}
       {/* ========================================================================================= */}
       {isPinModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -1832,41 +2258,404 @@ export default function CambiaLookApp() {
             </div>
 
             <div>
-              <h3 className="text-base font-bold text-white">Accesso Staff Salone</h3>
+              <h3 className="text-base font-bold text-white">Area Riservata Salone</h3>
               <p className="text-[11px] text-white/70 mt-1">
-                Inserisci il PIN per scattare foto e aggiungere prodotti (PIN demo: <strong className="text-white">1234</strong>)
+                Inserisci il codice di sicurezza autorizzato
               </p>
             </div>
 
-            <input
-              type="password"
-              maxLength={4}
-              placeholder="••••"
-              value={pinInput}
-              onChange={e => setPinInput(e.target.value)}
-              className="w-32 mx-auto text-center text-xl tracking-widest px-3 py-2 rounded-2xl bg-black/50 border border-[#E8D3A2] text-white outline-none"
-            />
+            <form onSubmit={(e) => { e.preventDefault(); handleVerifyPin(); }} className="space-y-3">
+              <input
+                type="password"
+                maxLength={6}
+                inputMode="numeric"
+                autoFocus
+                placeholder="••••"
+                value={pinInput}
+                onChange={e => setPinInput(e.target.value)}
+                className="w-36 mx-auto text-center text-xl tracking-widest px-3 py-2.5 rounded-2xl bg-black/50 border border-[#E8D3A2] text-white outline-none"
+              />
 
-            {pinError && (
-              <p className="text-[10px] text-amber-300 font-bold">PIN errato. Prova 1234</p>
-            )}
+              {lockoutUntil && Date.now() < lockoutUntil ? (
+                <p className="text-[10px] text-rose-300 font-bold">
+                  ⚠️ Blocco temporaneo per troppi errori. Attendi 30s.
+                </p>
+              ) : pinError ? (
+                <p className="text-[10px] text-amber-300 font-bold">
+                  Codice non valido. Tentativo {pinAttempts}/3
+                </p>
+              ) : null}
 
-            <div className="flex gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => setIsPinModalOpen(false)}
-                className="flex-1 py-2.5 rounded-xl bg-white/10 text-white text-xs font-bold hover:bg-white/20 transition-colors"
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsPinModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-white/10 text-white text-xs font-bold hover:bg-white/20 transition-colors"
+                >
+                  Annulla
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-white text-[#D11936] text-xs font-black shadow-lg hover:bg-[#E8D3A2] active:scale-95 transition-all"
+                >
+                  Accedi
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================================= */}
+      {/* MODAL GESTIONE PIN SALONE (CAMBIO PIN E MASTER PIN DEVELOPER 2860) */}
+      {/* ========================================================================================= */}
+      {isChangePinModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-[#80081B] border-2 border-[#E8D3A2] rounded-3xl p-6 space-y-4 shadow-2xl text-left">
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-2xl bg-[#E8D3A2] text-[#80081B] flex items-center justify-center font-bold">
+                  <KeyRound size={18} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Sicurezza & PIN Salone</h3>
+                  <span className="text-[10px] text-white/70">Gestione codici di accesso staff</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsChangePinModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20"
               >
-                Annulla
-              </button>
-              <button
-                type="button"
-                onClick={handleVerifyPin}
-                className="flex-1 py-2.5 rounded-xl bg-white text-[#D11936] text-xs font-black shadow-lg hover:bg-[#E8D3A2]"
-              >
-                Sblocca
+                <X size={16} />
               </button>
             </div>
+
+            {/* SE L'UTENTE È LO SVILUPPATORE (MASTER PIN 2860) */}
+            {isDeveloperMode && (
+              <div className="p-3 rounded-2xl bg-cyan-950/70 border border-cyan-400/40 text-cyan-200 space-y-1.5 text-xs">
+                <div className="flex items-center justify-between font-bold">
+                  <span>💻 Modalità Programmatore Attiva</span>
+                  <span className="text-[10px] bg-cyan-400/20 px-2 py-0.5 rounded-full text-cyan-300">Master 2860</span>
+                </div>
+                <p className="text-[11px] opacity-90">
+                  PIN attuale configurato per il salone: <strong className="text-white font-mono text-sm tracking-wider">{salonPin}</strong>
+                </p>
+                <button
+                  type="button"
+                  onClick={handleResetSalonPin}
+                  className="mt-1 text-[11px] py-1 px-2.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-100 font-bold transition-colors"
+                >
+                  🔄 Reimposta PIN Salone a 1234
+                </button>
+              </div>
+            )}
+
+            <form onSubmit={handleChangeSalonPin} className="space-y-3 text-xs">
+              {!isDeveloperMode && (
+                <div>
+                  <label className="font-bold text-white/90 block mb-1">PIN Attuale del Salone *</label>
+                  <input
+                    type="password"
+                    required
+                    maxLength={6}
+                    placeholder="Inserisci il PIN attuale"
+                    value={oldPinInput}
+                    onChange={e => setOldPinInput(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/20 text-white outline-none"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="font-bold text-white/90 block mb-1">Nuovo PIN Salone (min. 4 cifre) *</label>
+                <input
+                  type="password"
+                  required
+                  maxLength={6}
+                  placeholder="Es. 5432"
+                  value={newPinInput}
+                  onChange={e => setNewPinInput(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-[#E8D3A2]/60 text-[#E8D3A2] font-black outline-none tracking-widest text-center text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-white/90 block mb-1">Conferma Nuovo PIN *</label>
+                <input
+                  type="password"
+                  required
+                  maxLength={6}
+                  placeholder="Ripeti il nuovo PIN"
+                  value={confirmPinInput}
+                  onChange={e => setConfirmPinInput(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-[#E8D3A2]/60 text-[#E8D3A2] font-black outline-none tracking-widest text-center text-sm"
+                />
+              </div>
+
+              {changePinError && (
+                <p className="text-[10px] text-amber-300 font-bold bg-black/40 p-2 rounded-lg border border-amber-500/30">
+                  ⚠️ {changePinError}
+                </p>
+              )}
+
+              <p className="text-[10px] text-white/60 leading-tight">
+                💡 Nota di sicurezza: il Master PIN programmatore (2860) rimarrà sempre funzionante in caso di smarrimento del codice.
+              </p>
+
+              <button
+                type="submit"
+                className="w-full py-3.5 rounded-2xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all mt-2"
+              >
+                <Check size={16} />
+                <span>Salva Nuovo PIN Salone</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================================= */}
+      {/* MODAL MODIFICA DATI & ORARI SALONE (CISTERNA DI LATINA / ROMA) */}
+      {/* ========================================================================================= */}
+      {isEditSalonModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[#80081B] border-t-2 border-[#E8D3A2] rounded-t-[32px] p-6 space-y-4 animate-in slide-in-from-bottom duration-300 max-h-[92vh] overflow-y-auto no-scrollbar shadow-2xl">
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-2xl bg-white text-[#D11936] flex items-center justify-center font-bold">
+                  <Edit3 size={18} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Modifica Dati Salone</h3>
+                  <span className="text-[10px] text-white/70">{salonFormName}</span>
+                </div>
+              </div>
+              <button onClick={() => setIsEditSalonModalOpen(false)} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80">
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveSalon} className="space-y-3 text-xs">
+              {/* Foto Salone */}
+              <div>
+                <label className="font-bold text-white/90 block mb-1.5">Foto Salone</label>
+                <div className="flex items-center gap-3">
+                  <div className="w-20 h-16 rounded-2xl border-2 border-dashed border-[#E8D3A2]/60 bg-black/50 overflow-hidden relative flex items-center justify-center shrink-0">
+                    {salonFormImage ? (
+                      <Image src={salonFormImage} alt="Preview" fill className="object-cover" />
+                    ) : (
+                      <Camera size={22} className="text-[#E8D3A2]/70" />
+                    )}
+                  </div>
+                  <div className="space-y-1.5 flex-1">
+                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-[#D11936] font-bold text-[11px] shadow">
+                      <Upload size={13} />
+                      <span>{salonFormImage ? "Sostituisci Foto" : "Carica Foto"}</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={handleSalonImageUpload} />
+                    </label>
+                    <p className="text-[10px] text-white/60">Scatta dal telefono o scegli dalla galleria</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-white/90 block mb-1">Nome Salone *</label>
+                <input
+                  type="text"
+                  required
+                  value={salonFormName}
+                  onChange={e => setSalonFormName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/20 text-white outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-white/90 block mb-1">Indirizzo Completo *</label>
+                <input
+                  type="text"
+                  required
+                  value={salonFormAddress}
+                  onChange={e => setSalonFormAddress(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/20 text-white outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="font-bold text-white/90 block mb-1">Numero di Telefono *</label>
+                  <input
+                    type="text"
+                    required
+                    value={salonFormPhone}
+                    onChange={e => setSalonFormPhone(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/20 text-white font-bold outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-white/90 block mb-1">Orari di Apertura *</label>
+                  <input
+                    type="text"
+                    required
+                    value={salonFormHours}
+                    onChange={e => setSalonFormHours(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/20 text-white outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-white/90 block mb-1">Descrizione Salone</label>
+                <textarea
+                  rows={2}
+                  value={salonFormDescription}
+                  onChange={e => setSalonFormDescription(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl bg-black/40 border border-white/20 text-white outline-none resize-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3.5 rounded-2xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all mt-2"
+              >
+                <Check size={16} />
+                <span>Salva Dati Salone</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================================= */}
+      {/* MODAL NUOVO / MODIFICA TRATTAMENTO SERVIZIO SALONE */}
+      {/* ========================================================================================= */}
+      {isServiceModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[#80081B] border-t-2 border-[#E8D3A2] rounded-t-[32px] p-6 space-y-4 animate-in slide-in-from-bottom duration-300 max-h-[92vh] overflow-y-auto no-scrollbar shadow-2xl">
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-2xl bg-white text-[#D11936] flex items-center justify-center font-bold">
+                  {editingServiceId ? <Edit3 size={18} /> : <Plus size={18} />}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">
+                    {editingServiceId ? "Modifica Trattamento" : "Aggiungi Nuovo Trattamento"}
+                  </h3>
+                  <span className="text-[10px] text-white/70">
+                    {editingServiceId ? "Aggiorna prezzo, durata o descrizione del servizio" : "Carica foto, imposta prezzo e categoria"}
+                  </span>
+                </div>
+              </div>
+              <button onClick={() => setIsServiceModalOpen(false)} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80">
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveService} className="space-y-3 text-xs">
+              {/* Foto del Trattamento */}
+              <div>
+                <label className="font-bold text-white/90 block mb-1.5">Foto del Trattamento</label>
+                <div className="flex items-center gap-3">
+                  <div className="w-20 h-16 rounded-2xl border-2 border-dashed border-[#E8D3A2]/60 bg-black/50 overflow-hidden relative flex items-center justify-center shrink-0">
+                    {serviceFormImage ? (
+                      <Image src={serviceFormImage} alt="Preview" fill className="object-cover" />
+                    ) : (
+                      <Camera size={22} className="text-[#E8D3A2]/70" />
+                    )}
+                  </div>
+                  <div className="space-y-1.5 flex-1">
+                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-[#D11936] font-bold text-[11px] shadow">
+                      <Upload size={13} />
+                      <span>{serviceFormImage ? "Sostituisci Foto" : "Scatta o Scegli Foto"}</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={handleServiceImageUpload} />
+                    </label>
+                    <p className="text-[10px] text-white/60">Usa foto reali dei tuoi lavori</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-white/90 block mb-1">Nome del Trattamento *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Es. Balayage Caramel & Gloss Luce"
+                  value={serviceFormName}
+                  onChange={e => setServiceFormName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/20 text-white outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="font-bold text-white/90 block mb-1">Categoria *</label>
+                  <select
+                    value={serviceFormCategory}
+                    onChange={e => setServiceFormCategory(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/20 text-white outline-none"
+                  >
+                    <option value="Colore & Effetti Luce">Colore & Effetti Luce</option>
+                    <option value="Taglio & Morphing">Taglio & Morphing</option>
+                    <option value="Trattamenti Benessere">Trattamenti Benessere</option>
+                    <option value="Piega & Styling">Piega & Styling</option>
+                    <option value="Consulenza & Diagnosi">Consulenza & Diagnosi</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-bold text-white/90 block mb-1">Prezzo (€) *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Es. € 48 o da € 95"
+                    value={serviceFormPrice}
+                    onChange={e => setServiceFormPrice(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-[#E8D3A2]/60 text-[#E8D3A2] font-black outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="font-bold text-white/90 block mb-1">Durata Indicativa *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Es. 60 min / 120 min"
+                    value={serviceFormDuration}
+                    onChange={e => setServiceFormDuration(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/20 text-white outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-white/90 block mb-1">Etichetta Tag in Evidenza</label>
+                  <input
+                    type="text"
+                    placeholder="Es. Signature / Il Nostro Trend"
+                    value={serviceFormTag}
+                    onChange={e => setServiceFormTag(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/20 text-white outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-white/90 block mb-1">Descrizione Dettagliata</label>
+                <textarea
+                  rows={2}
+                  placeholder="Spiega alle clienti cosa comprende questo trattamento..."
+                  value={serviceFormDesc}
+                  onChange={e => setServiceFormDesc(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl bg-black/40 border border-white/20 text-white outline-none resize-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3.5 rounded-2xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all mt-2"
+              >
+                <Check size={16} />
+                <span>{editingServiceId ? "Salva Modifiche Servizio" : "Aggiungi al Listino"}</span>
+              </button>
+            </form>
           </div>
         </div>
       )}
@@ -2022,12 +2811,9 @@ export default function CambiaLookApp() {
                   onChange={e => setFormService(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl bg-black/60 border border-white/20 text-white outline-none font-medium"
                 >
-                  <option value="Balayage Soleil & Gloss Tonificante">Balayage Soleil & Gloss Tonificante</option>
-                  <option value="Taglio Sartoriale Donna & Piega Glamour">Taglio Sartoriale Donna & Piega Glamour</option>
-                  <option value="Botox Capillare & Cheratina Rimpolpante">Botox Capillare & Cheratina Rimpolpante</option>
-                  <option value="Colore Radici Botanico No Ammoniaca">Colore Radici Botanico No Ammoniaca</option>
-                  <option value="Piega Glamour & Trattamento Lucidante">Piega Glamour & Trattamento Lucidante</option>
-                  <option value="Consulenza Completa Cambio Look">Consulenza Completa Cambio Look</option>
+                  {servicesList.map(s => (
+                    <option key={s.id} value={s.name}>{s.name} ({s.price})</option>
+                  ))}
                   <option value="Altro / Trattamento Personalizzato">Altro / Trattamento Personalizzato</option>
                 </select>
               </div>
