@@ -368,66 +368,100 @@ export default function CambiaLookApp() {
   const [showNotification, setShowNotification] = useState(false);
   const [notificationText, setNotificationText] = useState("");
 
-  // Pull to refresh state
-  const [pullDistance, setPullDistance] = useState(0);
+  // Pull to refresh state & direct DOM refs (Zero-lag, zero-jitter 120fps)
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const touchStartY = useRef(0);
-  const isPulling = useRef(false);
+  const indicatorRef = useRef<HTMLDivElement | null>(null);
+  const iconRef = useRef<HTMLDivElement | null>(null);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (
-      selectedSalon || 
-      selectedService || 
-      selectedProduct || 
-      isAppointmentModalOpen || 
-      isCartOpen || 
-      isChangePinModalOpen || 
-      isPinModalOpen || 
-      isEditSalonModalOpen || 
-      isServiceModalOpen || 
-      isNewProductModalOpen
-    ) {
-      isPulling.current = false;
-      return;
-    }
-    if (typeof window !== "undefined" && window.scrollY <= 0 && !isRefreshing) {
-      touchStartY.current = e.touches[0].clientY;
-      isPulling.current = true;
-    } else {
-      isPulling.current = false;
-    }
-  };
+  useEffect(() => {
+    let touchStartY = 0;
+    let isPulling = false;
+    let pullDistance = 0;
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isPulling.current || isRefreshing) return;
-    const currentY = e.touches[0].clientY;
-    const diff = currentY - touchStartY.current;
-    if (diff > 0 && typeof window !== "undefined" && window.scrollY <= 0) {
-      const pull = Math.min(diff * 0.42, 85);
-      setPullDistance(pull);
-    } else {
-      setPullDistance(0);
-    }
-  };
+    const onTouchStart = (e: TouchEvent) => {
+      // Don't pull if modal is open or already refreshing
+      if (
+        document.querySelector(".fixed.inset-0") || 
+        isRefreshing
+      ) {
+        isPulling = false;
+        return;
+      }
+      if (window.scrollY <= 0) {
+        touchStartY = e.touches[0].clientY;
+        pullDistance = 0;
+        isPulling = true;
+      } else {
+        isPulling = false;
+      }
+    };
 
-  const handleTouchEnd = () => {
-    if (!isPulling.current || isRefreshing) return;
-    isPulling.current = false;
-    if (pullDistance >= 50) {
-      setIsRefreshing(true);
-      setPullDistance(55);
-      try {
-        if (typeof navigator !== "undefined" && navigator.vibrate) {
-          navigator.vibrate(25);
+    const onTouchMove = (e: TouchEvent) => {
+      if (!isPulling || isRefreshing) return;
+      const currentY = e.touches[0].clientY;
+      const diff = currentY - touchStartY;
+
+      if (diff > 0 && window.scrollY <= 0) {
+        // Prevent native iOS rubber-banding fight
+        if (e.cancelable) {
+          e.preventDefault();
         }
-      } catch {}
-      setTimeout(() => {
-        window.location.reload();
-      }, 400);
-    } else {
-      setPullDistance(0);
-    }
-  };
+        pullDistance = Math.min(diff * 0.45, 80);
+
+        if (indicatorRef.current && iconRef.current) {
+          indicatorRef.current.style.transition = "none";
+          indicatorRef.current.style.opacity = pullDistance > 10 ? "1" : "0";
+          indicatorRef.current.style.transform = `translate3d(0, ${pullDistance}px, 0)`;
+          iconRef.current.style.transform = `rotate(${pullDistance * 5}deg)`;
+        }
+      } else {
+        pullDistance = 0;
+        if (indicatorRef.current) {
+          indicatorRef.current.style.opacity = "0";
+          indicatorRef.current.style.transform = "translate3d(0, -60px, 0)";
+        }
+      }
+    };
+
+    const onTouchEnd = () => {
+      if (!isPulling || isRefreshing) return;
+      isPulling = false;
+
+      if (pullDistance >= 48) {
+        setIsRefreshing(true);
+        if (indicatorRef.current) {
+          indicatorRef.current.style.transition = "all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)";
+          indicatorRef.current.style.transform = "translate3d(0, 48px, 0)";
+          indicatorRef.current.style.opacity = "1";
+        }
+        try {
+          if (typeof navigator !== "undefined" && navigator.vibrate) {
+            navigator.vibrate(25);
+          }
+        } catch {}
+        setTimeout(() => {
+          window.location.reload();
+        }, 400);
+      } else {
+        pullDistance = 0;
+        if (indicatorRef.current) {
+          indicatorRef.current.style.transition = "all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)";
+          indicatorRef.current.style.transform = "translate3d(0, -60px, 0)";
+          indicatorRef.current.style.opacity = "0";
+        }
+      }
+    };
+
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [isRefreshing]);
 
   useEffect(() => {
     try {
@@ -1194,32 +1228,25 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
   };
 
   return (
-    <div 
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      style={{
-        transform: pullDistance > 0 ? `translate3d(0, ${pullDistance * 0.35}px, 0)` : undefined,
-        transition: isPulling.current ? "none" : "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)"
-      }}
-      className="max-w-md mx-auto min-h-screen bg-[#D11936] text-white flex flex-col relative select-none font-sans overflow-x-hidden pb-24 shadow-2xl"
-    >
+    <div className="max-w-md mx-auto min-h-screen bg-[#D11936] text-white flex flex-col relative select-none font-sans overflow-x-hidden pb-24 shadow-2xl">
       
-      {/* PULL TO REFRESH CIRCULAR ICON (NO TEXT, PURE NATIVE BADGE) */}
+      {/* PULL TO REFRESH CIRCULAR ICON (DIRECT GPU TRANSFORM, ZERO JITTER) */}
       <div 
-        className="fixed left-0 right-0 z-50 flex items-center justify-center pointer-events-none transition-all duration-150"
+        ref={indicatorRef}
+        className="fixed left-0 right-0 z-50 flex items-center justify-center pointer-events-none opacity-0"
         style={{ 
           top: "max(calc(env(safe-area-inset-top, 0px) + 12px), 1.25rem)",
-          transform: `translate3d(0, ${pullDistance > 0 ? pullDistance * 0.75 : isRefreshing ? 35 : -60}px, 0)`,
-          opacity: pullDistance > 8 || isRefreshing ? 1 : 0
+          transform: "translate3d(0, -60px, 0)",
+          willChange: "transform, opacity"
         }}
       >
         <div className="w-11 h-11 rounded-full bg-black/90 backdrop-blur-xl border border-[#E8D3A2]/60 shadow-[0_6px_20px_rgba(0,0,0,0.45)] flex items-center justify-center">
-          <RotateCw 
-            size={20} 
-            className={`text-[#E8D3A2] ${isRefreshing ? "animate-spin" : ""}`}
-            style={!isRefreshing ? { transform: `rotate(${pullDistance * 4.5}deg)` } : undefined}
-          />
+          <div ref={iconRef} className="flex items-center justify-center">
+            <RotateCw 
+              size={20} 
+              className={`text-[#E8D3A2] ${isRefreshing ? "animate-spin" : ""}`}
+            />
+          </div>
         </div>
       </div>
 
