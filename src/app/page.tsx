@@ -3014,8 +3014,8 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
       {/* MODAL: SEGNA / MODIFICA APPUNTAMENTO CLIENTE (AGENDA & PROMEMORIA TELEFONO) */}
       {/* ========================================================================================= */}
       {isAppointmentModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-end sm:items-center justify-center p-3 animate-in fade-in duration-200">
-          <div className="w-full max-w-sm bg-[#80081B] border-2 border-[#E8D3A2] rounded-3xl p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-end sm:items-center justify-center p-3 animate-in fade-in duration-200 overflow-hidden touch-none select-none">
+          <div className="w-full max-w-sm bg-[#80081B] border-2 border-[#E8D3A2] rounded-3xl p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden touch-pan-y overscroll-contain">
             
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div className="flex items-center gap-2.5">
@@ -3075,9 +3075,9 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
 
               {/* Data dell'appuntamento */}
               <div>
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
                   <label className="font-bold text-white/90">Data dell'Appuntamento *</label>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 shrink-0">
                     <button
                       type="button"
                       onClick={() => {
@@ -3085,7 +3085,7 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
                         const pad = (n: number) => n.toString().padStart(2, "0");
                         setFormDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
                       }}
-                      className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white/80"
+                      className="text-[10px] px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white/80 font-medium"
                     >
                       Oggi
                     </button>
@@ -3097,7 +3097,7 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
                         const pad = (n: number) => n.toString().padStart(2, "0");
                         setFormDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
                       }}
-                      className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white/80"
+                      className="text-[10px] px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white/80 font-medium"
                     >
                       Domani
                     </button>
@@ -3110,7 +3110,7 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
                         const pad = (n: number) => n.toString().padStart(2, "0");
                         setFormDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
                       }}
-                      className="text-[9px] px-1.5 py-0.5 rounded bg-[#E8D3A2]/20 hover:bg-[#E8D3A2]/30 text-[#E8D3A2] font-bold"
+                      className="text-[10px] px-2 py-0.5 rounded bg-[#E8D3A2]/20 hover:bg-[#E8D3A2]/30 text-[#E8D3A2] font-bold"
                     >
                       Sabato
                     </button>
@@ -3126,23 +3126,24 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
               </div>
 
               {/* Orario */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
                   <label className="font-bold text-white/90">Orario *</label>
-                  <div className="flex items-center gap-1">
-                    {["09:30", "11:00", "15:00", "16:30", "18:00"].map(t => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => setFormTime(t)}
-                        className={`text-[9px] px-1.5 py-0.5 rounded transition-colors ${
-                          formTime === t ? "bg-white text-[#D11936] font-bold" : "bg-white/10 text-white/70 hover:bg-white/20"
-                        }`}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
+                  <span className="text-[10px] text-white/60">Scelta rapida:</span>
+                </div>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {["09:30", "11:00", "15:00", "16:30", "18:00"].map(t => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setFormTime(t)}
+                      className={`text-[10px] py-1 rounded-lg transition-colors text-center font-bold ${
+                        formTime === t ? "bg-white text-[#D11936] shadow-sm font-black" : "bg-white/10 text-white/70 hover:bg-white/20"
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
                 </div>
                 <input
                   type="time"
