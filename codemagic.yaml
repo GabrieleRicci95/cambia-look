@@ -32,13 +32,12 @@ workflows:
           
           # 2. ATOMIC SIGNING SETUP
           keychain initialize
-          openssl genrsa -out /tmp/cert_key.p8 2048
           
-          # Force create with VERBOSE logging
+          # Force create or reuse with permanent private key
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --create \
-            --certificate-key "@file:/tmp/cert_key.p8" \
+            --certificate-key "@file:ios/cert_key.p8" \
             --verbose
           
           keychain add-certificates
