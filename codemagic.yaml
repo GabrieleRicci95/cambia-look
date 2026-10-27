@@ -21,6 +21,7 @@ workflows:
         script: |
           npm run build
           npx cap sync ios
+          cd ios/App && agvtool new-version -all $(($BUILD_NUMBER + 1)) && cd ../..
       - name: Automatic Signing & Build Archive
         script: |
           # 1. DIAGNOSTIC PORTAL CHECK
