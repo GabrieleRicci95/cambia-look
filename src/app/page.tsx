@@ -1128,7 +1128,7 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
     setServiceFormName("");
     setServiceFormCategory("Colore & Effetti Luce");
     setServiceFormPrice("da € 50");
-    setServiceFormDuration("60 min");
+    setServiceFormDuration("");
     setServiceFormTag("Novità");
     setServiceFormDesc("");
     setServiceFormImage("");
@@ -1141,7 +1141,7 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
     setServiceFormName(serv.name || "");
     setServiceFormCategory(serv.category || "Colore & Effetti Luce");
     setServiceFormPrice(serv.price || "");
-    setServiceFormDuration(serv.duration || "60 min");
+    setServiceFormDuration(serv.duration || "");
     setServiceFormTag(serv.tag || "");
     setServiceFormDesc(serv.desc || "");
     setServiceFormImage(serv.image || "");
@@ -1589,7 +1589,6 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
                     <MapPin size={13} className="text-[#E8D3A2] shrink-0" />
                     <span className="truncate">{salon.address}</span>
                   </span>
-                  <span className="text-[#E8D3A2] font-bold shrink-0 pl-2">Aperto</span>
                 </div>
               </div>
             ))}
@@ -1613,11 +1612,9 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
         <main className="flex-1 px-5 pt-4 space-y-5 animate-in fade-in duration-300">
           <div className="flex justify-between items-end">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#E8D3A2]">Atelier Capelli</span>
               <h2 className="text-3xl font-normal font-script text-white drop-shadow">
                 I Nostri Trattamenti
               </h2>
-              <p className="text-xs text-white/80">Listino prezzi e trattamenti per sole donne</p>
             </div>
 
             {/* PULSANTE AGGIUNGI SERVIZIO (Visibile solo in modalità Staff) */}
@@ -1706,10 +1703,12 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
                   </p>
 
                   <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[11px] text-white/70">
-                    <span className="flex items-center gap-1.5">
-                      <Clock size={12} className="text-[#E8D3A2]" />
-                      <span>Durata indicativa: <strong className="text-white">{serv.duration}</strong></span>
-                    </span>
+                    {serv.duration && serv.duration.trim() !== "" ? (
+                      <span className="flex items-center gap-1.5">
+                        <Clock size={12} className="text-[#E8D3A2]" />
+                        <span>Durata indicativa: <strong className="text-white">{serv.duration}</strong></span>
+                      </span>
+                    ) : <span />}
 
                     <div className="flex items-center gap-2">
                       <a
@@ -2311,7 +2310,9 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
               <div>
                 <span className="text-[10px] text-[#E8D3A2] font-bold uppercase tracking-wider">{selectedService.category}</span>
                 <h3 className="text-lg font-bold text-white">{selectedService.name}</h3>
-                <span className="text-xs text-white/70">Durata indicativa: {selectedService.duration}</span>
+                {selectedService.duration && selectedService.duration.trim() !== "" && (
+                  <span className="text-xs text-white/70 block">Durata indicativa: {selectedService.duration}</span>
+                )}
               </div>
               <button onClick={() => setSelectedService(null)} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80">
                 <X size={16} />
@@ -3051,11 +3052,10 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
 
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="font-bold text-white/90 block mb-1">Durata Indicativa *</label>
+                  <label className="font-bold text-white/90 block mb-1">Durata Indicativa (Opzionale)</label>
                   <input
                     type="text"
-                    required
-                    placeholder="Es. 60 min / 120 min"
+                    placeholder="Es. 60 min (lascia vuoto se non indicata)"
                     value={serviceFormDuration}
                     onChange={e => setServiceFormDuration(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/20 text-white outline-none"
@@ -3302,31 +3302,34 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
 
       {/* FLOATING CART BAR (Visibile quando ci sono prodotti nella busta) */}
       {cartTotalCount > 0 && !isCartOpen && (
-        <div className="fixed bottom-20 left-4 right-4 max-w-[416px] mx-auto z-30 animate-in slide-in-from-bottom duration-300">
+        <div 
+          className="fixed left-4 right-4 max-w-[416px] mx-auto z-30 animate-in slide-in-from-bottom duration-300"
+          style={{ bottom: "calc(env(safe-area-inset-bottom, 20px) + 5.2rem)" }}
+        >
           <button
             onClick={() => setIsCartOpen(true)}
-            className="w-full py-3 px-4 rounded-2xl bg-black/90 backdrop-blur-xl border border-[#E8D3A2] shadow-2xl flex items-center justify-between group active:scale-[0.98] transition-all"
+            className="w-full py-3.5 px-4 rounded-2xl bg-black/95 backdrop-blur-xl border border-[#E8D3A2] shadow-2xl flex items-center justify-between group active:scale-[0.98] transition-all"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#E8D3A2] to-[#B38F46] text-[#D11936] flex items-center justify-center font-black shadow relative">
-                <ShoppingBag size={20} />
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#E8D3A2] to-[#B38F46] text-[#D11936] flex items-center justify-center font-black shadow relative shrink-0">
+                <ShoppingBag size={22} />
                 <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#D11936] text-white border-2 border-[#E8D3A2] rounded-full text-[10px] font-black flex items-center justify-center">
                   {cartTotalCount}
                 </span>
               </div>
-              <div className="text-left">
+              <div className="text-left truncate">
                 <span className="text-[10px] uppercase font-bold text-[#E8D3A2] tracking-wider block">
                   Busta Salone Attiva
                 </span>
-                <span className="text-sm font-black text-white">
+                <span className="text-sm font-black text-white truncate block">
                   € {cartTotalPrice.toFixed(2)} • {cartTotalCount} {cartTotalCount === 1 ? "prodotto" : "prodotti"}
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 text-xs font-black text-[#E8D3A2] bg-white/10 px-3 py-1.5 rounded-xl border border-white/10 group-hover:bg-[#E8D3A2] group-hover:text-[#D11936] transition-all">
+            <div className="flex items-center gap-1.5 py-2.5 px-4 rounded-xl bg-gradient-to-r from-white to-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider shadow-lg group-hover:scale-105 active:scale-95 transition-all shrink-0 ml-2">
               <span>Ordina & Ritira</span>
-              <ChevronRight size={14} />
+              <ChevronRight size={16} strokeWidth={3} />
             </div>
           </button>
         </div>
