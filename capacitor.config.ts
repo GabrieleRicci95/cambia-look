@@ -1,9 +1,17 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'it.cambialook.app',
+  appId: 'com.gardigital.cambialook',
   appName: 'Cambia Look',
   webDir: 'out',
+  server: {
+    url: 'https://cambia-look.vercel.app',
+    cleartext: true,
+    allowNavigation: [
+      'cambia-look.vercel.app',
+      '*.vercel.app'
+    ]
+  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,

@@ -1,0 +1,130 @@
+workflows:
+  ios-workflow:
+    name: Cambia Look iOS Build & TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: "Apple Build"
+    environment:
+      vars:
+        XCODE_PROJECT: "ios/App/App.xcodeproj"
+        XCODE_SCHEME: "App"
+        BUNDLE_ID: "com.gardigital.cambialook"
+      node: latest
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install
+      - name: Capacitor build
+        script: |
+          npm run build
+          npx cap sync ios
+      - name: Automatic Signing & Build Archive
+        script: |
+          # 1. DIAGNOSTIC PORTAL CHECK
+          echo "Listing Bundle IDs to verify $BUNDLE_ID existence..."
+          app-store-connect bundle-ids list --identifier $BUNDLE_ID
+          
+          echo "Listing existing certificates..."
+          app-store-connect certificates list
+          
+          # 2. ATOMIC SIGNING SETUP
+          keychain initialize
+          openssl genrsa -out /tmp/cert_key.p8 2048
+          
+          # Force create with VERBOSE logging
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create \
+            --certificate-key "@file:/tmp/cert_key.p8" \
+            --verbose
+          
+          keychain add-certificates
+          xcode-project use-profiles
+          
+          # 3. EXTRACTION
+          MP_FILE=$(find /Users/builder -name "*.mobileprovision" | head -n 1)
+          if [ -z "$MP_FILE" ]; then
+            echo "ERROR: Still no mobileprovision file found after fetch. Diagnostic required."
+            exit 1
+          fi
+          echo "Found Profile at: |$MP_FILE|"
+          
+          security cms -D -i "$MP_FILE" > /tmp/decoded.plist
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" /tmp/decoded.plist)
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" /tmp/decoded.plist)
+          
+          # Detect Identity
+          if [ -z "$CM_KEYCHAIN_PATH" ]; then
+            CM_KEYCHAIN_PATH=$(find /Users/builder/Library -name "*.keychain-db" | grep "codemagic" | head -n 1)
+          fi
+          ID_LINE=$(security find-identity -v -p codesigning "$CM_KEYCHAIN_PATH" 2>/dev/null | grep "Distribution" | head -n 1)
+          if [ -z "$ID_LINE" ]; then
+            ID_LINE=$(security find-identity -v -p codesigning | grep "Distribution" | head -n 1)
+          fi
+          CERT_HASH=$(echo "$ID_LINE" | awk '{print $2}')
+          
+          echo "--- SIGNING DATA VERIFIED ---"
+          echo "Profile: |$PROFILE_NAME| ($PROFILE_UUID)"
+          echo "Cert Hash: |$CERT_HASH|"
+          
+          if [ -z "$CERT_HASH" ] || [ -z "$PROFILE_UUID" ]; then
+            echo "ERROR: Critical signing data missing. See portal diagnostics above."
+            exit 1
+          fi
+          
+          # 4. BUILD ARCHIVE
+          mkdir -p build/ios/xcarchive
+          xcodebuild archive \
+            -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Release \
+            -archivePath "$(pwd)/build/ios/xcarchive/App.xcarchive" \
+            -allowProvisioningUpdates \
+            PROVISIONING_PROFILE="$PROFILE_UUID" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
+            DEVELOPMENT_TEAM=33VT7NT5X9 \
+            CODE_SIGN_IDENTITY="$CERT_HASH" \
+            CODE_SIGN_STYLE=Manual
+          
+          # 5. EXPORT IPA
+          cat > /tmp/export_options.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>teamID</key>
+            <string>33VT7NT5X9</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>signingCertificate</key>
+            <string>$CERT_HASH</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>$BUNDLE_ID</key>
+              <string>$PROFILE_NAME</string>
+            </dict>
+          </dict>
+          </plist>
+          EOF
+          
+          xcodebuild -exportArchive \
+            -archivePath "$(pwd)/build/ios/xcarchive/App.xcarchive" \
+            -exportOptionsPlist /tmp/export_options.plist \
+            -exportPath "$(pwd)/build/ios/ipa"
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+      email:
+        recipients:
+          - gabricci95@gmail.com
+        notify:
+          success: true
+          failure: true
