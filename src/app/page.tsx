@@ -1326,9 +1326,8 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
               className="object-contain"
             />
           </div>
-          <div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#E8D3A2] block">Salone Donna</span>
-            <h1 className="text-xl font-extrabold tracking-tight text-white leading-tight font-script text-2xl">
+          <div className="flex items-center">
+            <h1 className="text-3xl font-normal font-script text-white drop-shadow-md tracking-wide leading-none">
               Cambia Look
             </h1>
           </div>
@@ -1453,16 +1452,16 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
                 <div className="absolute -bottom-1 left-2 text-[#E8D3A2] text-xs pointer-events-none">✦</div>
 
                 {/* Card con foto reale del salone */}
-                <div className="relative rounded-2xl overflow-hidden bg-black/40 border-2 border-white/90 shadow-2xl h-52">
+                <div className="relative rounded-2xl overflow-hidden bg-black/20 border-2 border-white/90 shadow-2xl h-52">
                   <Image 
                     src={salon.image} 
                     alt={salon.name} 
                     fill 
-                    className="object-cover group-hover:scale-105 transition-transform duration-700" 
+                    className="object-cover group-hover:scale-105 transition-transform duration-700 brightness-[1.12] contrast-[1.04] saturate-[1.06]" 
                   />
 
-                  {/* Gradient scuro sotto per far risaltare la scritta in corsivo come nell'app originale */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                  {/* Gradient leggero solo sul fondo per leggibilità scritte senza oscurare la foto */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
                   {/* Scritta in corsivo elegante in sovraimpressione come nella foto originale */}
                   <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
@@ -2145,8 +2144,13 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
           <div className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[85vh] flex flex-col">
             <div className="relative h-56 w-full">
-              <Image src={selectedSalon.image} alt={selectedSalon.name} fill className="object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#9E0B22] via-transparent to-transparent" />
+              <Image 
+                src={selectedSalon.image} 
+                alt={selectedSalon.name} 
+                fill 
+                className="object-cover brightness-[1.12] contrast-[1.04] saturate-[1.06]" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#9E0B22]/70 via-transparent to-transparent" />
               <button 
                 onClick={() => setSelectedSalon(null)}
                 className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black"
