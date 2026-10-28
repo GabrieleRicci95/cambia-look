@@ -1548,16 +1548,32 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
 
           <div 
             onClick={() => setIsCartOpen(true)}
-            className="p-4 rounded-2xl bg-black/40 border border-[#E8D3A2]/40 text-center space-y-1.5 cursor-pointer hover:bg-black/50 transition-all shadow-lg group mt-6 mb-10"
+            className="p-5 rounded-3xl bg-black/45 border-2 border-[#E8D3A2]/50 text-center space-y-3 cursor-pointer hover:bg-black/55 transition-all shadow-2xl group mt-6 mb-10"
           >
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#E8D3A2] to-[#B38F46] text-[#D11936] mx-auto flex items-center justify-center border border-[#E8D3A2]/40 group-hover:scale-110 transition-transform shadow">
-              <ShoppingCart size={18} />
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#E8D3A2] to-[#B38F46] text-[#D11936] mx-auto flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform shadow-lg">
+              <ShoppingCart size={20} />
             </div>
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Carrello Acquisti • Ritiro in Salone</h4>
-            <p className="text-[11px] text-white/75 leading-relaxed">
-              Aggiungi i prodotti professionali al carrello e prenota il ritiro rapido. Pagherai comodamente in salone senza costi extra!
-            </p>
-            <span className="inline-block text-[10px] font-bold text-[#E8D3A2] underline">Apri il Carrello ({cartTotalCount}) →</span>
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-white uppercase tracking-wider">
+                Carrello Acquisti Ritiro in Salone
+              </h4>
+              <p className="text-xs text-white/80 leading-relaxed max-w-xs mx-auto">
+                Aggiungi i tuoi prodotti al carrello e ritirali nei nostri negozi
+              </p>
+            </div>
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsCartOpen(true);
+                }}
+                className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-white via-[#FFF8E7] to-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider shadow-xl hover:brightness-105 active:scale-95 transition-all flex items-center justify-center gap-2 border border-[#E8D3A2]"
+              >
+                <ShoppingCart size={16} />
+                <span>Apri Carrello {cartTotalCount > 0 ? `(${cartTotalCount})` : ""}</span>
+              </button>
+            </div>
           </div>
         </main>
       )}
