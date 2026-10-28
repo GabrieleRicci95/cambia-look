@@ -1088,6 +1088,16 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
     }
   };
 
+  // Helper per pulire e formattare i prezzi con simbolo € permanente
+  const cleanPriceNumber = (val: string) => (val || "").replace(/€\s*/g, "").trim();
+  const formatPriceWithEuro = (val: string) => {
+    if (!val || !val.trim()) return "";
+    const trimmed = val.trim();
+    if (trimmed.toUpperCase() === "GRATIS" || trimmed.toUpperCase() === "OMAGGIO") return trimmed;
+    if (trimmed.startsWith("€")) return trimmed;
+    return `€ ${trimmed}`;
+  };
+
   // --- GESTIONE PROMOZIONI (STAFF SALONE) ---
   const handleOpenNewPromotion = () => {
     setEditingPromotionId(null);
@@ -1095,7 +1105,7 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
     setPromoFormSubtitle("");
     setPromoFormBadge("Offerta Speciale");
     setPromoFormOriginalPrice("");
-    setPromoFormPromoPrice("€ 49.00");
+    setPromoFormPromoPrice("49.00");
     setPromoFormValidUntil("Fino a fine mese");
     setPromoFormDesc("");
     setPromoFormSalonId("all");
@@ -1109,8 +1119,8 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
     setPromoFormTitle(promo.title || "");
     setPromoFormSubtitle(promo.subtitle || "");
     setPromoFormBadge(promo.badge || "");
-    setPromoFormOriginalPrice(promo.originalPrice || "");
-    setPromoFormPromoPrice(promo.promoPrice || "");
+    setPromoFormOriginalPrice(cleanPriceNumber(promo.originalPrice || ""));
+    setPromoFormPromoPrice(cleanPriceNumber(promo.promoPrice || ""));
     setPromoFormValidUntil(promo.validUntil || "");
     setPromoFormDesc(promo.desc || "");
     setPromoFormSalonId(promo.salonId || "all");
@@ -1137,13 +1147,16 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
     const promoId = editingPromotionId || `promo-${Date.now()}`;
     const isNew = !editingPromotionId;
 
+    const formattedPromoPrice = formatPriceWithEuro(promoFormPromoPrice);
+    const formattedOriginalPrice = formatPriceWithEuro(promoFormOriginalPrice);
+
     const promoPayload = {
       id: promoId,
       title: promoFormTitle,
       subtitle: promoFormSubtitle,
       badge: promoFormBadge || "Offerta Speciale",
-      originalPrice: promoFormOriginalPrice,
-      promoPrice: promoFormPromoPrice,
+      originalPrice: formattedOriginalPrice,
+      promoPrice: formattedPromoPrice,
       validUntil: promoFormValidUntil,
       desc: promoFormDesc,
       salonId: promoFormSalonId,
@@ -3238,26 +3251,37 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
                   <label className="text-[11px] font-bold text-white uppercase tracking-wider block">
                     Prezzo Promo *
                   </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Es. € 39.00"
-                    value={promoFormPromoPrice}
-                    onChange={(e) => setPromoFormPromoPrice(e.target.value)}
-                    className="w-full bg-black/40 border border-white/20 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#E8D3A2]"
-                  />
+                  <div className="relative flex items-center">
+                    <span className="absolute left-3.5 text-sm font-black text-[#E8D3A2] pointer-events-none select-none">
+                      €
+                    </span>
+                    <input
+                      type="text"
+                      required
+                      placeholder="39.00"
+                      value={promoFormPromoPrice}
+                      onChange={(e) => setPromoFormPromoPrice(e.target.value.replace(/€\s*/g, ''))}
+                      className="w-full bg-black/40 border border-white/20 rounded-xl pl-8 pr-3.5 py-2.5 text-sm text-white font-bold placeholder-white/40 focus:outline-none focus:border-[#E8D3A2]"
+                    />
+                  </div>
                 </div>
+
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold text-white uppercase tracking-wider block">
                     Prezzo Originale (barrato)
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Es. € 55.00"
-                    value={promoFormOriginalPrice}
-                    onChange={(e) => setPromoFormOriginalPrice(e.target.value)}
-                    className="w-full bg-black/40 border border-white/20 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#E8D3A2]"
-                  />
+                  <div className="relative flex items-center">
+                    <span className="absolute left-3.5 text-sm font-bold text-white/50 pointer-events-none select-none">
+                      €
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="55.00"
+                      value={promoFormOriginalPrice}
+                      onChange={(e) => setPromoFormOriginalPrice(e.target.value.replace(/€\s*/g, ''))}
+                      className="w-full bg-black/40 border border-white/20 rounded-xl pl-8 pr-3.5 py-2.5 text-sm text-white font-medium placeholder-white/40 focus:outline-none focus:border-[#E8D3A2]"
+                    />
+                  </div>
                 </div>
               </div>
 
