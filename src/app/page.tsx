@@ -831,10 +831,8 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
     setIsCartOpen(false);
   };
 
-  const triggerPushDemo = (text: string) => {
-    setNotificationText(text);
-    setShowNotification(true);
-    setTimeout(() => setShowNotification(false), 4500);
+  const triggerPushDemo = (_text: string) => {
+    // Simulazione disattivata su richiesta dell'utente
   };
 
   const handleToggleStaffMode = () => {
@@ -1380,30 +1378,6 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
           </div>
         </div>
       </div>
-
-      {/* SIMULATED PUSH NOTIFICATION */}
-      {showNotification && (
-        <div 
-          style={{ top: isStaffMode ? "max(calc(env(safe-area-inset-top, 0px) + 68px), 4.75rem)" : "max(calc(env(safe-area-inset-top, 0px) + 12px), 1.25rem)" }}
-          className="fixed left-4 right-4 z-[70] animate-in slide-in-from-top duration-300"
-        >
-          <div className="max-w-sm mx-auto bg-black/85 backdrop-blur-xl rounded-2xl p-3.5 shadow-2xl flex items-center gap-3 border border-[#E8D3A2]/40">
-            <div className="w-9 h-9 rounded-xl bg-[#9E0B22] flex items-center justify-center shrink-0 border border-white/20">
-              <Image src="/app_icon_192.png" alt="Icon" width={24} height={24} className="rounded-lg" />
-            </div>
-            <div className="flex-1 min-w-0 pr-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black tracking-wider uppercase text-[#E8D3A2]">Cambia Look</span>
-                <span className="text-[9px] text-white/40">Adesso</span>
-              </div>
-              <p className="text-xs text-white/95 font-medium leading-tight truncate">{notificationText}</p>
-            </div>
-            <button onClick={() => setShowNotification(false)} className="text-white/40 hover:text-white p-1">
-              <X size={14} />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* STAFF MODE BANNER */}
       {isStaffMode && (
