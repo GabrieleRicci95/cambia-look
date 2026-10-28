@@ -27,9 +27,10 @@ export async function registerPushNotifications(): Promise<boolean> {
       return false;
     }
 
-    const vapidKey =
+    const vapidKey = (
       process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
-      'BMeRI6-Cc0iR77fc7uCt2VfTzQIyaxnyxTWZ79hTKFt8saVHgPmhIdKcubzGgjJucuElyzU3ONNRMkJiC_WBSJc';
+      'BMeRI6-Cc0iR77fc7uCt2VfTzQIyaxnyxTWZ79hTKFt8saVHgPmhIdKcubzGgjJucuElyzU3ONNRMkJiC_WBSJc'
+    ).replace(/\s+/g, '');
 
     const convertedKey = urlBase64ToUint8Array(vapidKey);
 

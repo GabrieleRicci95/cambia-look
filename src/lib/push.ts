@@ -1,15 +1,19 @@
 import webpush from 'web-push';
 import { getDbPool } from './db';
 
-const publicKey =
+const publicKey = (
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
-  'BMeRI6-Cc0iR77fc7uCt2VfTzQIyaxnyxTWZ79hTKFt8saVHgPmhIdKcubzGgjJucuElyzU3ONNRMkJiC_WBSJc';
-const privateKey =
-  process.env.VAPID_PRIVATE_KEY || 'zF-sPsmNLfKuuD2qGyv4i4rSh7rd3aI8zjFK5DDYRqI';
-const subject = process.env.VAPID_SUBJECT || 'mailto:info@gardigital.it';
+  'BMeRI6-Cc0iR77fc7uCt2VfTzQIyaxnyxTWZ79hTKFt8saVHgPmhIdKcubzGgjJucuElyzU3ONNRMkJiC_WBSJc'
+).replace(/\s+/g, '');
+const privateKey = (
+  process.env.VAPID_PRIVATE_KEY || 'zF-sPsmNLfKuuD2qGyv4i4rSh7rd3aI8zjFK5DDYRqI'
+).replace(/\s+/g, '');
+const subject = (process.env.VAPID_SUBJECT || 'mailto:info@gardigital.it').trim();
 
+let vapidConfigured = false;
 try {
   webpush.setVapidDetails(subject, publicKey, privateKey);
+  vapidConfigured = true;
 } catch (e) {
   console.warn('VAPID setup error:', e);
 }
