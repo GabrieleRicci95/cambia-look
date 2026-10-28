@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'export',
+  output: process.env.IS_CAP_EXPORT ? 'export' : undefined,
   reactStrictMode: true,
   images: {
     unoptimized: true,

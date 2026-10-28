@@ -38,8 +38,10 @@ import {
   KeyRound,
   MessageCircle,
   Minus,
-  RotateCw
+  RotateCw,
+  Bell
 } from "lucide-react";
+import { registerPushNotifications, isPushSupported } from "@/lib/pushClient";
 
 // --- MASTER PIN DIRETTO SVILUPPATORE (Bypassa qualsiasi blocco e permette reset) ---
 const DEVELOPER_MASTER_PIN = "2860";
@@ -396,6 +398,8 @@ export default function CambiaLookApp() {
   // Promotions Dynamic State
   const [promotionsList, setPromotionsList] = useState<any[]>(INITIAL_PROMOTIONS);
   const [selectedPromotion, setSelectedPromotion] = useState<any | null>(null);
+  const [showPushBanner, setShowPushBanner] = useState<boolean>(false);
+  const [isRegisteringPush, setIsRegisteringPush] = useState<boolean>(false);
 
   // Products Dynamic State
   const [productsList, setProductsList] = useState<any[]>(INITIAL_PRODUCTS);
@@ -612,10 +616,48 @@ export default function CambiaLookApp() {
       if (savedPromotions) {
         setPromotionsList(JSON.parse(savedPromotions));
       }
+
+      // Sincronizzazione in tempo reale con il Database Cloud Supabase
+      fetch('/api/promotions')
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.success && Array.isArray(data.promotions) && data.promotions.length > 0) {
+            setPromotionsList(data.promotions);
+            try {
+              localStorage.setItem("cambia_look_promotions", JSON.stringify(data.promotions));
+            } catch (_) {}
+          }
+        })
+        .catch((err) => console.warn('Offline o caricamento locale:', err));
+
+      // Verifica supporto e disponibilità Notifiche Push
+      if (typeof window !== "undefined" && isPushSupported()) {
+        const dismissed = localStorage.getItem("cambia_look_push_prompt_dismissed");
+        if (!dismissed && Notification.permission === "default") {
+          setShowPushBanner(true);
+        }
+      }
     } catch (e) {
       console.error(e);
     }
   }, []);
+
+  const handleEnablePush = async () => {
+    setIsRegisteringPush(true);
+    try {
+      const ok = await registerPushNotifications();
+      setIsRegisteringPush(false);
+      setShowPushBanner(false);
+      if (ok) {
+        triggerPushDemo("🔔 Notifiche attivate! Riceverai gli aggiornamenti sulle nuove promozioni.");
+      } else {
+        localStorage.setItem("cambia_look_push_prompt_dismissed", "true");
+      }
+    } catch (err) {
+      setIsRegisteringPush(false);
+      setShowPushBanner(false);
+    }
+  };
 
   // Blocco rigoroso dello scroll della pagina di sfondo quando un modal è aperto
   const isAnyModalOpen = Boolean(
@@ -1066,25 +1108,33 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
     }
   };
 
-  const handleSavePromotion = (e: React.FormEvent) => {
+  const handleSavePromotion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!promoFormTitle || !promoFormPromoPrice) return;
 
     const fallbackImg = "https://images.unsplash.com/photo-1560869713-7d0a29430803?q=80&w=900&auto=format&fit=crop";
+    const promoId = editingPromotionId || `promo-${Date.now()}`;
+    const isNew = !editingPromotionId;
+
+    const promoPayload = {
+      id: promoId,
+      title: promoFormTitle,
+      subtitle: promoFormSubtitle,
+      badge: promoFormBadge || "Offerta Speciale",
+      originalPrice: promoFormOriginalPrice,
+      promoPrice: promoFormPromoPrice,
+      validUntil: promoFormValidUntil,
+      desc: promoFormDesc,
+      salonId: promoFormSalonId,
+      image: promoFormImage || fallbackImg,
+    };
 
     if (editingPromotionId) {
       const updated = promotionsList.map(p => {
         if (p.id === editingPromotionId) {
           return {
             ...p,
-            title: promoFormTitle,
-            subtitle: promoFormSubtitle,
-            badge: promoFormBadge,
-            originalPrice: promoFormOriginalPrice,
-            promoPrice: promoFormPromoPrice,
-            validUntil: promoFormValidUntil,
-            desc: promoFormDesc,
-            salonId: promoFormSalonId,
+            ...promoPayload,
             image: promoFormImage || p.image || fallbackImg,
           };
         }
@@ -1098,27 +1148,41 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
       triggerPushDemo(`🏷️ Promozione "${promoFormTitle}" aggiornata!`);
     } else {
       const newPromo = {
-        id: `promo-${Date.now()}`,
-        title: promoFormTitle,
-        subtitle: promoFormSubtitle,
-        badge: promoFormBadge || "Offerta Speciale",
-        originalPrice: promoFormOriginalPrice,
-        promoPrice: promoFormPromoPrice,
-        validUntil: promoFormValidUntil,
-        desc: promoFormDesc,
-        salonId: promoFormSalonId,
-        image: promoFormImage || fallbackImg,
+        ...promoPayload,
       };
 
       savePromotions([newPromo, ...promotionsList]);
-      triggerPushDemo(`🎉 Nuova promozione "${newPromo.title}" pubblicata!`);
+      triggerPushDemo(`🎉 Nuova promozione pubblicata! Invio notifica push in corso...`);
     }
 
     setIsPromotionModalOpen(false);
     setEditingPromotionId(null);
+
+    // Salvataggio nel Database Cloud Supabase + Invio Notifica Push a tutti i clienti
+    try {
+      const res = await fetch('/api/promotions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...promoPayload,
+          pin: isDeveloperMode ? DEVELOPER_MASTER_PIN : salonPin,
+          isNew,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && isNew) {
+        if (data.pushSent > 0) {
+          triggerPushDemo(`🔔 Notifica push inviata con successo a ${data.pushSent} clienti!`);
+        } else {
+          triggerPushDemo(`✨ Promozione salvata nel cloud per tutti i dispositivi!`);
+        }
+      }
+    } catch (err) {
+      console.warn('Errore sync server promozioni:', err);
+    }
   };
 
-  const handleDeletePromotion = (promoId: string, e: React.MouseEvent) => {
+  const handleDeletePromotion = async (promoId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm("Vuoi eliminare questa promozione?")) {
       const filtered = promotionsList.filter(p => p.id !== promoId);
@@ -1127,6 +1191,14 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
         setSelectedPromotion(null);
       }
       triggerPushDemo("🗑️ Promozione rimossa");
+
+      try {
+        await fetch(`/api/promotions?id=${promoId}&pin=${isDeveloperMode ? DEVELOPER_MASTER_PIN : salonPin}`, {
+          method: 'DELETE',
+        });
+      } catch (err) {
+        console.warn('Errore eliminazione promo server:', err);
+      }
     }
   };
 
@@ -1632,6 +1704,43 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
               </button>
             )}
           </div>
+
+          {/* BANNER ATTIVAZIONE NOTIFICHE PUSH SMARTPHONE PER LE CLIENTI */}
+          {showPushBanner && (
+            <div className="p-4 rounded-2xl bg-black/60 border border-[#E8D3A2]/60 shadow-xl flex items-center justify-between gap-3 animate-in fade-in duration-300">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-[#E8D3A2] text-[#80081B] flex items-center justify-center shrink-0 shadow">
+                  <Bell size={18} />
+                </div>
+                <div>
+                  <h5 className="text-xs font-bold text-white">Ricevi le nuove offerte sul telefono</h5>
+                  <p className="text-[10px] text-white/70 leading-tight">Attiva le notifiche per non perdere pacchetti regalo e sconti esclusivi!</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleEnablePush}
+                  disabled={isRegisteringPush}
+                  className="py-1.5 px-3 rounded-xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-black text-[11px] shadow active:scale-95 transition-all"
+                >
+                  {isRegisteringPush ? "..." : "Attiva"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPushBanner(false);
+                    try {
+                      localStorage.setItem("cambia_look_push_prompt_dismissed", "true");
+                    } catch (_) {}
+                  }}
+                  className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white/60 hover:text-white flex items-center justify-center transition-colors"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* LISTA DELLE PROMOZIONI */}
           <div className="space-y-4">
