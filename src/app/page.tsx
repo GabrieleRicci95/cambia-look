@@ -3333,18 +3333,18 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
                   <button 
                     type="button"
                     onClick={clearCart} 
-                    className="py-1 px-2.5 rounded-xl bg-white/10 hover:bg-rose-600/40 text-rose-300 hover:text-white text-[10px] font-bold flex items-center gap-1 transition-colors"
+                    className="py-1.5 px-3 rounded-xl bg-rose-500/20 hover:bg-rose-600/40 border border-rose-400/30 text-rose-200 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 shadow-sm"
                     title="Svuota carrello"
                   >
-                    <Trash2 size={12} />
-                    <span>Svuota</span>
+                    <Trash2 size={14} />
+                    <span>Svuota Carrello</span>
                   </button>
                 )}
                 <button 
                   onClick={() => setIsCartOpen(false)} 
-                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 transition-colors"
+                  className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 transition-colors"
                 >
-                  <X size={16} />
+                  <X size={18} />
                 </button>
               </div>
             </div>
@@ -3543,19 +3543,6 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
                     <MessageCircle size={18} />
                     <span>Invia Ordine su WhatsApp ({cartPickupSalon === "cisterna" ? "Cisterna" : "Roma"})</span>
                   </button>
-
-                  <div className="flex justify-between items-center px-1">
-                    <button
-                      type="button"
-                      onClick={clearCart}
-                      className="text-[10px] text-white/50 hover:text-rose-300 underline"
-                    >
-                      Svuota carrello
-                    </button>
-                    <span className="text-[10px] text-[#E8D3A2]">
-                      💬 Risposta rapida dallo staff Cambia Look
-                    </span>
-                  </div>
 
                   <p className="text-[10px] text-center text-white/50 pt-1">
                     Inviando l'ordine accetti l'<a href="/privacy" target="_blank" className="underline text-[#E8D3A2]">Informativa sulla Privacy</a>
