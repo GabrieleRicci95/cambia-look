@@ -5,6 +5,7 @@ import Image from "next/image";
 import { 
   Sparkles, 
   ShoppingBag, 
+  ShoppingCart,
   User, 
   Home, 
   Scissors, 
@@ -335,7 +336,6 @@ export default function CambiaLookApp() {
   // Cart / Shopping Bag State (Ordina & Ritira in Salone via WhatsApp)
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isCartBarDismissed, setIsCartBarDismissed] = useState(false);
   const [cartPickupSalon, setCartPickupSalon] = useState<"cisterna" | "roma">("cisterna");
   const [cartClientName, setCartClientName] = useState("");
   const [cartPickupTime, setCartPickupTime] = useState("Oggi / Domani");
@@ -643,8 +643,7 @@ export default function CambiaLookApp() {
       newCart = [...cart, { product, quantity: qty }];
     }
     saveCart(newCart);
-    setIsCartBarDismissed(false);
-    triggerPushDemo(`🛍️ Aggiunto alla Busta: ${product.name} (x${qty})`);
+    triggerPushDemo(`🛒 Aggiunto al carrello: ${product.name} (x${qty})`);
   };
 
   const updateCartQuantity = (productId: string, delta: number) => {
@@ -660,12 +659,12 @@ export default function CambiaLookApp() {
   const removeFromCart = (productId: string) => {
     const updated = cart.filter(item => item.product.id !== productId);
     saveCart(updated);
-    triggerPushDemo("🗑️ Prodotto rimosso dalla busta");
+    triggerPushDemo("🗑️ Prodotto rimosso dal carrello");
   };
 
   const clearCart = () => {
     saveCart([]);
-    triggerPushDemo("Busta salone svuotata");
+    triggerPushDemo("Carrello svuotato");
   };
 
   const cartTotalCount = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -689,9 +688,9 @@ export default function CambiaLookApp() {
 
     const message = 
 `👋 *CIAO CAMBIA LOOK!*
-Vorrei ordinare i seguenti prodotti tramite l'app per il *Ritiro in Salone*:
+Vorrei ordinare i seguenti prodotti dal *Carrello* dell'app per il *Ritiro in Salone*:
 
-🛍️ *PRODOTTI RICHIESTI:*
+🛒 *PRODOTTI NEL CARRELLO:*
 ${itemsText}
 
 ━━━━━━━━━━━━━━━━━━━━
@@ -701,7 +700,7 @@ ${itemsText}
 🕒 *QUANDO PASSO:* ${cartPickupTime || "Da concordare"}
 ${cartNotes.trim() ? `📝 *NOTE CLIENTE:* ${cartNotes.trim()}\n` : ""}━━━━━━━━━━━━━━━━━━━━
 
-Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in salone. Grazie mille ✨`;
+Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttamente in salone. Grazie mille ✨`;
 
     const waUrl = `https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(message)}`;
     window.open(waUrl, "_blank");
@@ -1442,15 +1441,16 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Tasto Busta Salone (Ordina & Ritira) */}
+          {/* Tasto Carrello Acquisti come nei veri shop online */}
           <button 
             onClick={() => setIsCartOpen(true)}
-            className="relative w-9 h-9 rounded-full bg-black/25 flex items-center justify-center text-white/90 hover:text-white border border-white/15 shadow transition-all active:scale-95"
-            title="Busta Salone (Ordina & Ritira)"
+            className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/35 hover:bg-black/50 text-white border border-[#E8D3A2]/50 shadow transition-all active:scale-95"
+            title="Carrello Acquisti"
           >
-            <ShoppingBag size={16} />
+            <ShoppingCart size={16} className="text-[#E8D3A2]" />
+            <span className="text-xs font-bold text-white">Carrello</span>
             {cartTotalCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#E8D3A2] text-[#D11936] text-[10px] font-black rounded-full flex items-center justify-center shadow animate-pulse">
+              <span className="w-5 h-5 bg-[#E8D3A2] text-[#D11936] text-[10px] font-black rounded-full flex items-center justify-center shadow animate-pulse">
                 {cartTotalCount}
               </span>
             )}
@@ -1984,16 +1984,27 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
               )}
             </div>
 
-            {/* PULSANTE AGGIUNGI PRODOTTO (Visibile solo in modalità Titolare) */}
-            {isStaffMode && (
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Tasto Carrello */}
               <button
-                onClick={handleOpenNewProduct}
-                className="py-2.5 px-3.5 rounded-2xl bg-white text-[#D11936] text-xs font-black flex items-center gap-1.5 shadow-xl active:scale-95 transition-all shrink-0 hover:bg-[#E8D3A2]"
+                onClick={() => setIsCartOpen(true)}
+                className="py-2.5 px-3.5 rounded-2xl bg-white text-[#D11936] text-xs font-black flex items-center gap-1.5 shadow-xl active:scale-95 transition-all hover:bg-[#E8D3A2]"
               >
-                <Plus size={16} />
-                <span>Nuovo Prodotto</span>
+                <ShoppingCart size={15} />
+                <span>Carrello {cartTotalCount > 0 ? `(${cartTotalCount})` : ""}</span>
               </button>
-            )}
+
+              {/* PULSANTE AGGIUNGI PRODOTTO (Visibile solo in modalità Titolare) */}
+              {isStaffMode && (
+                <button
+                  onClick={handleOpenNewProduct}
+                  className="py-2.5 px-3 rounded-2xl bg-black/40 text-[#E8D3A2] border border-[#E8D3A2]/40 text-xs font-bold flex items-center gap-1 shadow-xl active:scale-95 transition-all"
+                >
+                  <Plus size={15} />
+                  <span>Nuovo</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Filtri Categoria Rapidi */}
@@ -2080,11 +2091,11 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
                           e.stopPropagation();
                           addToCart(prod, 1);
                         }}
-                        className="px-2.5 py-1 rounded-xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-black text-[10px] flex items-center gap-1 shadow active:scale-95 transition-all"
-                        title="Aggiungi alla busta salone"
+                        className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-black text-[10px] flex items-center gap-1 shadow active:scale-95 transition-all"
+                        title="Aggiungi al carrello"
                       >
-                        <Plus size={11} strokeWidth={3} />
-                        <span>Busta</span>
+                        <ShoppingCart size={11} strokeWidth={2.5} />
+                        <span>Carrello</span>
                       </button>
                     </div>
                   </div>
@@ -2096,14 +2107,14 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
             onClick={() => setIsCartOpen(true)}
             className="p-4 rounded-2xl bg-black/40 border border-[#E8D3A2]/40 text-center space-y-1.5 cursor-pointer hover:bg-black/50 transition-all shadow-lg group"
           >
-            <div className="w-8 h-8 rounded-full bg-emerald-600/30 text-emerald-300 mx-auto flex items-center justify-center border border-emerald-500/30 group-hover:scale-110 transition-transform">
-              <MessageCircle size={16} />
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#E8D3A2] to-[#B38F46] text-[#D11936] mx-auto flex items-center justify-center border border-[#E8D3A2]/40 group-hover:scale-110 transition-transform shadow">
+              <ShoppingCart size={18} />
             </div>
-            <h4 className="text-xs font-bold text-white">Ordina su WhatsApp & Ritira in Salone</h4>
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Carrello Acquisti • Ritiro in Salone</h4>
             <p className="text-[11px] text-white/75 leading-relaxed">
-              Aggiungi i prodotti alla Busta Salone e invia l'ordine via WhatsApp. Prepariamo la tua busta e paghi direttamente in cassa al ritiro senza costi extra!
+              Aggiungi i prodotti professionali al carrello e prenota il ritiro rapido. Pagherai comodamente in salone senza costi extra!
             </p>
-            <span className="inline-block text-[10px] font-bold text-[#E8D3A2] underline">Apri la Busta Salone ({cartTotalCount}) →</span>
+            <span className="inline-block text-[10px] font-bold text-[#E8D3A2] underline">Apri il Carrello ({cartTotalCount}) →</span>
           </div>
         </main>
       )}
@@ -2447,7 +2458,7 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
               </span>
             </div>
 
-            {/* Selettore Quantità e Aggiunta alla Busta Salone */}
+            {/* Selettore Quantità e Aggiunta al Carrello */}
             <div className="space-y-2 pt-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-white/70 block">
                 Quantità da Ordinare per il Ritiro in Salone:
@@ -2483,8 +2494,8 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
                   }}
                   className="flex-1 py-3 px-3 rounded-2xl bg-gradient-to-r from-white via-[#FFF8E7] to-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-xl hover:brightness-105 active:scale-95 transition-all"
                 >
-                  <ShoppingBag size={15} />
-                  <span>Aggiungi alla Busta • € {(Number(selectedProduct.price) * prodDetailQty).toFixed(2)}</span>
+                  <ShoppingCart size={16} />
+                  <span>Aggiungi al Carrello • € {(Number(selectedProduct.price) * prodDetailQty).toFixed(2)}</span>
                 </button>
               </div>
             </div>
@@ -3299,60 +3310,8 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
         </div>
       )}
 
-      {/* FLOATING CART BAR (Visibile quando ci sono prodotti nella busta e siamo nella scheda prodotti) */}
-      {activeTab === "prodotti" && cartTotalCount > 0 && !isCartOpen && !isCartBarDismissed && (
-        <div 
-          className="fixed left-4 right-4 max-w-[416px] mx-auto z-30 animate-in slide-in-from-bottom duration-300"
-          style={{ bottom: "calc(env(safe-area-inset-bottom, 20px) + 5.2rem)" }}
-        >
-          <div className="w-full py-3 pl-4 pr-2.5 rounded-2xl bg-black/95 backdrop-blur-xl border border-[#E8D3A2] shadow-2xl flex items-center justify-between group">
-            <button
-              onClick={() => setIsCartOpen(true)}
-              className="flex items-center gap-3 min-w-0 flex-1 text-left active:scale-[0.98] transition-all"
-            >
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#E8D3A2] to-[#B38F46] text-[#D11936] flex items-center justify-center font-black shadow relative shrink-0">
-                <ShoppingBag size={22} />
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#D11936] text-white border-2 border-[#E8D3A2] rounded-full text-[10px] font-black flex items-center justify-center">
-                  {cartTotalCount}
-                </span>
-              </div>
-              <div className="truncate">
-                <span className="text-[10px] uppercase font-bold text-[#E8D3A2] tracking-wider block">
-                  Busta Salone Attiva
-                </span>
-                <span className="text-sm font-black text-white truncate block">
-                  € {cartTotalPrice.toFixed(2)} • {cartTotalCount} {cartTotalCount === 1 ? "prodotto" : "prodotti"}
-                </span>
-              </div>
-            </button>
-
-            <div className="flex items-center gap-2 shrink-0 ml-2">
-              <button
-                onClick={() => setIsCartOpen(true)}
-                className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl bg-gradient-to-r from-white to-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all"
-              >
-                <span>Ordina & Ritira</span>
-                <ChevronRight size={16} strokeWidth={3} />
-              </button>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsCartBarDismissed(true);
-                }}
-                className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center transition-colors"
-                title="Nascondi barra"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ========================================================================================= */}
-      {/* MODAL BUSTA SALONE: ORDINA SU WHATSAPP & RITIRA IN SALONE */}
+      {/* MODAL CARRELLO ACQUISTI: ORDINA SU WHATSAPP & RITIRA IN SALONE */}
       {/* ========================================================================================= */}
       {isCartOpen && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
@@ -3362,10 +3321,10 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
             <div className="flex justify-between items-center border-b border-white/10 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#E8D3A2] to-[#B38F46] text-[#D11936] flex items-center justify-center font-bold shadow">
-                  <ShoppingBag size={20} />
+                  <ShoppingCart size={20} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white leading-tight">La Tua Busta Salone</h3>
+                  <h3 className="text-base font-bold text-white leading-tight">Il Tuo Carrello</h3>
                   <span className="text-[10px] text-white/70">Ordina su WhatsApp e ritira in salone</span>
                 </div>
               </div>
@@ -3375,7 +3334,7 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
                     type="button"
                     onClick={clearCart} 
                     className="py-1 px-2.5 rounded-xl bg-white/10 hover:bg-rose-600/40 text-rose-300 hover:text-white text-[10px] font-bold flex items-center gap-1 transition-colors"
-                    title="Svuota busta"
+                    title="Svuota carrello"
                   >
                     <Trash2 size={12} />
                     <span>Svuota</span>
@@ -3393,10 +3352,10 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
             {cart.length === 0 ? (
               <div className="py-12 text-center space-y-4">
                 <div className="w-16 h-16 rounded-full bg-black/40 text-white/40 mx-auto flex items-center justify-center border border-white/10">
-                  <ShoppingBag size={28} />
+                  <ShoppingCart size={28} />
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-sm font-bold text-white">La tua busta è vuota</h4>
+                  <h4 className="text-sm font-bold text-white">Il tuo carrello è vuoto</h4>
                   <p className="text-xs text-white/70 max-w-xs mx-auto">
                     Esplora la nostra Boutique e aggiungi i prodotti professionali consigliati per la cura dei tuoi capelli.
                   </p>
@@ -3415,7 +3374,7 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
             ) : (
               <form onSubmit={handleSendWhatsAppOrder} className="space-y-4 text-xs">
                 
-                {/* LISTA DEI PRODOTTI NELLA BUSTA */}
+                {/* LISTA DEI PRODOTTI NEL CARRELLO */}
                 <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
                   {cart.map((item) => (
                     <div 
@@ -3517,7 +3476,7 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
                 {/* DATI CLIENTE */}
                 <div className="space-y-2 pt-1">
                   <label className="font-bold text-white/90 block">
-                    2. I Tuoi Dati per la Busta Salone *
+                    2. I Tuoi Dati per l'Ordine *
                   </label>
                   
                   <div>
@@ -3591,7 +3550,7 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
                       onClick={clearCart}
                       className="text-[10px] text-white/50 hover:text-rose-300 underline"
                     >
-                      Svuota busta
+                      Svuota carrello
                     </button>
                     <span className="text-[10px] text-[#E8D3A2]">
                       💬 Risposta rapida dallo staff Cambia Look
@@ -3619,7 +3578,7 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
             { id: "saloni", label: "Saloni", icon: Store },
             { id: "servizi", label: "Servizi", icon: Scissors },
             { id: "agenda", label: "Il Mio Appuntamento", icon: Calendar, badge: myAppointments.length > 0 },
-            { id: "prodotti", label: "Prodotti", icon: ShoppingBag, badge: cartTotalCount > 0 },
+            { id: "prodotti", label: "Prodotti", icon: ShoppingCart, badge: cartTotalCount > 0 },
             { id: "info", label: "Contatti", icon: MapPin },
           ].map(tab => {
             const Icon = tab.icon;
