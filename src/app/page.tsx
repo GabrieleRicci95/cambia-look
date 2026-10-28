@@ -1384,8 +1384,8 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
       {/* SIMULATED PUSH NOTIFICATION */}
       {showNotification && (
         <div 
-          style={{ top: "max(calc(env(safe-area-inset-top, 0px) + 12px), 1.25rem)" }}
-          className="fixed left-4 right-4 z-50 animate-in slide-in-from-top duration-300"
+          style={{ top: isStaffMode ? "max(calc(env(safe-area-inset-top, 0px) + 68px), 4.75rem)" : "max(calc(env(safe-area-inset-top, 0px) + 12px), 1.25rem)" }}
+          className="fixed left-4 right-4 z-[70] animate-in slide-in-from-top duration-300"
         >
           <div className="max-w-sm mx-auto bg-black/85 backdrop-blur-xl rounded-2xl p-3.5 shadow-2xl flex items-center gap-3 border border-[#E8D3A2]/40">
             <div className="w-9 h-9 rounded-xl bg-[#9E0B22] flex items-center justify-center shrink-0 border border-white/20">

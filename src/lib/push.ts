@@ -1,5 +1,6 @@
 import webpush from 'web-push';
 import { getDbPool } from './db';
+import { sendNativeApns } from './apns';
 
 const publicKey = (
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
@@ -55,6 +56,35 @@ export async function broadcastPushNotification(payload: PushPayload) {
 
     await Promise.allSettled(
       subscribers.map(async (sub) => {
+        // CASO 1: NOTIFICA NATIVA iOS (APNs Apple Push Notification service)
+        if (sub.endpoint && sub.endpoint.startsWith('native:')) {
+          const deviceToken = sub.endpoint.replace(/^native:/, '').trim();
+          try {
+            const apnsRes = await sendNativeApns({
+              deviceToken,
+              title: payload.title,
+              body: payload.body,
+              url: payload.url,
+              data: payload.data,
+            });
+            if (apnsRes.success) {
+              sent++;
+              console.log(`[APNs] Notifica inviata con successo al token ${deviceToken.slice(0, 8)}...`);
+            } else {
+              failed++;
+              console.warn(`[APNs] Invio fallito: ${apnsRes.error}`);
+              if (apnsRes.error?.includes('BadDeviceToken') || apnsRes.error?.includes('Unregistered')) {
+                staleEndpoints.push(sub.endpoint);
+              }
+            }
+          } catch (e: any) {
+            failed++;
+            console.error('[APNs] Errore imprevisto:', e.message);
+          }
+          return;
+        }
+
+        // CASO 2: WEB PUSH STANDARD (Safari macOS, Chrome, Edge, Android)
         const pushSubscription = {
           endpoint: sub.endpoint,
           keys: {
@@ -67,7 +97,7 @@ export async function broadcastPushNotification(payload: PushPayload) {
           sent++;
         } catch (err: any) {
           failed++;
-          // If status is 410 Gone or 404 Not Found, subscriber unregistered:
+          // Se 410 o 404, l'utente ha disiscritto o disinstallato
           if (err.statusCode === 410 || err.statusCode === 404) {
             staleEndpoints.push(sub.endpoint);
           }
@@ -75,7 +105,7 @@ export async function broadcastPushNotification(payload: PushPayload) {
       })
     );
 
-    // Clean up stale subscribers
+    // Pulizia subscriber non più validi
     if (staleEndpoints.length > 0) {
       await pool.query(
         'DELETE FROM public.cambia_look_push_subscribers WHERE endpoint = ANY($1)',
