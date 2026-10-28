@@ -1053,7 +1053,7 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
   };
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-[#D11936] text-white flex flex-col relative select-none font-sans overflow-x-hidden pb-24 shadow-2xl">
+    <div className="max-w-md mx-auto min-h-screen bg-[#D11936] text-white flex flex-col relative select-none font-sans overflow-x-hidden pb-36 shadow-2xl">
       
       {/* PULL TO REFRESH CIRCULAR ICON (DIRECT GPU TRANSFORM, ZERO JITTER) */}
       <div 
@@ -1548,7 +1548,7 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
 
           <div 
             onClick={() => setIsCartOpen(true)}
-            className="p-4 rounded-2xl bg-black/40 border border-[#E8D3A2]/40 text-center space-y-1.5 cursor-pointer hover:bg-black/50 transition-all shadow-lg group"
+            className="p-4 rounded-2xl bg-black/40 border border-[#E8D3A2]/40 text-center space-y-1.5 cursor-pointer hover:bg-black/50 transition-all shadow-lg group mt-6 mb-10"
           >
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#E8D3A2] to-[#B38F46] text-[#D11936] mx-auto flex items-center justify-center border border-[#E8D3A2]/40 group-hover:scale-110 transition-transform shadow">
               <ShoppingCart size={18} />
