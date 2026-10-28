@@ -270,6 +270,103 @@ const getInitialSampleAppointment = (): ClientAppointment => {
   };
 };
 
+// Hook riutilizzabile per lo swipe fluido verso il basso a 120fps su tutte le schede e popup
+function useSwipeDown(onClose: () => void) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef<number>(0);
+  const currentTranslateY = useRef<number>(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isAtTopRef = useRef<boolean>(true);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    currentTranslateY.current = 0;
+    if (sheetRef.current) {
+      sheetRef.current.style.transition = "none";
+      sheetRef.current.style.willChange = "transform";
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - touchStartY.current;
+    if (diff > 0 && sheetRef.current) {
+      currentTranslateY.current = diff;
+      sheetRef.current.style.transform = `translate3d(0, ${diff}px, 0)`;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!sheetRef.current) return;
+    sheetRef.current.style.willChange = "auto";
+    const currentY = currentTranslateY.current;
+
+    if (currentY > 80) {
+      // Scorrimento verso il basso completato: animazione di uscita fluida
+      sheetRef.current.style.transition = "transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)";
+      sheetRef.current.style.transform = "translate3d(0, 100%, 0)";
+      setTimeout(() => {
+        onClose();
+        if (sheetRef.current) {
+          sheetRef.current.style.transform = "";
+          sheetRef.current.style.transition = "";
+        }
+      }, 200);
+    } else if (currentY > 0) {
+      // Rilascio parziale: rimbalzo elastico in posizione iniziale
+      sheetRef.current.style.transition = "transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)";
+      sheetRef.current.style.transform = "translate3d(0, 0, 0)";
+      setTimeout(() => {
+        if (sheetRef.current && currentTranslateY.current === 0) {
+          sheetRef.current.style.transition = "";
+          sheetRef.current.style.transform = "";
+        }
+      }, 220);
+    }
+    currentTranslateY.current = 0;
+  };
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    isAtTopRef.current = e.currentTarget.scrollTop <= 5;
+  };
+
+  const handleContentTouchStart = (e: React.TouchEvent) => {
+    if (scrollRef.current && scrollRef.current.scrollTop > 5) {
+      isAtTopRef.current = false;
+      return;
+    }
+    isAtTopRef.current = true;
+    touchStartY.current = e.touches[0].clientY;
+    currentTranslateY.current = 0;
+    if (sheetRef.current) {
+      sheetRef.current.style.transition = "none";
+      sheetRef.current.style.willChange = "transform";
+    }
+  };
+
+  const handleContentTouchMove = (e: React.TouchEvent) => {
+    if (!isAtTopRef.current) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - touchStartY.current;
+    if (diff > 12 && sheetRef.current) {
+      const activeDiff = diff - 12;
+      currentTranslateY.current = activeDiff;
+      sheetRef.current.style.transform = `translate3d(0, ${activeDiff}px, 0)`;
+    }
+  };
+
+  return {
+    sheetRef,
+    scrollRef,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    handleScroll,
+    handleContentTouchStart,
+    handleContentTouchMove,
+  };
+}
+
 export default function CambiaLookApp() {
   const [activeTab, setActiveTab] = useState<"saloni" | "servizi" | "agenda" | "prodotti" | "info">("saloni");
   
@@ -342,12 +439,11 @@ export default function CambiaLookApp() {
   const [cartNotes, setCartNotes] = useState("");
   const [prodDetailQty, setProdDetailQty] = useState<number>(1);
 
-  // Cart Swipe-to-dismiss states & refs (Direct GPU DOM transform)
-  const cartSheetRef = useRef<HTMLDivElement>(null);
-  const cartTouchStartY = useRef<number>(0);
-  const cartCurrentTranslateY = useRef<number>(0);
-  const cartScrollRef = useRef<HTMLDivElement>(null);
-  const isCartAtTopRef = useRef<boolean>(true);
+  // Swipe-to-dismiss hooks per Carrello, Trattamenti, Prodotti e Saloni
+  const cartSwipe = useSwipeDown(() => setIsCartOpen(false));
+  const serviceSwipe = useSwipeDown(() => setSelectedService(null));
+  const productSwipe = useSwipeDown(() => setSelectedProduct(null));
+  const salonSwipe = useSwipeDown(() => setSelectedSalon(null));
 
   // New / Edit Service Modal State
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
@@ -720,77 +816,6 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
     setNotificationText(text);
     setShowNotification(true);
     setTimeout(() => setShowNotification(false), 4500);
-  };
-
-  // Gestione Swipe verso il basso fluida a 120fps (Direct GPU DOM Transform)
-  const handleCartTouchStart = (e: React.TouchEvent) => {
-    cartTouchStartY.current = e.touches[0].clientY;
-    cartCurrentTranslateY.current = 0;
-    if (cartSheetRef.current) {
-      cartSheetRef.current.style.transition = "none";
-      cartSheetRef.current.style.willChange = "transform";
-    }
-  };
-
-  const handleCartTouchMove = (e: React.TouchEvent) => {
-    const currentY = e.touches[0].clientY;
-    const diff = currentY - cartTouchStartY.current;
-    if (diff > 0 && cartSheetRef.current) {
-      cartCurrentTranslateY.current = diff;
-      cartSheetRef.current.style.transform = `translate3d(0, ${diff}px, 0)`;
-    }
-  };
-
-  const handleCartTouchEnd = () => {
-    if (!cartSheetRef.current) return;
-    cartSheetRef.current.style.willChange = "auto";
-    const currentY = cartCurrentTranslateY.current;
-
-    if (currentY > 80) {
-      // Scorrimento verso il basso completato: animazione di uscita morbida
-      cartSheetRef.current.style.transition = "transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)";
-      cartSheetRef.current.style.transform = "translate3d(0, 100%, 0)";
-      setTimeout(() => {
-        setIsCartOpen(false);
-        if (cartSheetRef.current) {
-          cartSheetRef.current.style.transform = "";
-          cartSheetRef.current.style.transition = "";
-        }
-      }, 200);
-    } else {
-      // Rilascio parziale: rimbalzo elastico in posizione iniziale
-      cartSheetRef.current.style.transition = "transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)";
-      cartSheetRef.current.style.transform = "translate3d(0, 0, 0)";
-    }
-    cartCurrentTranslateY.current = 0;
-  };
-
-  const handleCartScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    isCartAtTopRef.current = e.currentTarget.scrollTop <= 5;
-  };
-
-  const handleContentTouchStart = (e: React.TouchEvent) => {
-    if (cartScrollRef.current && cartScrollRef.current.scrollTop > 5) {
-      isCartAtTopRef.current = false;
-      return;
-    }
-    isCartAtTopRef.current = true;
-    cartTouchStartY.current = e.touches[0].clientY;
-    cartCurrentTranslateY.current = 0;
-    if (cartSheetRef.current) {
-      cartSheetRef.current.style.transition = "none";
-    }
-  };
-
-  const handleContentTouchMove = (e: React.TouchEvent) => {
-    if (!isCartAtTopRef.current) return;
-    const currentY = e.touches[0].clientY;
-    const diff = currentY - cartTouchStartY.current;
-    if (diff > 12 && cartSheetRef.current) {
-      const activeDiff = diff - 12;
-      cartCurrentTranslateY.current = activeDiff;
-      cartSheetRef.current.style.transform = `translate3d(0, ${activeDiff}px, 0)`;
-    }
   };
 
   // Helper date formatting (in Italian)
@@ -2314,12 +2339,29 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
       {/* POPUP: DETTAGLIO SALONE SELEZIONATO */}
       {/* ========================================================================================= */}
       {selectedSalon && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-300 h-[93vh] flex flex-col">
-            <div className="w-full flex justify-center pt-2.5 pb-1 bg-black/30 shrink-0">
-              <div className="w-12 h-1.5 rounded-full bg-white/40" />
+        <div 
+          onClick={() => setSelectedSalon(null)}
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200"
+        >
+          <div 
+            ref={salonSwipe.sheetRef}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] overflow-hidden shadow-2xl h-[93vh] flex flex-col touch-pan-y"
+          >
+            <div 
+              className="w-full flex justify-center pt-2.5 pb-2 bg-black/30 shrink-0 touch-none select-none cursor-grab active:cursor-grabbing"
+              onTouchStart={salonSwipe.handleTouchStart}
+              onTouchMove={salonSwipe.handleTouchMove}
+              onTouchEnd={salonSwipe.handleTouchEnd}
+            >
+              <div className="w-12 h-1.5 rounded-full bg-white/40 shadow-sm" />
             </div>
-            <div className="relative h-60 w-full shrink-0">
+            <div 
+              className="relative h-60 w-full shrink-0 touch-none select-none"
+              onTouchStart={salonSwipe.handleTouchStart}
+              onTouchMove={salonSwipe.handleTouchMove}
+              onTouchEnd={salonSwipe.handleTouchEnd}
+            >
               <Image 
                 src={selectedSalon.image} 
                 alt={selectedSalon.name} 
@@ -2329,7 +2371,7 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
               <div className="absolute inset-0 bg-gradient-to-t from-[#9E0B22]/70 via-transparent to-transparent" />
               <button 
                 onClick={() => setSelectedSalon(null)}
-                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black"
+                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black transition-colors"
               >
                 <X size={18} />
               </button>
@@ -2339,7 +2381,14 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
               </div>
             </div>
 
-            <div className="p-6 space-y-4 overflow-y-auto no-scrollbar">
+            <div 
+              ref={salonSwipe.scrollRef}
+              onScroll={salonSwipe.handleScroll}
+              onTouchStart={salonSwipe.handleContentTouchStart}
+              onTouchMove={salonSwipe.handleContentTouchMove}
+              onTouchEnd={salonSwipe.handleTouchEnd}
+              className="p-6 space-y-4 overflow-y-auto no-scrollbar flex-1 overscroll-contain"
+            >
               <p className="text-xs text-white/90 leading-relaxed font-normal">
                 {selectedSalon.description}
               </p>
@@ -2394,13 +2443,32 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
       {/* POPUP: DETTAGLIO SERVIZIO (SOLA CONSULTAZIONE CON FOTO DEL SERVIZIO) */}
       {/* ========================================================================================= */}
       {selectedService && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300 h-[93vh] flex flex-col overflow-y-auto no-scrollbar">
-            <div className="w-full flex justify-center -mt-2 mb-1 shrink-0">
-              <div className="w-12 h-1.5 rounded-full bg-white/40" />
+        <div 
+          onClick={() => setSelectedService(null)}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200"
+        >
+          <div 
+            ref={serviceSwipe.sheetRef}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] shadow-2xl h-[93vh] flex flex-col overflow-hidden touch-pan-y"
+          >
+            {/* Area drag maniglia iOS con swipe verso il basso */}
+            <div 
+              className="w-full flex flex-col items-center pt-3 pb-2 cursor-grab active:cursor-grabbing shrink-0 touch-none select-none"
+              onTouchStart={serviceSwipe.handleTouchStart}
+              onTouchMove={serviceSwipe.handleTouchMove}
+              onTouchEnd={serviceSwipe.handleTouchEnd}
+            >
+              <div className="w-12 h-1.5 rounded-full bg-white/40 shadow-sm" />
             </div>
             
-            <div className="flex justify-between items-start border-b border-white/10 pb-3 shrink-0">
+            {/* Header del trattamento (supporta swipe verso il basso) */}
+            <div 
+              className="px-6 pb-3 pt-1 flex justify-between items-start border-b border-white/10 shrink-0 select-none touch-none"
+              onTouchStart={serviceSwipe.handleTouchStart}
+              onTouchMove={serviceSwipe.handleTouchMove}
+              onTouchEnd={serviceSwipe.handleTouchEnd}
+            >
               <div>
                 <span className="text-[10px] text-[#E8D3A2] font-bold uppercase tracking-wider">{selectedService.category}</span>
                 <h3 className="text-lg font-bold text-white">{selectedService.name}</h3>
@@ -2408,86 +2476,100 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
                   <span className="text-xs text-white/70 block">Durata indicativa: {selectedService.duration}</span>
                 )}
               </div>
-              <button onClick={() => setSelectedService(null)} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80">
+              <button 
+                type="button"
+                onClick={() => setSelectedService(null)} 
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 transition-colors"
+              >
                 <X size={16} />
               </button>
             </div>
 
-            {/* Foto del Servizio nel Popup */}
-            <div className="relative aspect-video rounded-2xl overflow-hidden bg-black/50 border border-white/20 shadow-lg">
-              <Image 
-                src={selectedService.image} 
-                alt={selectedService.name} 
-                fill 
-                className="object-cover" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-              <div className="absolute bottom-2.5 left-3">
-                <span className="text-[10px] font-black uppercase tracking-wider text-[#E8D3A2] bg-black/80 px-2.5 py-0.5 rounded-full border border-white/10">
-                  Trattamento Salone
+            {/* Contenuto scorrevole con swipe support */}
+            <div 
+              ref={serviceSwipe.scrollRef}
+              onScroll={serviceSwipe.handleScroll}
+              onTouchStart={serviceSwipe.handleContentTouchStart}
+              onTouchMove={serviceSwipe.handleContentTouchMove}
+              onTouchEnd={serviceSwipe.handleTouchEnd}
+              className="flex-1 overflow-y-auto px-6 py-4 space-y-4 no-scrollbar overscroll-contain"
+            >
+              {/* Foto del Servizio nel Popup */}
+              <div className="relative aspect-video rounded-2xl overflow-hidden bg-black/50 border border-white/20 shadow-lg">
+                <Image 
+                  src={selectedService.image} 
+                  alt={selectedService.name} 
+                  fill 
+                  className="object-cover" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                <div className="absolute bottom-2.5 left-3">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-[#E8D3A2] bg-black/80 px-2.5 py-0.5 rounded-full border border-white/10">
+                    Trattamento Salone
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-xs text-white/90 leading-relaxed font-normal">
+                {selectedService.desc}
+              </p>
+
+              <div className="p-3.5 rounded-2xl bg-black/35 border border-white/15 flex items-center justify-between">
+                <span className="text-xs text-white/70">Prezzo di listino:</span>
+                <span className="text-xl font-black text-[#E8D3A2]">{selectedService.price}</span>
+              </div>
+
+              {/* Azioni Staff Mode nel dettaglio servizio */}
+              {isStaffMode && (
+                <div className="pt-1 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleOpenEditService(selectedService);
+                      setSelectedService(null);
+                    }}
+                    className="flex-1 py-2.5 rounded-xl bg-[#E8D3A2] hover:bg-[#d8c392] text-[#D11936] font-black text-xs flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
+                  >
+                    <Edit3 size={14} />
+                    <span>Modifica Questo Trattamento</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      handleDeleteService(selectedService.id, e);
+                    }}
+                    className="px-3.5 py-2.5 rounded-xl bg-black/50 text-rose-300 hover:text-white hover:bg-rose-600 font-bold text-xs flex items-center justify-center gap-1.5 border border-rose-500/30 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                    <span>Elimina</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Chiamata telefonica diretta per info */}
+              <div className="space-y-2 pt-1 pb-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-white/70 block text-center">
+                  Telefona per richiedere informazioni o concordare la data:
                 </span>
+                <div className="grid grid-cols-2 gap-2">
+                  <a
+                    href="tel:069699412"
+                    className="py-2.5 px-3 rounded-xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-bold text-xs flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
+                  >
+                    <Phone size={13} />
+                    <span>Cisterna: 06 969 9412</span>
+                  </a>
+                  <a
+                    href="tel:067804521"
+                    className="py-2.5 px-3 rounded-xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-bold text-xs flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
+                  >
+                    <Phone size={13} />
+                    <span>Roma: 06 780 4521</span>
+                  </a>
+                </div>
               </div>
+
             </div>
-
-            <p className="text-xs text-white/90 leading-relaxed font-normal">
-              {selectedService.desc}
-            </p>
-
-            <div className="p-3.5 rounded-2xl bg-black/35 border border-white/15 flex items-center justify-between">
-              <span className="text-xs text-white/70">Prezzo di listino:</span>
-              <span className="text-xl font-black text-[#E8D3A2]">{selectedService.price}</span>
-            </div>
-
-            {/* Azioni Staff Mode nel dettaglio servizio */}
-            {isStaffMode && (
-              <div className="pt-1 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleOpenEditService(selectedService);
-                    setSelectedService(null);
-                  }}
-                  className="flex-1 py-2.5 rounded-xl bg-[#E8D3A2] hover:bg-[#d8c392] text-[#D11936] font-black text-xs flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
-                >
-                  <Edit3 size={14} />
-                  <span>Modifica Questo Trattamento</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    handleDeleteService(selectedService.id, e);
-                  }}
-                  className="px-3.5 py-2.5 rounded-xl bg-black/50 text-rose-300 hover:text-white hover:bg-rose-600 font-bold text-xs flex items-center justify-center gap-1.5 border border-rose-500/30 transition-colors"
-                >
-                  <Trash2 size={14} />
-                  <span>Elimina</span>
-                </button>
-              </div>
-            )}
-
-            {/* Chiamata telefonica diretta per info */}
-            <div className="space-y-2 pt-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-white/70 block text-center">
-                Telefona per richiedere informazioni o concordare la data:
-              </span>
-              <div className="grid grid-cols-2 gap-2">
-                <a
-                  href="tel:069699412"
-                  className="py-2.5 px-3 rounded-xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-bold text-xs flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
-                >
-                  <Phone size={13} />
-                  <span>Cisterna: 06 969 9412</span>
-                </a>
-                <a
-                  href="tel:067804521"
-                  className="py-2.5 px-3 rounded-xl bg-white hover:bg-[#E8D3A2] text-[#D11936] font-bold text-xs flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
-                >
-                  <Phone size={13} />
-                  <span>Roma: 06 780 4521</span>
-                </a>
-              </div>
-            </div>
-
           </div>
         </div>
       )}
@@ -2496,124 +2578,157 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
       {/* POPUP: DETTAGLIO PRODOTTO (SOLA CONSULTAZIONE / NO PRENOTAZIONI) */}
       {/* ========================================================================================= */}
       {selectedProduct && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300 h-[93vh] flex flex-col overflow-y-auto no-scrollbar">
-            <div className="w-full flex justify-center -mt-2 mb-1 shrink-0">
-              <div className="w-12 h-1.5 rounded-full bg-white/40" />
+        <div 
+          onClick={() => setSelectedProduct(null)}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200"
+        >
+          <div 
+            ref={productSwipe.sheetRef}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] shadow-2xl h-[93vh] flex flex-col overflow-hidden touch-pan-y"
+          >
+            {/* Area drag maniglia iOS con swipe verso il basso */}
+            <div 
+              className="w-full flex flex-col items-center pt-3 pb-2 cursor-grab active:cursor-grabbing shrink-0 touch-none select-none"
+              onTouchStart={productSwipe.handleTouchStart}
+              onTouchMove={productSwipe.handleTouchMove}
+              onTouchEnd={productSwipe.handleTouchEnd}
+            >
+              <div className="w-12 h-1.5 rounded-full bg-white/40 shadow-sm" />
             </div>
             
-            <div className="flex justify-between items-start border-b border-white/10 pb-3 shrink-0">
+            {/* Header del prodotto */}
+            <div 
+              className="px-6 pb-3 pt-1 flex justify-between items-start border-b border-white/10 shrink-0 select-none touch-none"
+              onTouchStart={productSwipe.handleTouchStart}
+              onTouchMove={productSwipe.handleTouchMove}
+              onTouchEnd={productSwipe.handleTouchEnd}
+            >
               <div>
                 <span className="text-[10px] text-[#E8D3A2] font-bold uppercase tracking-wider">{selectedProduct.brand}</span>
                 <h3 className="text-base font-bold text-white">{selectedProduct.name}</h3>
                 <span className="text-xs text-white/70">{selectedProduct.size}</span>
               </div>
-              <button onClick={() => setSelectedProduct(null)} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80">
+              <button 
+                type="button"
+                onClick={() => setSelectedProduct(null)} 
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 transition-colors"
+              >
                 <X size={16} />
               </button>
             </div>
 
-            {/* Foto grande del prodotto */}
-            <div className="relative aspect-video rounded-2xl overflow-hidden bg-black/40 border border-white/15">
-              <Image src={selectedProduct.img} alt={selectedProduct.name} fill className="object-cover" />
-            </div>
+            {/* Contenuto scrollabile con swipe support */}
+            <div 
+              ref={productSwipe.scrollRef}
+              onScroll={productSwipe.handleScroll}
+              onTouchStart={productSwipe.handleContentTouchStart}
+              onTouchMove={productSwipe.handleContentTouchMove}
+              onTouchEnd={productSwipe.handleTouchEnd}
+              className="flex-1 overflow-y-auto px-6 py-4 space-y-4 no-scrollbar overscroll-contain"
+            >
+              {/* Foto grande del prodotto */}
+              <div className="relative aspect-video rounded-2xl overflow-hidden bg-black/40 border border-white/15">
+                <Image src={selectedProduct.img} alt={selectedProduct.name} fill className="object-cover" />
+              </div>
 
-            <div className="space-y-2">
-              <p className="text-xs text-white/90 leading-relaxed font-normal">{selectedProduct.desc}</p>
-              
-              <div className="space-y-1.5 pt-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8D3A2]">Caratteristiche & Benefici:</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {(selectedProduct.benefits || []).map((b: string, i: number) => (
-                    <span key={i} className="inline-flex items-center gap-1 text-[10px] bg-black/40 border border-white/15 text-white px-2.5 py-1 rounded-xl">
-                      <Sparkle size={10} className="text-[#E8D3A2]" />
-                      <span>{b}</span>
+              <div className="space-y-2">
+                <p className="text-xs text-white/90 leading-relaxed font-normal">{selectedProduct.desc}</p>
+                
+                <div className="space-y-1.5 pt-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8D3A2]">Caratteristiche & Benefici:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(selectedProduct.benefits || []).map((b: string, i: number) => (
+                      <span key={i} className="inline-flex items-center gap-1 text-[10px] bg-black/40 border border-white/15 text-white px-2.5 py-1 rounded-xl">
+                        <Sparkle size={10} className="text-[#E8D3A2]" />
+                        <span>{b}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Prezzo e disponibilità */}
+              <div className="p-3.5 rounded-2xl bg-black/35 border border-white/15 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-white/60 block">Prezzo al pubblico:</span>
+                  <span className="text-xl font-black text-[#E8D3A2]">€ {Number(selectedProduct.price).toFixed(2)}</span>
+                </div>
+                <span className="text-xs font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30">
+                  In Vendita nei Saloni
+                </span>
+              </div>
+
+              {/* Selettore Quantità e Aggiunta al Carrello */}
+              <div className="space-y-2 pt-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-white/70 block">
+                  Quantità da Ordinare per il Ritiro in Salone:
+                </span>
+                <div className="flex items-center gap-2.5">
+                  <div className="flex items-center bg-black/60 border border-white/20 rounded-2xl p-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setProdDetailQty(Math.max(1, prodDetailQty - 1))}
+                      className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white active:scale-95 transition-all"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="w-9 text-center font-black text-sm text-[#E8D3A2]">
+                      {prodDetailQty}
                     </span>
-                  ))}
-                </div>
-              </div>
-            </div>
+                    <button
+                      type="button"
+                      onClick={() => setProdDetailQty(prodDetailQty + 1)}
+                      className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white active:scale-95 transition-all"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
 
-            {/* Prezzo e disponibilità */}
-            <div className="p-3.5 rounded-2xl bg-black/35 border border-white/15 flex items-center justify-between">
-              <div>
-                <span className="text-[10px] text-white/60 block">Prezzo al pubblico:</span>
-                <span className="text-xl font-black text-[#E8D3A2]">€ {Number(selectedProduct.price).toFixed(2)}</span>
-              </div>
-              <span className="text-xs font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30">
-                In Vendita nei Saloni
-              </span>
-            </div>
-
-            {/* Selettore Quantità e Aggiunta al Carrello */}
-            <div className="space-y-2 pt-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-white/70 block">
-                Quantità da Ordinare per il Ritiro in Salone:
-              </span>
-              <div className="flex items-center gap-2.5">
-                <div className="flex items-center bg-black/60 border border-white/20 rounded-2xl p-1 shrink-0">
                   <button
                     type="button"
-                    onClick={() => setProdDetailQty(Math.max(1, prodDetailQty - 1))}
-                    className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white active:scale-95 transition-all"
+                    onClick={() => {
+                      addToCart(selectedProduct, prodDetailQty);
+                      setProdDetailQty(1);
+                      setSelectedProduct(null);
+                      setIsCartOpen(true);
+                    }}
+                    className="flex-1 py-3 px-3 rounded-2xl bg-gradient-to-r from-white via-[#FFF8E7] to-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-xl hover:brightness-105 active:scale-95 transition-all"
                   >
-                    <Minus size={14} />
-                  </button>
-                  <span className="w-9 text-center font-black text-sm text-[#E8D3A2]">
-                    {prodDetailQty}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setProdDetailQty(prodDetailQty + 1)}
-                    className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white active:scale-95 transition-all"
-                  >
-                    <Plus size={14} />
+                    <ShoppingCart size={16} />
+                    <span>Aggiungi al Carrello • € {(Number(selectedProduct.price) * prodDetailQty).toFixed(2)}</span>
                   </button>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    addToCart(selectedProduct, prodDetailQty);
-                    setProdDetailQty(1);
-                    setSelectedProduct(null);
-                    setIsCartOpen(true);
-                  }}
-                  className="flex-1 py-3 px-3 rounded-2xl bg-gradient-to-r from-white via-[#FFF8E7] to-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-xl hover:brightness-105 active:scale-95 transition-all"
-                >
-                  <ShoppingCart size={16} />
-                  <span>Aggiungi al Carrello • € {(Number(selectedProduct.price) * prodDetailQty).toFixed(2)}</span>
-                </button>
               </div>
+
+              {/* Azioni Staff Mode nel dettaglio prodotto */}
+              {isStaffMode && (
+                <div className="pt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleOpenEditProduct(selectedProduct);
+                      setSelectedProduct(null);
+                    }}
+                    className="flex-1 py-2.5 rounded-xl bg-[#E8D3A2] hover:bg-[#d8c392] text-[#D11936] font-black text-xs flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
+                  >
+                    <Edit3 size={14} />
+                    <span>Modifica Questo Prodotto</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      handleDeleteProduct(selectedProduct.id, e);
+                      setSelectedProduct(null);
+                    }}
+                    className="px-3.5 py-2.5 rounded-xl bg-black/50 text-rose-300 hover:text-white hover:bg-rose-600 font-bold text-xs flex items-center justify-center gap-1.5 border border-rose-500/30 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                    <span>Elimina</span>
+                  </button>
+                </div>
+              )}
             </div>
-
-            {/* Azioni Staff Mode nel dettaglio prodotto */}
-            {isStaffMode && (
-              <div className="pt-2 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleOpenEditProduct(selectedProduct);
-                    setSelectedProduct(null);
-                  }}
-                  className="flex-1 py-2.5 rounded-xl bg-[#E8D3A2] hover:bg-[#d8c392] text-[#D11936] font-black text-xs flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
-                >
-                  <Edit3 size={14} />
-                  <span>Modifica Questo Prodotto</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    handleDeleteProduct(selectedProduct.id, e);
-                    setSelectedProduct(null);
-                  }}
-                  className="px-3.5 py-2.5 rounded-xl bg-black/50 text-rose-300 hover:text-white hover:bg-rose-600 font-bold text-xs flex items-center justify-center gap-1.5 border border-rose-500/30 transition-colors"
-                >
-                  <Trash2 size={14} />
-                  <span>Elimina</span>
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -3406,16 +3521,16 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
           className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200"
         >
           <div 
-            ref={cartSheetRef}
+            ref={cartSwipe.sheetRef}
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-md bg-[#80081B] border-t-2 border-[#E8D3A2] rounded-t-[32px] shadow-2xl h-[94vh] flex flex-col overflow-hidden touch-pan-y"
           >
             {/* Area di trascinamento swipe verso il basso con maniglia iOS */}
             <div 
               className="w-full flex flex-col items-center pt-3 pb-2 cursor-grab active:cursor-grabbing shrink-0 touch-none select-none"
-              onTouchStart={handleCartTouchStart}
-              onTouchMove={handleCartTouchMove}
-              onTouchEnd={handleCartTouchEnd}
+              onTouchStart={cartSwipe.handleTouchStart}
+              onTouchMove={cartSwipe.handleTouchMove}
+              onTouchEnd={cartSwipe.handleTouchEnd}
             >
               <div className="w-12 h-1.5 rounded-full bg-white/40 shadow-sm" />
             </div>
@@ -3423,9 +3538,9 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
             {/* Header del carrello (supporta swipe down rapido) */}
             <div 
               className="px-6 pb-3 pt-1 flex justify-between items-center border-b border-white/10 shrink-0 select-none touch-none"
-              onTouchStart={handleCartTouchStart}
-              onTouchMove={handleCartTouchMove}
-              onTouchEnd={handleCartTouchEnd}
+              onTouchStart={cartSwipe.handleTouchStart}
+              onTouchMove={cartSwipe.handleTouchMove}
+              onTouchEnd={cartSwipe.handleTouchEnd}
             >
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#E8D3A2] to-[#B38F46] text-[#D11936] flex items-center justify-center font-bold shadow shrink-0">
@@ -3460,11 +3575,11 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
 
             {/* Contenuto scrollabile a tutta altezza con swipe support */}
             <div 
-              ref={cartScrollRef}
-              onScroll={handleCartScroll}
-              onTouchStart={handleContentTouchStart}
-              onTouchMove={handleContentTouchMove}
-              onTouchEnd={handleCartTouchEnd}
+              ref={cartSwipe.scrollRef}
+              onScroll={cartSwipe.handleScroll}
+              onTouchStart={cartSwipe.handleContentTouchStart}
+              onTouchMove={cartSwipe.handleContentTouchMove}
+              onTouchEnd={cartSwipe.handleTouchEnd}
               className="flex-1 overflow-y-auto px-6 py-4 space-y-4 no-scrollbar overscroll-contain"
             >
 
