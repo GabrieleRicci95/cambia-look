@@ -28,6 +28,7 @@ import {
   Clock,
   Compass,
   Store,
+  Tag,
   Calendar,
   Smartphone,
   AlertCircle,
@@ -226,6 +227,59 @@ const INITIAL_PRODUCTS = [
   }
 ];
 
+// --- PROMOZIONI & PACCHETTI SPECIALI SALONE ---
+export interface PromotionItem {
+  id: string;
+  title: string;
+  subtitle?: string;
+  badge: string;
+  originalPrice?: string;
+  promoPrice: string;
+  validUntil: string;
+  desc: string;
+  salonId: "all" | "cisterna" | "roma";
+  image: string;
+}
+
+const INITIAL_PROMOTIONS: PromotionItem[] = [
+  {
+    id: "promo-blonde-glamour",
+    title: "Pacchetto Blonde Glamour",
+    subtitle: "Schiariture Soleil + Gloss Tonalizzante + Piega VIP",
+    badge: "Pacchetto VIP",
+    originalPrice: "€ 135",
+    promoPrice: "€ 95",
+    validUntil: "Fino a fine mese",
+    desc: "Il trattamento schiariture iconico di Cambia Look con effetto naturale sfumato, completato dal gloss illuminante per un biondo seta irresistibile e piega glamour.",
+    salonId: "all",
+    image: "https://images.unsplash.com/photo-1560869713-7d0a29430803?q=80&w=900&auto=format&fit=crop"
+  },
+  {
+    id: "promo-botox-cheratina",
+    title: "Rigenerazione Profonda Botox & Cheratina",
+    subtitle: "Ricostruzione aminoacidica per capelli sfibrati e crespi",
+    badge: "-25% Sconto",
+    originalPrice: "€ 60",
+    promoPrice: "€ 45",
+    validUntil: "Disponibilità limitata",
+    desc: "Un vero e proprio filler rimpolpante per la fibra capillare. Restituisce spessore, morbidezza immediata ed elimina il crespo fin dalla prima seduta.",
+    salonId: "all",
+    image: "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?q=80&w=900&auto=format&fit=crop"
+  },
+  {
+    id: "promo-duo-prodotti",
+    title: "Duo Care & Shine in Omaggio",
+    subtitle: "Acquista Shampoo + Maschera e ricevi l'Olio di Argan omaggio",
+    badge: "Regalo Salone",
+    originalPrice: "€ 76",
+    promoPrice: "€ 50",
+    validUntil: "Fino a esaurimento scorte",
+    desc: "Prenditi cura dei tuoi capelli a casa con i nostri prodotti professionali esclusivi. Acquistando il set lavaggio ricevi in omaggio il prezioso Elisir d'Oro Olio di Argan da 100ml.",
+    salonId: "all",
+    image: "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=900&auto=format&fit=crop"
+  }
+];
+
 // Hook riutilizzabile per lo swipe fluido verso il basso a 120fps su tutte le schede e popup
 function useSwipeDown(onClose: () => void) {
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -324,7 +378,7 @@ function useSwipeDown(onClose: () => void) {
 }
 
 export default function CambiaLookApp() {
-  const [activeTab, setActiveTab] = useState<"saloni" | "servizi" | "prodotti" | "info">("saloni");
+  const [activeTab, setActiveTab] = useState<"saloni" | "servizi" | "promozioni" | "prodotti" | "info">("saloni");
   
   // Dynamic Salons and Services
   const [salonsList, setSalonsList] = useState<any[]>(INITIAL_SALONS);
@@ -338,6 +392,10 @@ export default function CambiaLookApp() {
 
   // Selected Product for showcase detail popup (only viewing, no bookings)
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+
+  // Promotions Dynamic State
+  const [promotionsList, setPromotionsList] = useState<any[]>(INITIAL_PROMOTIONS);
+  const [selectedPromotion, setSelectedPromotion] = useState<any | null>(null);
 
   // Products Dynamic State
   const [productsList, setProductsList] = useState<any[]>(INITIAL_PRODUCTS);
@@ -380,11 +438,25 @@ export default function CambiaLookApp() {
   const [cartNotes, setCartNotes] = useState("");
   const [prodDetailQty, setProdDetailQty] = useState<number>(1);
 
-  // Swipe-to-dismiss hooks per Carrello, Trattamenti, Prodotti e Saloni
+  // Swipe-to-dismiss hooks per Carrello, Trattamenti, Prodotti, Promozioni e Saloni
   const cartSwipe = useSwipeDown(() => setIsCartOpen(false));
   const serviceSwipe = useSwipeDown(() => setSelectedService(null));
   const productSwipe = useSwipeDown(() => setSelectedProduct(null));
+  const promotionSwipe = useSwipeDown(() => setSelectedPromotion(null));
   const salonSwipe = useSwipeDown(() => setSelectedSalon(null));
+
+  // New / Edit Promotion Modal State (Staff Mode)
+  const [isPromotionModalOpen, setIsPromotionModalOpen] = useState(false);
+  const [editingPromotionId, setEditingPromotionId] = useState<string | null>(null);
+  const [promoFormTitle, setPromoFormTitle] = useState("");
+  const [promoFormSubtitle, setPromoFormSubtitle] = useState("");
+  const [promoFormBadge, setPromoFormBadge] = useState("Offerta Speciale");
+  const [promoFormOriginalPrice, setPromoFormOriginalPrice] = useState("");
+  const [promoFormPromoPrice, setPromoFormPromoPrice] = useState("");
+  const [promoFormValidUntil, setPromoFormValidUntil] = useState("");
+  const [promoFormDesc, setPromoFormDesc] = useState("");
+  const [promoFormSalonId, setPromoFormSalonId] = useState<"all" | "cisterna" | "roma">("all");
+  const [promoFormImage, setPromoFormImage] = useState("");
 
   // New / Edit Service Modal State
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
@@ -535,6 +607,11 @@ export default function CambiaLookApp() {
       if (savedCart) {
         setCart(JSON.parse(savedCart));
       }
+
+      const savedPromotions = localStorage.getItem("cambia_look_promotions");
+      if (savedPromotions) {
+        setPromotionsList(JSON.parse(savedPromotions));
+      }
     } catch (e) {
       console.error(e);
     }
@@ -545,6 +622,8 @@ export default function CambiaLookApp() {
     selectedSalon ||
     selectedService ||
     selectedProduct ||
+    selectedPromotion ||
+    isPromotionModalOpen ||
     isCartOpen ||
     isChangePinModalOpen ||
     isPinModalOpen ||
@@ -566,6 +645,15 @@ export default function CambiaLookApp() {
       };
     }
   }, [isAnyModalOpen]);
+
+  const savePromotions = (newList: any[]) => {
+    setPromotionsList(newList);
+    try {
+      localStorage.setItem("cambia_look_promotions", JSON.stringify(newList));
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const saveProducts = (newList: any[]) => {
     setProductsList(newList);
@@ -935,6 +1023,119 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
       }
       triggerPushDemo("🗑️ Trattamento rimosso dal listino");
     }
+  };
+
+  // --- GESTIONE PROMOZIONI (STAFF SALONE) ---
+  const handleOpenNewPromotion = () => {
+    setEditingPromotionId(null);
+    setPromoFormTitle("");
+    setPromoFormSubtitle("");
+    setPromoFormBadge("Offerta Speciale");
+    setPromoFormOriginalPrice("");
+    setPromoFormPromoPrice("€ 49.00");
+    setPromoFormValidUntil("Fino a fine mese");
+    setPromoFormDesc("");
+    setPromoFormSalonId("all");
+    setPromoFormImage("");
+    setIsPromotionModalOpen(true);
+  };
+
+  const handleOpenEditPromotion = (promo: any, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingPromotionId(promo.id);
+    setPromoFormTitle(promo.title || "");
+    setPromoFormSubtitle(promo.subtitle || "");
+    setPromoFormBadge(promo.badge || "");
+    setPromoFormOriginalPrice(promo.originalPrice || "");
+    setPromoFormPromoPrice(promo.promoPrice || "");
+    setPromoFormValidUntil(promo.validUntil || "");
+    setPromoFormDesc(promo.desc || "");
+    setPromoFormSalonId(promo.salonId || "all");
+    setPromoFormImage(promo.image || "");
+    setIsPromotionModalOpen(true);
+  };
+
+  const handlePromotionImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPromoFormImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSavePromotion = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!promoFormTitle || !promoFormPromoPrice) return;
+
+    const fallbackImg = "https://images.unsplash.com/photo-1560869713-7d0a29430803?q=80&w=900&auto=format&fit=crop";
+
+    if (editingPromotionId) {
+      const updated = promotionsList.map(p => {
+        if (p.id === editingPromotionId) {
+          return {
+            ...p,
+            title: promoFormTitle,
+            subtitle: promoFormSubtitle,
+            badge: promoFormBadge,
+            originalPrice: promoFormOriginalPrice,
+            promoPrice: promoFormPromoPrice,
+            validUntil: promoFormValidUntil,
+            desc: promoFormDesc,
+            salonId: promoFormSalonId,
+            image: promoFormImage || p.image || fallbackImg,
+          };
+        }
+        return p;
+      });
+
+      savePromotions(updated);
+      if (selectedPromotion && selectedPromotion.id === editingPromotionId) {
+        setSelectedPromotion(updated.find(p => p.id === editingPromotionId));
+      }
+      triggerPushDemo(`🏷️ Promozione "${promoFormTitle}" aggiornata!`);
+    } else {
+      const newPromo = {
+        id: `promo-${Date.now()}`,
+        title: promoFormTitle,
+        subtitle: promoFormSubtitle,
+        badge: promoFormBadge || "Offerta Speciale",
+        originalPrice: promoFormOriginalPrice,
+        promoPrice: promoFormPromoPrice,
+        validUntil: promoFormValidUntil,
+        desc: promoFormDesc,
+        salonId: promoFormSalonId,
+        image: promoFormImage || fallbackImg,
+      };
+
+      savePromotions([newPromo, ...promotionsList]);
+      triggerPushDemo(`🎉 Nuova promozione "${newPromo.title}" pubblicata!`);
+    }
+
+    setIsPromotionModalOpen(false);
+    setEditingPromotionId(null);
+  };
+
+  const handleDeletePromotion = (promoId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm("Vuoi eliminare questa promozione?")) {
+      const filtered = promotionsList.filter(p => p.id !== promoId);
+      savePromotions(filtered);
+      if (selectedPromotion && selectedPromotion.id === promoId) {
+        setSelectedPromotion(null);
+      }
+      triggerPushDemo("🗑️ Promozione rimossa");
+    }
+  };
+
+  const handleRequestPromotionWhatsApp = (promo: any, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const phone = "3807544502";
+    const salonName = promo.salonId === "roma" ? "Roma (Via delle Cave)" : promo.salonId === "cisterna" ? "Cisterna di Latina" : "Cambia Look";
+    const msg = encodeURIComponent(`Ciao Cambia Look (${salonName})! Sono interessata alla promozione: "${promo.title}" (${promo.promoPrice}). Vorrei maggiori informazioni per prenotare.`);
+    window.open(`https://wa.me/39${phone}?text=${msg}`, "_blank");
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1405,7 +1606,158 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
       )}
 
       {/* ========================================================================================= */}
-      {/* TAB 3: VETRINA PRODOTTI (IL PARRUCCHIERE PUÒ INSERIRLI CON FOTO, PREZZO E DESCRIZIONE) */}
+      {/* TAB: PROMOZIONI & OFFERTE SPECIALI */}
+      {/* ========================================================================================= */}
+      {activeTab === "promozioni" && (
+        <main className="flex-1 px-5 pt-4 space-y-5 animate-in fade-in duration-300">
+          <div className="flex justify-between items-end">
+            <div>
+              <h2 className="text-3xl font-normal font-script text-white drop-shadow">
+                Le Nostre Promozioni
+              </h2>
+              {isStaffMode && (
+                <p className="text-[10px] text-[#E8D3A2] font-semibold mt-0.5">Pannello Staff Salone</p>
+              )}
+            </div>
+
+            {/* PULSANTE AGGIUNGI PROMOZIONE (Staff Mode) */}
+            {isStaffMode && (
+              <button
+                type="button"
+                onClick={handleOpenNewPromotion}
+                className="py-2.5 px-3.5 rounded-2xl bg-white hover:bg-[#E8D3A2] text-[#D11936] text-xs font-black flex items-center gap-1.5 shadow-xl active:scale-95 transition-all shrink-0"
+              >
+                <Plus size={16} strokeWidth={2.5} />
+                <span>Nuova Promo</span>
+              </button>
+            )}
+          </div>
+
+          {/* LISTA DELLE PROMOZIONI */}
+          <div className="space-y-4">
+            {promotionsList.length === 0 ? (
+              <div className="p-8 rounded-3xl bg-black/40 border border-white/20 text-center space-y-3">
+                <Tag size={32} className="mx-auto text-[#E8D3A2]" />
+                <h4 className="text-sm font-bold text-white">Nessuna promozione attiva al momento</h4>
+                <p className="text-xs text-white/70">
+                  Torna a trovarci presto per scoprire i nuovi pacchetti esclusivi e le offerte riservate!
+                </p>
+              </div>
+            ) : (
+              promotionsList.map((promo) => (
+                <div
+                  key={promo.id}
+                  onClick={() => setSelectedPromotion(promo)}
+                  className="rounded-3xl bg-black/45 backdrop-blur-md border-2 border-white/90 hover:border-[#E8D3A2] overflow-hidden shadow-2xl relative cursor-pointer active:scale-[0.99] transition-all group"
+                >
+                  {/* Foto Promozione */}
+                  <div className="relative aspect-[16/9] w-full bg-black/60 overflow-hidden">
+                    <Image
+                      src={promo.image}
+                      alt={promo.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
+
+                    {/* Badge Sconto in alto a sinistra */}
+                    {promo.badge && (
+                      <div className="absolute top-3 left-3">
+                        <span className="px-3 py-1 rounded-full bg-gradient-to-r from-[#D11936] to-[#80081B] text-white font-black text-[11px] uppercase tracking-wider border border-[#E8D3A2]/60 shadow-lg flex items-center gap-1">
+                          <Sparkles size={11} className="text-[#E8D3A2]" />
+                          <span>{promo.badge}</span>
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Validità in alto a destra */}
+                    {promo.validUntil && (
+                      <div className="absolute top-3 right-3">
+                        <span className="px-2.5 py-0.5 rounded-full bg-black/75 text-[#E8D3A2] font-bold text-[9.5px] border border-white/10 backdrop-blur-sm">
+                          ⏳ {promo.validUntil}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Prezzo in evidenza */}
+                    <div className="absolute bottom-3 right-3 flex items-baseline gap-1.5 bg-black/85 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-white/15 shadow">
+                      {promo.originalPrice && (
+                        <span className="text-xs text-white/50 line-through font-semibold">
+                          {promo.originalPrice}
+                        </span>
+                      )}
+                      <span className="text-base font-black text-[#E8D3A2]">
+                        {promo.promoPrice}
+                      </span>
+                    </div>
+
+                    {/* Salone */}
+                    <div className="absolute bottom-3 left-3">
+                      <span className="text-[10px] font-bold text-white/90 bg-black/75 px-2.5 py-0.5 rounded-full border border-white/10">
+                        {promo.salonId === "roma" ? "Salone Roma" : promo.salonId === "cisterna" ? "Salone Cisterna" : "Tutti i Saloni"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Informazioni testuali e pulsante */}
+                  <div className="p-4 space-y-2.5">
+                    <div>
+                      <h3 className="text-base font-bold text-white leading-snug group-hover:text-[#E8D3A2] transition-colors">
+                        {promo.title}
+                      </h3>
+                      {promo.subtitle && (
+                        <p className="text-xs text-[#E8D3A2] font-semibold mt-0.5">
+                          {promo.subtitle}
+                        </p>
+                      )}
+                    </div>
+
+                    <p className="text-xs text-white/80 leading-relaxed font-normal line-clamp-2">
+                      {promo.desc}
+                    </p>
+
+                    <div className="pt-2 flex items-center justify-between border-t border-white/10 gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => handleRequestPromotionWhatsApp(promo, e)}
+                        className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#25D366] to-[#1ebe5d] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-lg active:scale-95 transition-all"
+                      >
+                        <MessageCircle size={15} />
+                        <span>Richiedi su WhatsApp</span>
+                      </button>
+
+                      {/* Tasti Modifica / Elimina per Staff */}
+                      {isStaffMode && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => handleOpenEditPromotion(promo, e)}
+                            className="p-2.5 rounded-xl bg-white/10 hover:bg-[#E8D3A2] hover:text-[#80081B] text-white transition-all"
+                            title="Modifica"
+                          >
+                            <Edit3 size={15} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeletePromotion(promo.id, e)}
+                            className="p-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white transition-all"
+                            title="Elimina"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </main>
+      )}
+
+      {/* ========================================================================================= */}
+      {/* TAB: VETRINA PRODOTTI */}
       {/* ========================================================================================= */}
       {activeTab === "prodotti" && (
         <main className="flex-1 px-5 pt-4 space-y-5 animate-in fade-in duration-300">
@@ -1910,6 +2262,173 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
                 </div>
               </div>
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================================= */}
+      {/* POPUP: DETTAGLIO PROMOZIONE ESCLUSIVA */}
+      {/* ========================================================================================= */}
+      {selectedPromotion && (
+        <div 
+          onClick={() => setSelectedPromotion(null)}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200"
+        >
+          <div 
+            ref={promotionSwipe.sheetRef}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] shadow-2xl h-[93vh] flex flex-col overflow-hidden touch-pan-y"
+          >
+            {/* Area drag maniglia iOS con swipe verso il basso */}
+            <div 
+              className="w-full flex flex-col items-center pt-3 pb-2 cursor-grab active:cursor-grabbing shrink-0 touch-none select-none"
+              onTouchStart={promotionSwipe.handleTouchStart}
+              onTouchMove={promotionSwipe.handleTouchMove}
+              onTouchEnd={promotionSwipe.handleTouchEnd}
+            >
+              <div className="w-12 h-1.5 rounded-full bg-white/40 shadow-sm" />
+            </div>
+            
+            {/* Header della promozione */}
+            <div 
+              className="px-6 pb-3 pt-1 flex justify-between items-start border-b border-white/10 shrink-0 select-none touch-none"
+              onTouchStart={promotionSwipe.handleTouchStart}
+              onTouchMove={promotionSwipe.handleTouchMove}
+              onTouchEnd={promotionSwipe.handleTouchEnd}
+            >
+              <div>
+                <span className="text-[10px] text-[#E8D3A2] font-black uppercase tracking-wider">
+                  {selectedPromotion.badge || "Offerta Speciale"}
+                </span>
+                <h3 className="text-lg font-bold text-white leading-tight">{selectedPromotion.title}</h3>
+                {selectedPromotion.subtitle && (
+                  <span className="text-xs text-white/70 block">{selectedPromotion.subtitle}</span>
+                )}
+              </div>
+              <button 
+                type="button"
+                onClick={() => setSelectedPromotion(null)} 
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Contenuto scrollabile con swipe support */}
+            <div 
+              ref={promotionSwipe.scrollRef}
+              onScroll={promotionSwipe.handleScroll}
+              onTouchStart={promotionSwipe.handleContentTouchStart}
+              onTouchMove={promotionSwipe.handleContentTouchMove}
+              onTouchEnd={promotionSwipe.handleTouchEnd}
+              className="flex-1 overflow-y-auto px-6 py-4 space-y-4 no-scrollbar overscroll-contain"
+            >
+              {/* Foto della promozione */}
+              <div className="relative aspect-video rounded-2xl overflow-hidden bg-black/50 border border-white/20 shadow-lg">
+                <Image 
+                  src={selectedPromotion.image} 
+                  alt={selectedPromotion.title} 
+                  fill 
+                  className="object-cover" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-[#80081B] bg-[#E8D3A2] px-2.5 py-0.5 rounded-full shadow">
+                    {selectedPromotion.badge || "PROMO LIMITATA"}
+                  </span>
+                  {selectedPromotion.validUntil && (
+                    <span className="text-[10px] text-white/90 bg-black/60 px-2 py-0.5 rounded-md backdrop-blur-sm">
+                      Scade il {selectedPromotion.validUntil}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Box Prezzo Scontato */}
+              <div className="p-4 rounded-2xl bg-black/35 border border-[#E8D3A2]/40 flex items-center justify-between shadow-inner">
+                <div>
+                  <span className="text-[10px] text-white/60 block uppercase font-bold tracking-wider">
+                    Offerta Esclusiva:
+                  </span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-black text-[#E8D3A2]">
+                      {selectedPromotion.promoPrice}
+                    </span>
+                    {selectedPromotion.originalPrice && (
+                      <span className="text-sm text-white/50 line-through">
+                        {selectedPromotion.originalPrice}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-emerald-300 font-bold bg-emerald-500/20 px-2.5 py-1 rounded-full border border-emerald-500/30">
+                    Disponibile Subito
+                  </span>
+                </div>
+              </div>
+
+              {/* Descrizione completa */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8D3A2]">
+                  Dettagli della Promozione:
+                </span>
+                <p className="text-xs text-white/90 leading-relaxed font-normal whitespace-pre-line">
+                  {selectedPromotion.desc}
+                </p>
+              </div>
+
+              {/* Salone di riferimento */}
+              <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2 text-xs text-white/80">
+                <MapPin size={14} className="text-[#E8D3A2] shrink-0" />
+                <span>
+                  {selectedPromotion.salonId === "both" 
+                    ? "Valida in entrambi i saloni (Cisterna di Latina & Roma)" 
+                    : selectedPromotion.salonId === "cisterna"
+                    ? "Valida esclusivamente nel Salone di Cisterna di Latina"
+                    : "Valida esclusivamente nel Salone di Roma Appia"}
+                </span>
+              </div>
+
+              {/* Tasto Richiedi / Prenota su WhatsApp */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => handleRequestPromotionWhatsApp(selectedPromotion)}
+                  className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#25D366] to-[#1ebe5d] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl hover:brightness-105 active:scale-95 transition-all"
+                >
+                  <MessageCircle size={18} />
+                  <span>Blocca l'Offerta su WhatsApp</span>
+                </button>
+              </div>
+
+              {/* Azioni Staff Mode nel dettaglio promozione */}
+              {isStaffMode && (
+                <div className="pt-2 flex items-center gap-2 border-t border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleOpenEditPromotion(selectedPromotion);
+                      setSelectedPromotion(null);
+                    }}
+                    className="flex-1 py-2.5 rounded-xl bg-[#E8D3A2] hover:bg-[#d8c392] text-[#D11936] font-black text-xs flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all"
+                  >
+                    <Edit3 size={14} />
+                    <span>Modifica Questa Promo</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      handleDeletePromotion(selectedPromotion.id, e);
+                    }}
+                    className="px-3.5 py-2.5 rounded-xl bg-black/50 text-rose-300 hover:text-white hover:bg-rose-600 font-bold text-xs flex items-center justify-center gap-1.5 border border-rose-500/30 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                    <span>Elimina</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -2516,6 +3035,191 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
       )}
 
       {/* ========================================================================================= */}
+      {/* MODAL STAFF: GESTIONE / AGGIUNTA / MODIFICA PROMOZIONE */}
+      {/* ========================================================================================= */}
+      {isPromotionModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[#80081B] border-t-2 border-[#E8D3A2] rounded-t-[32px] p-6 space-y-4 animate-in slide-in-from-bottom duration-300 max-h-[92vh] overflow-y-auto no-scrollbar shadow-2xl">
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-2xl bg-white text-[#D11936] flex items-center justify-center font-bold">
+                  {editingPromotionId ? <Edit3 size={18} /> : <Tag size={18} />}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">
+                    {editingPromotionId ? "Modifica Promozione" : "Nuova Promozione"}
+                  </h3>
+                  <p className="text-[10px] text-white/70">Gestione offerte speciali e pacchetti salone</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPromotionModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSavePromotion} className="space-y-3.5">
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-white uppercase tracking-wider block">
+                  Titolo Promozione *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Es. Pacchetto Rigenerazione Botox"
+                  value={promoFormTitle}
+                  onChange={(e) => setPromoFormTitle(e.target.value)}
+                  className="w-full bg-black/40 border border-white/20 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#E8D3A2]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-white uppercase tracking-wider block">
+                    Sottotitolo / Info Breve
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Es. Trattamento + Piega"
+                    value={promoFormSubtitle}
+                    onChange={(e) => setPromoFormSubtitle(e.target.value)}
+                    className="w-full bg-black/40 border border-white/20 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#E8D3A2]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-white uppercase tracking-wider block">
+                    Etichetta Badge
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Es. SCONTO 30% o REGALO"
+                    value={promoFormBadge}
+                    onChange={(e) => setPromoFormBadge(e.target.value)}
+                    className="w-full bg-black/40 border border-white/20 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#E8D3A2]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-white uppercase tracking-wider block">
+                    Prezzo Promo *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Es. € 39.00"
+                    value={promoFormPromoPrice}
+                    onChange={(e) => setPromoFormPromoPrice(e.target.value)}
+                    className="w-full bg-black/40 border border-white/20 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#E8D3A2]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-white uppercase tracking-wider block">
+                    Prezzo Originale (barrato)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Es. € 55.00"
+                    value={promoFormOriginalPrice}
+                    onChange={(e) => setPromoFormOriginalPrice(e.target.value)}
+                    className="w-full bg-black/40 border border-white/20 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#E8D3A2]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-white uppercase tracking-wider block">
+                    Scadenza / Validità
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Es. 30 Novembre o Sempre valida"
+                    value={promoFormValidUntil}
+                    onChange={(e) => setPromoFormValidUntil(e.target.value)}
+                    className="w-full bg-black/40 border border-white/20 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#E8D3A2]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-white uppercase tracking-wider block">
+                    Salone Valido
+                  </label>
+                  <select
+                    value={promoFormSalonId}
+                    onChange={(e) => setPromoFormSalonId(e.target.value as any)}
+                    className="w-full bg-black/40 border border-white/20 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[#E8D3A2]"
+                  >
+                    <option value="both" className="bg-[#80081B] text-white">Entrambi i Saloni</option>
+                    <option value="cisterna" className="bg-[#80081B] text-white">Solo Cisterna</option>
+                    <option value="roma" className="bg-[#80081B] text-white">Solo Roma</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-white uppercase tracking-wider block">
+                  Descrizione dell'Offerta
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Descrivi cosa include la promozione e come usufruirne..."
+                  value={promoFormDesc}
+                  onChange={(e) => setPromoFormDesc(e.target.value)}
+                  className="w-full bg-black/40 border border-white/20 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#E8D3A2] resize-none"
+                />
+              </div>
+
+              {/* Upload Foto Promo */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-white uppercase tracking-wider block">
+                  Foto Promozione
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-black/40 border border-white/20 shrink-0 flex items-center justify-center">
+                    {promoFormImage ? (
+                      <Image src={promoFormImage} alt="Anteprima Promo" fill className="object-cover" />
+                    ) : (
+                      <Tag size={24} className="text-white/40" />
+                    )}
+                  </div>
+                  <label className="flex-1 py-3 px-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 text-center">
+                    <Camera size={16} />
+                    <span>Carica Foto Promo</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePromotionImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="pt-2 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsPromotionModalOpen(false)}
+                  className="w-1/3 py-3 rounded-xl bg-black/40 text-white/80 font-bold text-xs hover:bg-black/60 transition-colors"
+                >
+                  Annulla
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-white via-[#FFF8E7] to-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider shadow-lg hover:brightness-105 active:scale-95 transition-all"
+                >
+                  {editingPromotionId ? "Salva Modifiche" : "Pubblica Promozione"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================================= */}
       {/* MODAL NUOVO / MODIFICA TRATTAMENTO SERVIZIO SALONE */}
       {/* ========================================================================================= */}
       {isServiceModalOpen && (
@@ -2929,13 +3633,14 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
       )}
 
       {/* ========================================================================================= */}
-      {/* BOTTOM NAVIGATION BAR (VETRINA ROSSO CAMBIA LOOK - 4 TABS) */}
+      {/* BOTTOM NAVIGATION BAR (VETRINA ROSSO CAMBIA LOOK - 5 TABS) */}
       {/* ========================================================================================= */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#A60F25]/95 backdrop-blur-xl border-t border-black/20 max-w-md mx-auto safe-pb shadow-[0_-5px_25px_rgba(0,0,0,0.4)]">
-        <div className="grid grid-cols-4 h-16 items-center px-1">
+        <div className="grid grid-cols-5 h-16 items-center px-1">
           {[
             { id: "saloni", label: "Saloni", icon: Store },
             { id: "servizi", label: "Servizi", icon: Scissors },
+            { id: "promozioni", label: "Promozioni", icon: Tag, badge: promotionsList.length > 0 },
             { id: "prodotti", label: "Prodotti", icon: ShoppingCart, badge: cartTotalCount > 0 },
             { id: "info", label: "Contatti", icon: MapPin },
           ].map(tab => {
@@ -2950,12 +3655,12 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
                 }`}
               >
                 <div className={`p-1.5 rounded-xl transition-all relative ${isActive ? "bg-white text-[#D11936] shadow-md scale-105" : ""}`}>
-                  <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                  <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
                   {tab.badge && !isActive && (
-                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#E8D3A2] ring-2 ring-[#A60F25]" />
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#E8D3A2] ring-2 ring-[#A60F25]" />
                   )}
                 </div>
-                <span className={`text-[10px] leading-tight text-center max-w-[80px] ${isActive ? "font-black text-white" : "font-medium"}`}>
+                <span className={`text-[8.5px] leading-tight text-center max-w-[62px] truncate ${isActive ? "font-black text-white" : "font-medium"}`}>
                   {tab.label}
                 </span>
               </button>
