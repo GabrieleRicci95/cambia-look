@@ -342,6 +342,13 @@ export default function CambiaLookApp() {
   const [cartNotes, setCartNotes] = useState("");
   const [prodDetailQty, setProdDetailQty] = useState<number>(1);
 
+  // Cart Swipe-to-dismiss states & refs
+  const [cartTranslateY, setCartTranslateY] = useState(0);
+  const [isSwipingCart, setIsSwipingCart] = useState(false);
+  const cartTouchStartY = useRef<number>(0);
+  const cartScrollRef = useRef<HTMLDivElement>(null);
+  const isCartAtTopRef = useRef<boolean>(true);
+
   // New / Edit Service Modal State
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
@@ -713,6 +720,55 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
     setNotificationText(text);
     setShowNotification(true);
     setTimeout(() => setShowNotification(false), 4500);
+  };
+
+  // Gestione Swipe verso il basso per chiudere il carrello
+  const handleCartTouchStart = (e: React.TouchEvent) => {
+    cartTouchStartY.current = e.touches[0].clientY;
+    setIsSwipingCart(true);
+  };
+
+  const handleCartTouchMove = (e: React.TouchEvent) => {
+    if (!isSwipingCart) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - cartTouchStartY.current;
+    if (diff > 0) {
+      setCartTranslateY(diff);
+    } else {
+      setCartTranslateY(0);
+    }
+  };
+
+  const handleCartTouchEnd = () => {
+    if (!isSwipingCart) return;
+    setIsSwipingCart(false);
+    if (cartTranslateY > 80) {
+      setIsCartOpen(false);
+    }
+    setCartTranslateY(0);
+  };
+
+  const handleCartScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    isCartAtTopRef.current = e.currentTarget.scrollTop <= 5;
+  };
+
+  const handleContentTouchStart = (e: React.TouchEvent) => {
+    if (cartScrollRef.current && cartScrollRef.current.scrollTop > 5) {
+      isCartAtTopRef.current = false;
+      return;
+    }
+    isCartAtTopRef.current = true;
+    cartTouchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleContentTouchMove = (e: React.TouchEvent) => {
+    if (!isCartAtTopRef.current) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - cartTouchStartY.current;
+    if (diff > 12) {
+      setIsSwipingCart(true);
+      setCartTranslateY(diff - 12);
+    }
   };
 
   // Helper date formatting (in Italian)
@@ -2237,8 +2293,11 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
       {/* ========================================================================================= */}
       {selectedSalon && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[85vh] flex flex-col">
-            <div className="relative h-56 w-full">
+          <div className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-300 h-[93vh] flex flex-col">
+            <div className="w-full flex justify-center pt-2.5 pb-1 bg-black/30 shrink-0">
+              <div className="w-12 h-1.5 rounded-full bg-white/40" />
+            </div>
+            <div className="relative h-60 w-full shrink-0">
               <Image 
                 src={selectedSalon.image} 
                 alt={selectedSalon.name} 
@@ -2314,9 +2373,12 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
       {/* ========================================================================================= */}
       {selectedService && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[88vh] overflow-y-auto no-scrollbar">
+          <div className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300 h-[93vh] flex flex-col overflow-y-auto no-scrollbar">
+            <div className="w-full flex justify-center -mt-2 mb-1 shrink-0">
+              <div className="w-12 h-1.5 rounded-full bg-white/40" />
+            </div>
             
-            <div className="flex justify-between items-start border-b border-white/10 pb-3">
+            <div className="flex justify-between items-start border-b border-white/10 pb-3 shrink-0">
               <div>
                 <span className="text-[10px] text-[#E8D3A2] font-bold uppercase tracking-wider">{selectedService.category}</span>
                 <h3 className="text-lg font-bold text-white">{selectedService.name}</h3>
@@ -2413,9 +2475,12 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
       {/* ========================================================================================= */}
       {selectedProduct && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[88vh] overflow-y-auto no-scrollbar">
+          <div className="w-full max-w-md bg-[#9E0B22] border-t-2 border-[#E8D3A2] rounded-t-[32px] p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300 h-[93vh] flex flex-col overflow-y-auto no-scrollbar">
+            <div className="w-full flex justify-center -mt-2 mb-1 shrink-0">
+              <div className="w-12 h-1.5 rounded-full bg-white/40" />
+            </div>
             
-            <div className="flex justify-between items-start border-b border-white/10 pb-3">
+            <div className="flex justify-between items-start border-b border-white/10 pb-3 shrink-0">
               <div>
                 <span className="text-[10px] text-[#E8D3A2] font-bold uppercase tracking-wider">{selectedProduct.brand}</span>
                 <h3 className="text-base font-bold text-white">{selectedProduct.name}</h3>
@@ -3314,13 +3379,37 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
       {/* MODAL CARRELLO ACQUISTI: ORDINA SU WHATSAPP & RITIRA IN SALONE */}
       {/* ========================================================================================= */}
       {isCartOpen && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#80081B] border-t-2 border-[#E8D3A2] rounded-t-[32px] p-6 space-y-4 animate-in slide-in-from-bottom duration-300 max-h-[92vh] overflow-y-auto no-scrollbar shadow-2xl">
-            
-            {/* Header del carrello */}
-            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+        <div 
+          onClick={() => setIsCartOpen(false)}
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              transform: cartTranslateY > 0 ? `translateY(${cartTranslateY}px)` : undefined,
+              transition: isSwipingCart ? "none" : "transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
+            className="w-full max-w-md bg-[#80081B] border-t-2 border-[#E8D3A2] rounded-t-[32px] shadow-2xl animate-in slide-in-from-bottom duration-300 h-[94vh] flex flex-col overflow-hidden"
+          >
+            {/* Area di trascinamento swipe verso il basso */}
+            <div 
+              className="w-full flex flex-col items-center pt-3 pb-1 cursor-grab active:cursor-grabbing shrink-0 touch-none select-none"
+              onTouchStart={handleCartTouchStart}
+              onTouchMove={handleCartTouchMove}
+              onTouchEnd={handleCartTouchEnd}
+            >
+              <div className="w-12 h-1.5 rounded-full bg-white/40" />
+            </div>
+
+            {/* Header del carrello (supporta swipe down) */}
+            <div 
+              className="px-6 pb-3 pt-1 flex justify-between items-center border-b border-white/10 shrink-0 select-none"
+              onTouchStart={handleCartTouchStart}
+              onTouchMove={handleCartTouchMove}
+              onTouchEnd={handleCartTouchEnd}
+            >
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#E8D3A2] to-[#B38F46] text-[#D11936] flex items-center justify-center font-bold shadow">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#E8D3A2] to-[#B38F46] text-[#D11936] flex items-center justify-center font-bold shadow shrink-0">
                   <ShoppingCart size={20} />
                 </div>
                 <div>
@@ -3341,6 +3430,7 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
                   </button>
                 )}
                 <button 
+                  type="button"
                   onClick={() => setIsCartOpen(false)} 
                   className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 transition-colors"
                 >
@@ -3348,6 +3438,16 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
                 </button>
               </div>
             </div>
+
+            {/* Contenuto scrollabile a tutta altezza con swipe support */}
+            <div 
+              ref={cartScrollRef}
+              onScroll={handleCartScroll}
+              onTouchStart={handleContentTouchStart}
+              onTouchMove={handleContentTouchMove}
+              onTouchEnd={handleCartTouchEnd}
+              className="flex-1 overflow-y-auto px-6 py-4 space-y-4 no-scrollbar overscroll-contain"
+            >
 
             {cart.length === 0 ? (
               <div className="py-12 text-center space-y-4">
@@ -3552,6 +3652,7 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
               </form>
             )}
 
+            </div>
           </div>
         </div>
       )}
