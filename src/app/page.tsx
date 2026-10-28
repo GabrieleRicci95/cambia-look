@@ -1276,9 +1276,9 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
           {/* BANNER INFORMATIVO DI BENVENUTO */}
           <div className="p-4 rounded-2xl cambia-glass text-center space-y-2 border border-white/20">
             <Sparkles size={20} className="mx-auto text-[#E8D3A2]" />
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Saloni Esclusivi Per Sole Donne</h3>
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">I Nostri Saloni</h3>
             <p className="text-xs text-white/80 leading-relaxed font-normal">
-              Scopri il nostro listino trattamenti e i prodotti professionali che usiamo e vendiamo in salone. Per informazioni o per prenotare una consulenza, contattaci direttamente!
+              Scopri i nostri trattamenti e i nostri prodotti, per informazioni o per prenotazioni contattaci direttamente
             </p>
           </div>
         </main>
