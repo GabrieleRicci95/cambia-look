@@ -10,7 +10,6 @@ import {
   Home, 
   Scissors, 
   ChevronRight, 
-  Bell, 
   MapPin, 
   Phone, 
   CheckCircle2, 
@@ -1185,13 +1184,6 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
             title="Area Riservata"
           >
             {isStaffMode ? <Unlock size={14} /> : <Lock size={13} />}
-          </button>
-
-          <button 
-            onClick={() => triggerPushDemo("🔔 Benvenuta nell'app ufficiale di Cambia Look!")}
-            className="w-9 h-9 rounded-full bg-black/25 flex items-center justify-center text-white/90 hover:text-white border border-white/15 shadow"
-          >
-            <Bell size={16} />
           </button>
         </div>
       </header>
