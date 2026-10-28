@@ -1604,11 +1604,8 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
                   </button>
                 )}
 
-                <div className="flex items-center justify-between pr-16">
+                <div className="pr-16">
                   <h3 className="text-xl font-script text-white">{salon.name}</h3>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
-                    Aperto Mar - Sab
-                  </span>
                 </div>
 
                 <div className="space-y-1.5 text-xs text-white/80">
