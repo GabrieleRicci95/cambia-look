@@ -1584,7 +1584,6 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
       {activeTab === "info" && (
         <main className="flex-1 px-5 pt-4 space-y-6 animate-in fade-in duration-300">
           <div className="text-center space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#E8D3A2]">Contatti Salone</span>
             <h2 className="text-3xl font-normal font-script text-white drop-shadow">
               Vieni a Trovarci
             </h2>
@@ -1681,9 +1680,6 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
               <span>•</span>
               <span className="text-[11px]">© Cambia Look</span>
             </div>
-            <p className="text-[10px] text-white/50">
-              Salone Donna • Cisterna di Latina (LT) & Roma (RM)
-            </p>
           </div>
         </main>
       )}
