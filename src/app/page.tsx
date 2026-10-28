@@ -3801,7 +3801,7 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
             {/* Testi Principali */}
             <div className="space-y-1.5 pt-1">
               <span className="text-[10px] font-black uppercase tracking-widest text-[#E8D3A2]">
-                Saloni Esclusivi Donna
+                Cambia Look
               </span>
               <h3 className="text-xl font-bold text-white drop-shadow">
                 Non Perdere le Nostre Offerte!
