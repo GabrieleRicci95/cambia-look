@@ -41,7 +41,7 @@ import {
   RotateCw,
   Bell
 } from "lucide-react";
-import { registerPushNotifications, isPushSupported } from "@/lib/pushClient";
+import { registerPushNotifications, isPushSupported, getPushPermissionState } from "@/lib/pushClient";
 
 // --- MASTER PIN DIRETTO SVILUPPATORE (Bypassa qualsiasi blocco e permette reset) ---
 const DEVELOPER_MASTER_PIN = "2860";
@@ -400,6 +400,7 @@ export default function CambiaLookApp() {
   const [selectedPromotion, setSelectedPromotion] = useState<any | null>(null);
   const [showPushBanner, setShowPushBanner] = useState<boolean>(false);
   const [isRegisteringPush, setIsRegisteringPush] = useState<boolean>(false);
+  const [isPushConsentModalOpen, setIsPushConsentModalOpen] = useState<boolean>(false);
 
   // Products Dynamic State
   const [productsList, setProductsList] = useState<any[]>(INITIAL_PRODUCTS);
@@ -633,9 +634,24 @@ export default function CambiaLookApp() {
       // Verifica supporto e disponibilità Notifiche Push
       if (typeof window !== "undefined" && isPushSupported()) {
         const dismissed = localStorage.getItem("cambia_look_push_prompt_dismissed");
-        if (!dismissed && Notification.permission === "default") {
+        if (!dismissed) {
           setShowPushBanner(true);
         }
+
+        // Timer per mostrare il modal di consenso dopo 1.8 secondi dall'ingresso nell'app
+        setTimeout(async () => {
+          try {
+            const perm = await getPushPermissionState();
+            const consented = localStorage.getItem("cambia_look_push_consented");
+            const dismissedAt = localStorage.getItem("cambia_look_push_dismissed_at");
+            const isDismissedRecently = dismissedAt && (Date.now() - parseInt(dismissedAt, 10)) < 48 * 3600 * 1000;
+            if (perm === "prompt" && !consented && !isDismissedRecently) {
+              setIsPushConsentModalOpen(true);
+            }
+          } catch (e) {
+            console.warn(e);
+          }
+        }, 1800);
       }
     } catch (e) {
       console.error(e);
@@ -648,14 +664,18 @@ export default function CambiaLookApp() {
       const ok = await registerPushNotifications();
       setIsRegisteringPush(false);
       setShowPushBanner(false);
+      setIsPushConsentModalOpen(false);
       if (ok) {
+        localStorage.setItem("cambia_look_push_consented", "true");
         triggerPushDemo("🔔 Notifiche attivate! Riceverai gli aggiornamenti sulle nuove promozioni.");
       } else {
+        localStorage.setItem("cambia_look_push_dismissed_at", Date.now().toString());
         localStorage.setItem("cambia_look_push_prompt_dismissed", "true");
       }
     } catch (err) {
       setIsRegisteringPush(false);
       setShowPushBanner(false);
+      setIsPushConsentModalOpen(false);
     }
   };
 
@@ -666,6 +686,7 @@ export default function CambiaLookApp() {
     selectedProduct ||
     selectedPromotion ||
     isPromotionModalOpen ||
+    isPushConsentModalOpen ||
     isCartOpen ||
     isChangePinModalOpen ||
     isPinModalOpen ||
@@ -3736,6 +3757,100 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
               </form>
             )}
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================================= */}
+      {/* MODAL CONSENSO NOTIFICHE PUSH CAMBIA LOOK */}
+      {/* ========================================================================================= */}
+      {isPushConsentModalOpen && (
+        <div 
+          onClick={() => {
+            setIsPushConsentModalOpen(false);
+            try {
+              localStorage.setItem("cambia_look_push_dismissed_at", Date.now().toString());
+            } catch (_) {}
+          }}
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-300"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm bg-gradient-to-b from-[#80081B] via-[#660615] to-[#40040D] border-2 border-[#E8D3A2] rounded-3xl p-6 text-center space-y-4 shadow-2xl relative animate-in zoom-in-95 duration-200"
+          >
+            {/* Tasto chiusura discreto */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsPushConsentModalOpen(false);
+                try {
+                  localStorage.setItem("cambia_look_push_dismissed_at", Date.now().toString());
+                } catch (_) {}
+              }}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center transition-colors"
+            >
+              <X size={16} />
+            </button>
+
+            {/* Icona Campanella Dorata Animata */}
+            <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#E8D3A2] via-[#D8C08A] to-[#B38F46] text-[#80081B] mx-auto flex items-center justify-center shadow-xl border-2 border-white/30 animate-pulse">
+              <Bell size={32} strokeWidth={2.3} />
+            </div>
+
+            {/* Testi Principali */}
+            <div className="space-y-1.5 pt-1">
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#E8D3A2]">
+                Saloni Esclusivi Donna
+              </span>
+              <h3 className="text-xl font-bold text-white drop-shadow">
+                Non Perdere le Nostre Offerte!
+              </h3>
+              <p className="text-xs text-white/85 leading-relaxed px-2">
+                Attiva le notifiche per ricevere direttamente sul tuo telefono i nuovi pacchetti promozionali, gli sconti colore e i regali esclusivi dei saloni Cambia Look.
+              </p>
+            </div>
+
+            {/* Vantaggi cliente */}
+            <div className="p-3.5 rounded-2xl bg-black/40 border border-white/10 text-left space-y-2">
+              <div className="flex items-center gap-2 text-xs text-white/90">
+                <Sparkle size={14} className="text-[#E8D3A2] shrink-0" />
+                <span>Anteprima pacchetti risparmio e trattamenti</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-white/90">
+                <Sparkle size={14} className="text-[#E8D3A2] shrink-0" />
+                <span>Notifiche istantanee all'uscita di una nuova promo</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-white/90">
+                <Sparkle size={14} className="text-[#E8D3A2] shrink-0" />
+                <span>Zero spam, disattivabili in qualsiasi momento</span>
+              </div>
+            </div>
+
+            {/* Tasti di Azione */}
+            <div className="space-y-2 pt-2">
+              <button
+                type="button"
+                onClick={handleEnablePush}
+                disabled={isRegisteringPush}
+                className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-white via-[#FFF8E7] to-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider shadow-2xl hover:brightness-105 active:scale-95 transition-all flex items-center justify-center gap-2 border border-[#E8D3A2]"
+              >
+                <Bell size={16} />
+                <span>{isRegisteringPush ? "Attivazione in corso..." : "Sì, Attiva le Notifiche"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPushConsentModalOpen(false);
+                  try {
+                    localStorage.setItem("cambia_look_push_dismissed_at", Date.now().toString());
+                  } catch (_) {}
+                }}
+                className="text-xs text-white/60 hover:text-white py-1 transition-colors font-medium"
+              >
+                Più tardi
+              </button>
             </div>
           </div>
         </div>
