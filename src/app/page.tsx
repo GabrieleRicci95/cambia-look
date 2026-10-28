@@ -335,6 +335,7 @@ export default function CambiaLookApp() {
   // Cart / Shopping Bag State (Ordina & Ritira in Salone via WhatsApp)
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isCartBarDismissed, setIsCartBarDismissed] = useState(false);
   const [cartPickupSalon, setCartPickupSalon] = useState<"cisterna" | "roma">("cisterna");
   const [cartClientName, setCartClientName] = useState("");
   const [cartPickupTime, setCartPickupTime] = useState("Oggi / Domani");
@@ -347,7 +348,7 @@ export default function CambiaLookApp() {
   const [serviceFormName, setServiceFormName] = useState("");
   const [serviceFormCategory, setServiceFormCategory] = useState("Colore & Effetti Luce");
   const [serviceFormPrice, setServiceFormPrice] = useState("");
-  const [serviceFormDuration, setServiceFormDuration] = useState("60 min");
+  const [serviceFormDuration, setServiceFormDuration] = useState("");
   const [serviceFormTag, setServiceFormTag] = useState("");
   const [serviceFormDesc, setServiceFormDesc] = useState("");
   const [serviceFormImage, setServiceFormImage] = useState("");
@@ -642,6 +643,7 @@ export default function CambiaLookApp() {
       newCart = [...cart, { product, quantity: qty }];
     }
     saveCart(newCart);
+    setIsCartBarDismissed(false);
     triggerPushDemo(`🛍️ Aggiunto alla Busta: ${product.name} (x${qty})`);
   };
 
@@ -1974,15 +1976,12 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
         <main className="flex-1 px-5 pt-4 space-y-5 animate-in fade-in duration-300">
           <div className="flex justify-between items-end">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#E8D3A2]">Boutique Salone</span>
               <h2 className="text-3xl font-normal font-script text-white drop-shadow">
-                I Prodotti del Salone
+                I Nostri Prodotti
               </h2>
-              <p className="text-xs text-white/80">
-                {isStaffMode 
-                  ? "Pannello Parrucchieri: carica foto, descrizione e prezzo" 
-                  : "Le linee professionali che puoi acquistare nei nostri saloni"}
-              </p>
+              {isStaffMode && (
+                <p className="text-[10px] text-[#E8D3A2] font-semibold mt-0.5">Pannello Staff Salone</p>
+              )}
             </div>
 
             {/* PULSANTE AGGIUNGI PRODOTTO (Visibile solo in modalità Titolare) */}
@@ -3300,24 +3299,24 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
         </div>
       )}
 
-      {/* FLOATING CART BAR (Visibile quando ci sono prodotti nella busta) */}
-      {cartTotalCount > 0 && !isCartOpen && (
+      {/* FLOATING CART BAR (Visibile quando ci sono prodotti nella busta e siamo nella scheda prodotti) */}
+      {activeTab === "prodotti" && cartTotalCount > 0 && !isCartOpen && !isCartBarDismissed && (
         <div 
           className="fixed left-4 right-4 max-w-[416px] mx-auto z-30 animate-in slide-in-from-bottom duration-300"
           style={{ bottom: "calc(env(safe-area-inset-bottom, 20px) + 5.2rem)" }}
         >
-          <button
-            onClick={() => setIsCartOpen(true)}
-            className="w-full py-3.5 px-4 rounded-2xl bg-black/95 backdrop-blur-xl border border-[#E8D3A2] shadow-2xl flex items-center justify-between group active:scale-[0.98] transition-all"
-          >
-            <div className="flex items-center gap-3 min-w-0">
+          <div className="w-full py-3 pl-4 pr-2.5 rounded-2xl bg-black/95 backdrop-blur-xl border border-[#E8D3A2] shadow-2xl flex items-center justify-between group">
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="flex items-center gap-3 min-w-0 flex-1 text-left active:scale-[0.98] transition-all"
+            >
               <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#E8D3A2] to-[#B38F46] text-[#D11936] flex items-center justify-center font-black shadow relative shrink-0">
                 <ShoppingBag size={22} />
                 <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#D11936] text-white border-2 border-[#E8D3A2] rounded-full text-[10px] font-black flex items-center justify-center">
                   {cartTotalCount}
                 </span>
               </div>
-              <div className="text-left truncate">
+              <div className="truncate">
                 <span className="text-[10px] uppercase font-bold text-[#E8D3A2] tracking-wider block">
                   Busta Salone Attiva
                 </span>
@@ -3325,13 +3324,30 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
                   € {cartTotalPrice.toFixed(2)} • {cartTotalCount} {cartTotalCount === 1 ? "prodotto" : "prodotti"}
                 </span>
               </div>
-            </div>
+            </button>
 
-            <div className="flex items-center gap-1.5 py-2.5 px-4 rounded-xl bg-gradient-to-r from-white to-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider shadow-lg group-hover:scale-105 active:scale-95 transition-all shrink-0 ml-2">
-              <span>Ordina & Ritira</span>
-              <ChevronRight size={16} strokeWidth={3} />
+            <div className="flex items-center gap-2 shrink-0 ml-2">
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl bg-gradient-to-r from-white to-[#E8D3A2] text-[#D11936] font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all"
+              >
+                <span>Ordina & Ritira</span>
+                <ChevronRight size={16} strokeWidth={3} />
+              </button>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsCartBarDismissed(true);
+                }}
+                className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center transition-colors"
+                title="Nascondi barra"
+              >
+                <X size={14} />
+              </button>
             </div>
-          </button>
+          </div>
         </div>
       )}
 
@@ -3353,12 +3369,25 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
                   <span className="text-[10px] text-white/70">Ordina su WhatsApp e ritira in salone</span>
                 </div>
               </div>
-              <button 
-                onClick={() => setIsCartOpen(false)} 
-                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 transition-colors"
-              >
-                <X size={16} />
-              </button>
+              <div className="flex items-center gap-2">
+                {cart.length > 0 && (
+                  <button 
+                    type="button"
+                    onClick={clearCart} 
+                    className="py-1 px-2.5 rounded-xl bg-white/10 hover:bg-rose-600/40 text-rose-300 hover:text-white text-[10px] font-bold flex items-center gap-1 transition-colors"
+                    title="Svuota busta"
+                  >
+                    <Trash2 size={12} />
+                    <span>Svuota</span>
+                  </button>
+                )}
+                <button 
+                  onClick={() => setIsCartOpen(false)} 
+                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
 
             {cart.length === 0 ? (
@@ -3590,7 +3619,7 @@ Fatemi sapere quando la busta è pronta per il ritiro! Pagamento direttamente in
             { id: "saloni", label: "Saloni", icon: Store },
             { id: "servizi", label: "Servizi", icon: Scissors },
             { id: "agenda", label: "Il Mio Appuntamento", icon: Calendar, badge: myAppointments.length > 0 },
-            { id: "prodotti", label: "Prodotti", icon: ShoppingBag },
+            { id: "prodotti", label: "Prodotti", icon: ShoppingBag, badge: cartTotalCount > 0 },
             { id: "info", label: "Contatti", icon: MapPin },
           ].map(tab => {
             const Icon = tab.icon;
