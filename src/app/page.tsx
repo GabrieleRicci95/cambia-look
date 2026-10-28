@@ -342,10 +342,10 @@ export default function CambiaLookApp() {
   const [cartNotes, setCartNotes] = useState("");
   const [prodDetailQty, setProdDetailQty] = useState<number>(1);
 
-  // Cart Swipe-to-dismiss states & refs
-  const [cartTranslateY, setCartTranslateY] = useState(0);
-  const [isSwipingCart, setIsSwipingCart] = useState(false);
+  // Cart Swipe-to-dismiss states & refs (Direct GPU DOM transform)
+  const cartSheetRef = useRef<HTMLDivElement>(null);
   const cartTouchStartY = useRef<number>(0);
+  const cartCurrentTranslateY = useRef<number>(0);
   const cartScrollRef = useRef<HTMLDivElement>(null);
   const isCartAtTopRef = useRef<boolean>(true);
 
@@ -722,30 +722,47 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
     setTimeout(() => setShowNotification(false), 4500);
   };
 
-  // Gestione Swipe verso il basso per chiudere il carrello
+  // Gestione Swipe verso il basso fluida a 120fps (Direct GPU DOM Transform)
   const handleCartTouchStart = (e: React.TouchEvent) => {
     cartTouchStartY.current = e.touches[0].clientY;
-    setIsSwipingCart(true);
+    cartCurrentTranslateY.current = 0;
+    if (cartSheetRef.current) {
+      cartSheetRef.current.style.transition = "none";
+      cartSheetRef.current.style.willChange = "transform";
+    }
   };
 
   const handleCartTouchMove = (e: React.TouchEvent) => {
-    if (!isSwipingCart) return;
     const currentY = e.touches[0].clientY;
     const diff = currentY - cartTouchStartY.current;
-    if (diff > 0) {
-      setCartTranslateY(diff);
-    } else {
-      setCartTranslateY(0);
+    if (diff > 0 && cartSheetRef.current) {
+      cartCurrentTranslateY.current = diff;
+      cartSheetRef.current.style.transform = `translate3d(0, ${diff}px, 0)`;
     }
   };
 
   const handleCartTouchEnd = () => {
-    if (!isSwipingCart) return;
-    setIsSwipingCart(false);
-    if (cartTranslateY > 80) {
-      setIsCartOpen(false);
+    if (!cartSheetRef.current) return;
+    cartSheetRef.current.style.willChange = "auto";
+    const currentY = cartCurrentTranslateY.current;
+
+    if (currentY > 80) {
+      // Scorrimento verso il basso completato: animazione di uscita morbida
+      cartSheetRef.current.style.transition = "transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)";
+      cartSheetRef.current.style.transform = "translate3d(0, 100%, 0)";
+      setTimeout(() => {
+        setIsCartOpen(false);
+        if (cartSheetRef.current) {
+          cartSheetRef.current.style.transform = "";
+          cartSheetRef.current.style.transition = "";
+        }
+      }, 200);
+    } else {
+      // Rilascio parziale: rimbalzo elastico in posizione iniziale
+      cartSheetRef.current.style.transition = "transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)";
+      cartSheetRef.current.style.transform = "translate3d(0, 0, 0)";
     }
-    setCartTranslateY(0);
+    cartCurrentTranslateY.current = 0;
   };
 
   const handleCartScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -759,15 +776,20 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
     }
     isCartAtTopRef.current = true;
     cartTouchStartY.current = e.touches[0].clientY;
+    cartCurrentTranslateY.current = 0;
+    if (cartSheetRef.current) {
+      cartSheetRef.current.style.transition = "none";
+    }
   };
 
   const handleContentTouchMove = (e: React.TouchEvent) => {
     if (!isCartAtTopRef.current) return;
     const currentY = e.touches[0].clientY;
     const diff = currentY - cartTouchStartY.current;
-    if (diff > 12) {
-      setIsSwipingCart(true);
-      setCartTranslateY(diff - 12);
+    if (diff > 12 && cartSheetRef.current) {
+      const activeDiff = diff - 12;
+      cartCurrentTranslateY.current = activeDiff;
+      cartSheetRef.current.style.transform = `translate3d(0, ${activeDiff}px, 0)`;
     }
   };
 
@@ -3384,26 +3406,23 @@ Fatemi sapere quando i prodotti sono pronti per il ritiro! Pagamento direttament
           className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-200"
         >
           <div 
+            ref={cartSheetRef}
             onClick={(e) => e.stopPropagation()}
-            style={{
-              transform: cartTranslateY > 0 ? `translateY(${cartTranslateY}px)` : undefined,
-              transition: isSwipingCart ? "none" : "transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
-            }}
-            className="w-full max-w-md bg-[#80081B] border-t-2 border-[#E8D3A2] rounded-t-[32px] shadow-2xl animate-in slide-in-from-bottom duration-300 h-[94vh] flex flex-col overflow-hidden"
+            className="w-full max-w-md bg-[#80081B] border-t-2 border-[#E8D3A2] rounded-t-[32px] shadow-2xl h-[94vh] flex flex-col overflow-hidden touch-pan-y"
           >
-            {/* Area di trascinamento swipe verso il basso */}
+            {/* Area di trascinamento swipe verso il basso con maniglia iOS */}
             <div 
-              className="w-full flex flex-col items-center pt-3 pb-1 cursor-grab active:cursor-grabbing shrink-0 touch-none select-none"
+              className="w-full flex flex-col items-center pt-3 pb-2 cursor-grab active:cursor-grabbing shrink-0 touch-none select-none"
               onTouchStart={handleCartTouchStart}
               onTouchMove={handleCartTouchMove}
               onTouchEnd={handleCartTouchEnd}
             >
-              <div className="w-12 h-1.5 rounded-full bg-white/40" />
+              <div className="w-12 h-1.5 rounded-full bg-white/40 shadow-sm" />
             </div>
 
-            {/* Header del carrello (supporta swipe down) */}
+            {/* Header del carrello (supporta swipe down rapido) */}
             <div 
-              className="px-6 pb-3 pt-1 flex justify-between items-center border-b border-white/10 shrink-0 select-none"
+              className="px-6 pb-3 pt-1 flex justify-between items-center border-b border-white/10 shrink-0 select-none touch-none"
               onTouchStart={handleCartTouchStart}
               onTouchMove={handleCartTouchMove}
               onTouchEnd={handleCartTouchEnd}
