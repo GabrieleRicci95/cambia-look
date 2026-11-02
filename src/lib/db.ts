@@ -4,9 +4,10 @@ let pool: Pool | null = null;
 
 export function getDbPool(): Pool {
   if (!pool) {
-    const connectionString =
-      process.env.DATABASE_URL ||
-      'postgresql://postgres.ynngloniclnqguvzvlhe:Xo89sj3a123@aws-1-eu-central-1.pooler.supabase.com:6543/postgres';
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+      throw new Error('DATABASE_URL is not defined in environment variables.');
+    }
 
     pool = new Pool({
       connectionString,

@@ -102,10 +102,11 @@ export async function registerPushNotifications(): Promise<boolean> {
         return false;
       }
 
-      const vapidKey = (
-        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
-        'BMeRI6-Cc0iR77fc7uCt2VfTzQIyaxnyxTWZ79hTKFt8saVHgPmhIdKcubzGgjJucuElyzU3ONNRMkJiC_WBSJc'
-      ).replace(/\s+/g, '');
+      const vapidKey = (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '').replace(/\s+/g, '');
+      if (!vapidKey) {
+        console.warn('NEXT_PUBLIC_VAPID_PUBLIC_KEY non configurata');
+        return false;
+      }
 
       const convertedKey = urlBase64ToUint8Array(vapidKey);
 

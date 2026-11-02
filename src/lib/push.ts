@@ -2,21 +2,18 @@ import webpush from 'web-push';
 import { getDbPool } from './db';
 import { sendNativeApns } from './apns';
 
-const publicKey = (
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
-  'BMeRI6-Cc0iR77fc7uCt2VfTzQIyaxnyxTWZ79hTKFt8saVHgPmhIdKcubzGgjJucuElyzU3ONNRMkJiC_WBSJc'
-).replace(/\s+/g, '');
-const privateKey = (
-  process.env.VAPID_PRIVATE_KEY || 'zF-sPsmNLfKuuD2qGyv4i4rSh7rd3aI8zjFK5DDYRqI'
-).replace(/\s+/g, '');
+const publicKey = (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '').replace(/\s+/g, '');
+const privateKey = (process.env.VAPID_PRIVATE_KEY || '').replace(/\s+/g, '');
 const subject = (process.env.VAPID_SUBJECT || 'mailto:info@gardigital.it').trim();
 
 let vapidConfigured = false;
-try {
-  webpush.setVapidDetails(subject, publicKey, privateKey);
-  vapidConfigured = true;
-} catch (e) {
-  console.warn('VAPID setup error:', e);
+if (publicKey && privateKey) {
+  try {
+    webpush.setVapidDetails(subject, publicKey, privateKey);
+    vapidConfigured = true;
+  } catch (e) {
+    console.warn('VAPID setup error:', e);
+  }
 }
 
 export interface PushPayload {
